@@ -1,0 +1,13 @@
+version: v1
+managed:
+  enabled: true
+  java_package_prefix: "build.buf"
+types:
+  include:
+    - google.rpc.Status
+plugins:
+  - name: java
+    out: google-java/src/main/java
+  - name: java
+    out: google-javalite/src/main/java
+    opt: lite

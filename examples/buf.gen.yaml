@@ -1,0 +1,17 @@
+version: v1
+managed:
+  enabled: true
+  java_package_prefix: "build"
+plugins:
+  - name: connect-kotlin
+    out: generated-google-java/src/main/kotlin
+    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+  - name: java
+    out: generated-google-java/src/main/java
+
+  - name: connect-kotlin
+    out: generated-google-javalite/src/main/kotlin
+    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+  - name: java
+    out: generated-google-javalite/src/main/java
+    opt: lite
