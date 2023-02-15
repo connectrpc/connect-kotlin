@@ -1,0 +1,3 @@
+#!/bin/sh
+
+exec java -jar ../protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar

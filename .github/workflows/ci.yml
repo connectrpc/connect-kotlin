@@ -1,0 +1,93 @@
+name: ci
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch: {} # support manual runs
+jobs:
+  plugins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - uses: bufbuild/buf-setup-action@v1.14.0
+        with:
+          github_token: ${{ github.token }}
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build plugin
+        run: make buildplugin
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1.14.0
+        with:
+          github_token: ${{ github.token }}
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate proto files for project
+        run: make generate
+      - name: Print diff
+        run: git diff
+      - name: Ensure no generated diff
+        run: |
+          # extensions/ uses checked in generated code to ensure correct protoc versioning for
+          # binaries. As of 30/12/2022, arduino/setup-protoc does not support the new protoc
+          # versioning scheme and is stuck on 3.20: https://github.com/arduino/setup-protoc/issues/33.
+          # The current protoc version used is 3.21.11 or 21.11.
+          # For now, just undo extensions and check other generated files.
+          git checkout extensions
+          git update-index --refresh --add --remove
+          git diff-index --quiet HEAD --
+      - name: Build project
+        run: make build
+  crosstests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker-practice/actions-setup-docker@master
+      - uses: actions/setup-go@v3
+      - uses: bufbuild/buf-setup-action@v1.14.0
+        with:
+          github_token: ${{ github.token }}
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate proto files for cross tests.
+        run: make generatecrosstests
+      - name: Start test server
+        run: make crosstestserverrun
+      - name: Run crosstests
+        run: make crosstestsrun
+      - name: Stop test server
+        run: make crosstestserverstop
+  license-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check license headers
+        run: |
+          make licenseheaders
+          git update-index --refresh --add --remove
+          git diff-index --quiet HEAD --
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: make test
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1.14.0
+        with:
+          github_token: ${{ github.token }}
+      - name: Run lint
+        run: make lint
