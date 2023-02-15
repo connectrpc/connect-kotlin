@@ -1,0 +1,43 @@
+name: release
+on:
+  push:
+    tags:
+      - v*
+  workflow_dispatch: {} # support manual runs
+jobs:
+  library:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1.14.0
+        with:
+          github_token: ${{ github.token }}
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+      - name: Configure GPG signing & publish
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_KEY_NAME: ${{ secrets.GPG_KEY_NAME }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          export ORG_GRADLE_PROJECT_mavenCentralUsername=$SONATYPE_USER
+          export ORG_GRADLE_PROJECT_mavenCentralPassword=$SONATYPE_PASSWORD
+          export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=$GPG_PASSPHRASE
+          release_version=$(git describe --tags --abbrev=0 --exact-match)
+          export ORG_GRADLE_PROJECT_releaseVersion="${release_version:1}"
+          # https://github.com/keybase/keybase-issues/issues/2798
+          export GPG_TTY=$(tty)
+          # Import gpg keys and warm the passphrase to avoid the gpg
+          # passphrase prompt when initiating a deploy
+          # `--pinentry-mode=loopback` could be needed to ensure we
+          # suppress the gpg prompt
+          echo $GPG_KEY | base64 --decode > signing-key
+          gpg --passphrase $GPG_PASSPHRASE --batch --import signing-key
+          export ORG_GRADLE_PROJECT_signingInMemoryKey=$(gpg --armor --passphrase $GPG_PASSPHRASE --pinentry-mode=loopback --export-secret-keys $GPG_KEY_NAME signing-key | grep -v '\-\-' | grep -v '^=.' | tr -d '\n')
+          shred signing-key
+          make release
