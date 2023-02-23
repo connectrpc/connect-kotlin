@@ -250,6 +250,10 @@ object Plugin {
             }
             return null
         }
+
+        fun findFileByName(fileName: String) : Descriptors.FileDescriptor? {
+            return files[fileName]
+        }
     }
 
     /**

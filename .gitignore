@@ -9,6 +9,7 @@
 /crosstests/google-java/src/main/java/generated/
 /crosstests/google-javalite/src/main/kotlin/generated/
 /crosstests/google-javalite/src/main/java/generated/
+/protoc-gen-connect-kotlin/generated/
 /.gradle
 /.tmp
 # Cache of project
