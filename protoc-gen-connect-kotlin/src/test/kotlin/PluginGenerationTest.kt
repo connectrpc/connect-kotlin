@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledInnerMessageServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
-import buf.javamultiplefiles.enabled.v1.DisabledEmptyServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledEmptyServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledInnerMessageServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
