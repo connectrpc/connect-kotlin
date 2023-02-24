@@ -14,13 +14,14 @@
 
 syntax = "proto3";
 
-package buf.javamultiplefiles.disabled.v1;
+package buf.javamultiplefiles.enabled.v1;
 
-option java_multiple_files = false;
+option java_multiple_files = true;
 
-message DisabledEmpty {
+message EnabledOuterMessageNested {
+  message InnerMessage {}
 }
 
-service DisabledEmptyService {
-  rpc DisabledEmptyRPC(DisabledEmpty) returns (DisabledEmpty);
+service EnabledInnerMessageService {
+  rpc EnabledInnerMessageRPC(EnabledOuterMessageNested.InnerMessage) returns (EnabledOuterMessageNested.InnerMessage);
 }

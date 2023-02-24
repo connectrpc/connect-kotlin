@@ -312,6 +312,18 @@ class Generator : CodeGenerator {
         }
         return ClassName(getFileJavaPackage(inputType.file), getFileClassName(inputType.file), inputType.name)
     }
+//
+//    private fun classNameFromType(inputType: Descriptors.Descriptor): ClassName {
+//        val packageName = getFileJavaPackage(inputType.file)
+//        val names = getFileClassName(inputType.file)
+//            .removePrefix(packageName)
+//            .removePrefix(".")
+//            .split(".")
+//        if (names.size > 1) {
+//            return ClassName(packageName, names.first(), *names.subList(1, names.size - 1).toTypedArray())
+//        }
+//        return ClassName(packageName, names.first())
+//    }
 }
 
 private fun serviceClientInterfaceClassName(packageName: String, service: Descriptors.ServiceDescriptor): ClassName {

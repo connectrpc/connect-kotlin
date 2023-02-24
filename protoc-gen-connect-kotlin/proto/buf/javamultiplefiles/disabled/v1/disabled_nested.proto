@@ -18,9 +18,10 @@ package buf.javamultiplefiles.disabled.v1;
 
 option java_multiple_files = false;
 
-message DisabledEmpty {
+message DisabledOuterMessageNested {
+  message InnerMessage {}
 }
 
-service DisabledEmptyService {
-  rpc DisabledEmptyRPC(DisabledEmpty) returns (DisabledEmpty);
+service DisabledInnerMessageService {
+  rpc DisabledInnerMessageRPC(DisabledOuterMessageNested.InnerMessage) returns (DisabledOuterMessageNested.InnerMessage);
 }
