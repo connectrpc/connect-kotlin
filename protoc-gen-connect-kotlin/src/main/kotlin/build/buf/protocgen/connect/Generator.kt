@@ -47,7 +47,7 @@ import com.squareup.kotlinpoet.asClassName
  * Instead, this is the way to reference these objects for now. If there is ever a desire to
  * move off of type aliases, this can be changed without user API breakage.
  */
-private val HEADERS_CLASS_NAME = ClassName.bestGuess("build.buf.connect.Headers")
+private val HEADERS_CLASS_NAME = ClassName("build.buf.connect", "Headers")
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
