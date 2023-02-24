@@ -23,7 +23,6 @@ import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
-import build.buf.protocgen.connect.internal.getFileClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
@@ -306,12 +305,20 @@ class Generator : CodeGenerator {
         return functions
     }
 
-    private fun classNameFromType(inputType: Descriptors.Descriptor): ClassName {
-        val packageName = getFileJavaPackage(inputType.file)
-        val names = getClassName(inputType)
+    private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
+        // Get the package of the descriptor's file.
+        // e.g. "build.buf.connect"
+        val packageName = getFileJavaPackage(descriptor.file)
+        // Get the fully qualified class name of the descriptor
+        // and subtract the file's package.
+        // e.g. "build.buf.connect.EmptyMessage.InnerMessage"
+        // becomes ["EmptyMessage", "InnerMessage"]
+        val names = getClassName(descriptor)
             .removePrefix(packageName)
             .removePrefix(".")
             .split(".")
+        // Case when there is a nested entity.
+        // e.g Nested message definitions and messages within "*OuterClass.java".
         if (names.size > 1) {
             return ClassName(packageName, names.first(), *names.subList(1, names.size - 1).toTypedArray())
         }
