@@ -24,6 +24,7 @@ import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
+import build.buf.protocgen.connect.internal.getJavaFileName
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName
@@ -36,6 +37,9 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import java.lang.StringBuilder
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /*
  * These are constants since build.buf.connect.Headers and build.buf.connect.http.Cancelable

@@ -14,8 +14,8 @@
 
 package build.buf.protocgen.connect.internal
 
-import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.Descriptors
+import com.google.protobuf.Descriptors.FileDescriptor
 
 /**
  * Various helper methods, particularly useful when generating Java code.
@@ -27,41 +27,8 @@ import com.google.protobuf.Descriptors
  * Based on original Protocol Buffers design by
  *  Sanjay Ghemawat, Jeff Dean, and others.
  */
-/**
- * Name of the outer class scope insertion point.
- */
-internal fun outerClassScopeInsertionPoint(): String = "outer_class_scope"
 
-/**
- * Returns the insertion point name for a given message's class scope.
- */
-internal fun getClassScopeInsertionPoint(descriptor: Descriptors.Descriptor): String {
-    return "class_scope:" + descriptor.fullName
-}
-
-/**
- * Returns the insertion point name for a given message's builder class scope.
- */
-internal fun getBuilderScopeInsertionPoint(descriptor: Descriptors.Descriptor): String {
-    return "builder_scope:" + descriptor.fullName
-}
-
-/**
- * Returns the insertion point name for a given enum's scope.
- */
-internal fun getEnumScopeInsertionPoint(descriptor: Descriptors.EnumDescriptor): String {
-    return "enum_scope:" + descriptor.fullName
-}
-
-/**
- * Commonly-used separator comments (a line of '=').
- */
-internal const val THICK_SEPARATOR = "// ===================================================================\n"
-
-/**
- * Commonly-used separator comments (a line of '-').
- */
-internal const val THIN_SEPARATOR = "// -------------------------------------------------------------------\n"
+private const val OUTER_CLASS_SUFFIX = "OuterClass"
 
 /**
  * Parses a set of comma-delimited name/value pairs.
@@ -156,32 +123,6 @@ internal fun getProtocJavaFileName(descriptor: Descriptors.ServiceDescriptor): S
 }
 
 /**
- * Converts the field's name to camel-case, e.g. "foo_bar_baz" becomes
- * "fooBarBaz".
- */
-internal fun underscoresToCamelCase(field: Descriptors.FieldDescriptor): String {
-    return underscoresToCamelCaseImpl(getFieldName(field), false)
-}
-
-/**
- * Converts the field's name to camel-case, e.g. "foo_bar_baz" becomes
- * "FooBarBaz".
- */
-internal fun underscoresToCapitalizedCamelCase(
-    field: Descriptors.FieldDescriptor
-): String {
-    return underscoresToCamelCaseImpl(getFieldName(field), true)
-}
-
-/**
- * Converts the method's name to camel-case. (Typically, this merely has the
- * effect of lower-casing the first letter of the name.)
- */
-internal fun underscoresToCamelCase(method: Descriptors.MethodDescriptor): String {
-    return underscoresToCamelCaseImpl(method.name, false)
-}
-
-/**
  * Strips ".proto" or ".protodevel" from the end of a filename.
  */
 private fun stripProto(filename: String): String {
@@ -201,7 +142,7 @@ private fun stripProto(filename: String): String {
  * in that class, unless the `java_multiple_files` option has been set
  * to true.
  */
-private fun getFileClassName(file: Descriptors.FileDescriptor): String {
+private fun getFileClassName(file: FileDescriptor): String {
     return if (file.options.hasJavaOuterClassname()) {
         file.options.javaOuterClassname
     } else {
@@ -210,8 +151,45 @@ private fun getFileClassName(file: Descriptors.FileDescriptor): String {
         if (lastSlash >= 0) {
             basename = basename.substring(lastSlash + 1)
         }
-        underscoresToCamelCaseImpl(stripProto(basename), true)
+        val className = underscoresToCamelCaseImpl(stripProto(basename), true)
+        return if (hasConflictingClassName(file, className)) {
+            "${className}$OUTER_CLASS_SUFFIX"
+        } else {
+            className
+        }
     }
+}
+
+/**
+ * Checks if the file has a conflicting class name.
+ *
+ * This is primarily used to identify when the Google generators are
+ * generating for `java_multiple_files=false`. If there exists a message
+ * with the same name as the protobuf file (e.g. `message Empty {}` in `empty.proto`)
+ * the generated file becomes suffixed with "OuterClass". This helper function
+ * identifies when a conflict could occur so that the caller can make a decision on
+ * what to do.
+ *
+ * Translated from:
+ * https://github.com/protocolbuffers/protobuf/blob/main/src/google/protobuf/compiler/java/name_resolver.cc#L195-L217.
+ */
+private fun hasConflictingClassName(file: FileDescriptor, className: String): Boolean {
+    for (enum in file.enumTypes) {
+        if (enum.name.equals(className)) {
+            return true
+        }
+    }
+    for (service in file.services) {
+        if (service.name.equals(className)) {
+            return true
+        }
+    }
+    for (messages in file.messageTypes) {
+        if (messages.name.equals(className)) {
+            return true
+        }
+    }
+    return false
 }
 
 /**
@@ -220,7 +198,7 @@ private fun getFileClassName(file: Descriptors.FileDescriptor): String {
  * This depends on the `java_package` and `package` and options
  * specified in the .proto file.
  */
-internal fun getFileJavaPackage(file: Descriptors.FileDescriptor): String {
+internal fun getFileJavaPackage(file: FileDescriptor): String {
     return if (file.options.hasJavaPackage()) {
         file.options.javaPackage
     } else {
@@ -229,11 +207,33 @@ internal fun getFileJavaPackage(file: Descriptors.FileDescriptor): String {
 }
 
 /**
+ * Returns the Java file name (and path) for a given message.
+ *
+ * This depends on the `java_package`, `package` and
+ * `java_multiple_files` options specified in the .proto file.
+ */
+fun getJavaFileName(descriptor: Descriptors.Descriptor): String {
+    var descriptor: Descriptors.Descriptor = descriptor
+    val fullName: String
+    if (descriptor.file.options.javaMultipleFiles) {
+        var containingType: Descriptors.Descriptor?
+        while (descriptor.containingType.also { containingType = it } != null) {
+            descriptor = containingType!!
+        }
+        fullName = getClassName(descriptor)
+    } else {
+        fullName = getClassName(descriptor.file)
+    }
+    return fullName.replace('.', '/') + ".java"
+}
+
+
+/**
  * Converts the given fully-qualified name in the proto namespace to its
  * fully-qualified name in the Java namespace, given that it is in the given
  * file.
  */
-private fun toJavaName(fullName: String, file: Descriptors.FileDescriptor): String {
+private fun toJavaName(fullName: String, file: FileDescriptor): String {
     val result = StringBuilder()
     if (file.options.javaMultipleFiles) {
         result.append(getFileJavaPackage(file))
@@ -281,7 +281,7 @@ internal fun getClassName(descriptor: Descriptors.ServiceDescriptor): String {
  * Returns the fully-qualified class name corresponding to the given
  * file descriptor.
  */
-internal fun getClassName(descriptor: Descriptors.FileDescriptor): String {
+internal fun getClassName(descriptor: FileDescriptor): String {
     val result = StringBuilder(getFileJavaPackage(descriptor))
     if (result.isNotEmpty()) {
         result.append('.')
@@ -296,122 +296,6 @@ internal fun getClassName(descriptor: Descriptors.FileDescriptor): String {
  */
 internal fun getFieldConstantName(field: Descriptors.FieldDescriptor): String {
     return field.name.uppercase() + "_FIELD_NUMBER"
-}
-
-/**
- * Returns the type name for a boxed primitive type, e.g. "int" for
- * [JavaType.INT]. Returns `null` for enum and message types.
- */
-internal fun getPrimitiveTypeName(type: Descriptors.FieldDescriptor.JavaType): String? {
-    return when (type) {
-        Descriptors.FieldDescriptor.JavaType.INT -> "int"
-        Descriptors.FieldDescriptor.JavaType.LONG -> "long"
-        Descriptors.FieldDescriptor.JavaType.FLOAT -> "float"
-        Descriptors.FieldDescriptor.JavaType.DOUBLE -> "double"
-        Descriptors.FieldDescriptor.JavaType.BOOLEAN -> "boolean"
-        Descriptors.FieldDescriptor.JavaType.STRING -> "java.lang.String"
-        Descriptors.FieldDescriptor.JavaType.BYTE_STRING -> "com.google.protobuf.ByteString"
-        Descriptors.FieldDescriptor.JavaType.ENUM -> null
-        Descriptors.FieldDescriptor.JavaType.MESSAGE -> null
-        else -> throw IllegalArgumentException()
-    }
-}
-
-/**
- * Returns the fully-qualified class name for a boxed primitive type, e.g.
- * "java.lang.Integer" for [JavaType.INT]. Returns `null` for
- * enum and message types.
- */
-internal fun getBoxedPrimitiveTypeName(
-    type: Descriptors.FieldDescriptor.JavaType?
-): String? {
-    return when (type) {
-        Descriptors.FieldDescriptor.JavaType.INT -> "java.lang.Integer"
-        Descriptors.FieldDescriptor.JavaType.LONG -> "java.lang.Long"
-        Descriptors.FieldDescriptor.JavaType.FLOAT -> "java.lang.Float"
-        Descriptors.FieldDescriptor.JavaType.DOUBLE -> "java.lang.Double"
-        Descriptors.FieldDescriptor.JavaType.BOOLEAN -> "java.lang.Boolean"
-        Descriptors.FieldDescriptor.JavaType.STRING -> "java.lang.String"
-        Descriptors.FieldDescriptor.JavaType.BYTE_STRING -> "com.google.protobuf.ByteString"
-        Descriptors.FieldDescriptor.JavaType.ENUM -> null
-        Descriptors.FieldDescriptor.JavaType.MESSAGE -> null
-        else -> throw IllegalArgumentException()
-    }
-}
-
-/**
- * Returns whether this message keeps track of unknown fields.
- */
-internal fun hasUnknownField(descriptor: Descriptors.Descriptor): Boolean {
-    return (
-        descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-        )
-}
-
-/**
- * Returns whether this message has generated parsing, serialization,
- * and other standard methods for which reflection-based fallback
- * implementations exist?
- */
-internal fun hasGeneratedMethods(descriptor: Descriptors.Descriptor): Boolean {
-    return (
-        descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.CODE_SIZE
-        )
-}
-
-/**
- * Returns whether this message has descriptor and reflection methods?
- */
-internal fun hasDescriptorMethods(descriptor: Descriptors.Descriptor): Boolean {
-    return (
-        descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-        )
-}
-
-/**
- * Returns whether this enum has descriptor and reflection methods?
- */
-internal fun hasDescriptorMethods(descriptor: Descriptors.EnumDescriptor): Boolean {
-    return (
-        descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-        )
-}
-
-/**
- * Returns whether this service has descriptor and reflection methods?
- */
-internal fun hasDescriptorMethods(descriptor: Descriptors.ServiceDescriptor): Boolean {
-    return (
-        descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-        )
-}
-
-/**
- * Returns whether this file has descriptor and reflection methods?
- */
-internal fun hasDescriptorMethods(file: Descriptors.FileDescriptor): Boolean {
-    return (
-        file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-        )
-}
-
-/**
- * Returns whether generic services should be generated for this file.
- */
-internal fun hasGenericServices(file: Descriptors.FileDescriptor): Boolean {
-    return (
-        file.services.isNotEmpty() &&
-            (
-                file.options.optimizeFor
-                    != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
-                ) && file.options.javaGenericServices
-        )
 }
 
 /**
