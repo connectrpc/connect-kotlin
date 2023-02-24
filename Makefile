@@ -34,8 +34,7 @@ clean: ## Cleans the underlying build.
 	rm -rf crosstests/google-javalite/src/main/java/generated
 	rm -rf crosstests/google-javalite/src/main/kotlin/generated
 
-	rm -rf protoc-gen-connect-kotlin/generation/src/test/java/
-	rm -rf protoc-gen-connect-kotlin/generation/src/test/kotlin/
+	rm -rf protoc-gen-connect-kotlin/src/test/java/
 
 .PHONY: crosstestserverrun
 crosstestserverrun: crosstestserverstop ## Run the server for cross tests.
