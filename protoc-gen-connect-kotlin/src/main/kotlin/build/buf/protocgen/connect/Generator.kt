@@ -23,6 +23,7 @@ import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
+import build.buf.protocgen.connect.internal.getFileClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
 import build.buf.protocgen.connect.internal.getJavaFileName
 import com.google.protobuf.Descriptors
@@ -124,8 +125,8 @@ class Generator : CodeGenerator {
             .defaultValue("%L", "emptyMap()")
             .build()
         for (method in methods) {
-            val inputClassName = ClassName.bestGuess(getClassName(method.inputType))
-            val outputClassName = ClassName.bestGuess(getClassName(method.outputType))
+            val inputClassName = ClassName(getFileJavaPackage(method.inputType.file), getFileClassName(method.inputType.file), method.inputType.name)
+            val outputClassName = ClassName(getFileJavaPackage(method.outputType.file), getFileClassName(method.outputType.file), method.outputType.name)
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingBuilder = FunSpec.builder(method.name.lowerCamelCase())
                     .addModifiers(KModifier.ABSTRACT)
@@ -205,8 +206,8 @@ class Generator : CodeGenerator {
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
-            val inputClassName = ClassName.bestGuess(getClassName(method.inputType))
-            val outputClassName = ClassName.bestGuess(getClassName(method.outputType))
+            val inputClassName = ClassName(getFileJavaPackage(method.inputType.file), getFileClassName(method.inputType.file), method.inputType.name)
+            val outputClassName = ClassName(getFileJavaPackage(method.outputType.file), getFileClassName(method.outputType.file), method.outputType.name)
             val methodCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
                 .addStatement("\"$packageName.$serviceName/${method.name}\",")

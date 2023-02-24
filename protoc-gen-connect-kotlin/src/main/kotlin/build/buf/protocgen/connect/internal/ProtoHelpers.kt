@@ -142,7 +142,7 @@ private fun stripProto(filename: String): String {
  * in that class, unless the `java_multiple_files` option has been set
  * to true.
  */
-private fun getFileClassName(file: FileDescriptor): String {
+internal fun getFileClassName(file: FileDescriptor): String {
     return if (file.options.hasJavaOuterClassname()) {
         file.options.javaOuterClassname
     } else {
@@ -153,7 +153,7 @@ private fun getFileClassName(file: FileDescriptor): String {
         }
         val className = underscoresToCamelCaseImpl(stripProto(basename), true)
         return if (hasConflictingClassName(file, className)) {
-            "${className}$OUTER_CLASS_SUFFIX"
+            "$className$OUTER_CLASS_SUFFIX"
         } else {
             className
         }
