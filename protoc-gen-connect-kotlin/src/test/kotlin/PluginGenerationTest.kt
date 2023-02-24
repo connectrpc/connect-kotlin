@@ -13,7 +13,10 @@
 // limitations under the License.
 
 import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
+import buf.javamultiplefiles.enabled.v1.DisabledEmptyServiceClient
+import buf.javamultiplefiles.enabled.v1.EnabledEmptyServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
+import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -28,16 +31,19 @@ class PluginGenerationTest {
 
     @Test
     fun multiFileEnabled() {
+        assertThat(EnabledEmptyServiceClient::class.java).isNotNull
         assertThat(EnabledServiceClient::class.java).isNotNull
     }
 
     @Test
     fun multiFileDisabled() {
+        assertThat(DisabledEmptyServiceClient::class.java).isNotNull
         assertThat(DisabledServiceClient::class.java).isNotNull
     }
 
     @Test
     fun multiFileUnspecified() {
+        assertThat(UnspecifiedEmptyServiceClient::class.java).isNotNull
         assertThat(UnspecifiedServiceClient::class.java).isNotNull
     }
 }
