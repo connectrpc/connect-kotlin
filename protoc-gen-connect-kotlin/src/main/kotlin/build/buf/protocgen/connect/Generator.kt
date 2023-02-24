@@ -36,9 +36,6 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
-import java.lang.StringBuilder
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /*
  * These are constants since build.buf.connect.Headers and build.buf.connect.http.Cancelable

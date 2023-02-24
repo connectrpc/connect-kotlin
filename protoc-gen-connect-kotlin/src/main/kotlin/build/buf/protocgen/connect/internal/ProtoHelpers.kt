@@ -227,7 +227,6 @@ fun getJavaFileName(descriptor: Descriptors.Descriptor): String {
     return fullName.replace('.', '/') + ".java"
 }
 
-
 /**
  * Converts the given fully-qualified name in the proto namespace to its
  * fully-qualified name in the Java namespace, given that it is in the given
