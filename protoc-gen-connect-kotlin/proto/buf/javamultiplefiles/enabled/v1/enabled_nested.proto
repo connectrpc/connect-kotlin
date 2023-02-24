@@ -23,5 +23,7 @@ message EnabledOuterMessageNested {
 }
 
 service EnabledInnerMessageService {
+  // buf:lint:ignore RPC_REQUEST_STANDARD_NAME
+  // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
   rpc EnabledInnerMessageRPC(EnabledOuterMessageNested.InnerMessage) returns (EnabledOuterMessageNested.InnerMessage);
 }

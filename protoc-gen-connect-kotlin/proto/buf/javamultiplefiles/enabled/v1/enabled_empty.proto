@@ -21,7 +21,13 @@ option java_multiple_files = true;
 message EnabledEmpty {
 }
 
+message EnabledEmptyRPCRequest {
+}
+
+message EnabledEmptyRPCResponse {
+}
+
 service EnabledEmptyService {
-  rpc EnabledEmptyRPC(EnabledEmpty) returns (EnabledEmpty);
+  rpc EnabledEmptyRPC(EnabledEmptyRPCRequest) returns (EnabledEmptyRPCResponse);
 }
 

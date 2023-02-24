@@ -24,5 +24,8 @@ message UnspecifiedOuterMessageNested {
 }
 
 service UnspecifiedInnerMessageService {
+
+  // buf:lint:ignore RPC_REQUEST_STANDARD_NAME
+  // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
   rpc UnspecifiedInnerMessageRPC(UnspecifiedOuterMessageNested.InnerMessage) returns (UnspecifiedOuterMessageNested.InnerMessage);
 }

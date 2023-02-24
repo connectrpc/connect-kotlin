@@ -22,6 +22,12 @@ package buf.javamultiplefiles.unspecified.v1;
 message UnspecifiedEmpty {
 }
 
+message UnspecifiedEmptyRPCRequest {
+}
+
+message UnspecifiedEmptyRPCResponse {
+}
+
 service UnspecifiedEmptyService {
-  rpc UnspecifiedEmptyRPC(UnspecifiedEmpty) returns (UnspecifiedEmpty);
+  rpc UnspecifiedEmptyRPC(UnspecifiedEmptyRPCRequest) returns (UnspecifiedEmptyRPCResponse);
 }

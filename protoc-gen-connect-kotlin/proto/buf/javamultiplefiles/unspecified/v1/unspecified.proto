@@ -28,5 +28,5 @@ message UnspecifiedResponse {
 }
 
 service UnspecifiedService {
-    rpc UnspecifiedRPC(UnspecifiedRequest) returns (UnspecifiedResponse) {}
+    rpc Unspecified(UnspecifiedRequest) returns (UnspecifiedResponse) {}
 }
