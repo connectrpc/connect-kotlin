@@ -29,10 +29,10 @@ import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import java.util.concurrent.TimeUnit
 
 class ElizaChatActivity : AppCompatActivity() {
 
@@ -84,8 +84,8 @@ class ElizaChatActivity : AppCompatActivity() {
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaLiteProtobufStrategy(),
-                networkProtocol = selectedNetworkProtocolOption
-            )
+                networkProtocol = selectedNetworkProtocolOption,
+            ),
         )
         // Create the Eliza service client.
         val elizaServiceClient = ElizaServiceClient(client)
@@ -153,10 +153,10 @@ class ElizaChatActivity : AppCompatActivity() {
                         adapter.add(
                             MessageData(
                                 "Session has ended.",
-                                true
-                            )
+                                true,
+                            ),
                         )
-                    }
+                    },
                 )
             }
             lifecycleScope.launch(Dispatchers.Main) {

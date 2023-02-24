@@ -14,9 +14,6 @@
 
 package build.buf.connect.crosstest.ssl
 
-import okhttp3.tls.HandshakeCertificates
-import okhttp3.tls.HeldCertificate
-import okio.ByteString.Companion.encodeUtf8
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.cert.CertificateFactory
@@ -27,6 +24,9 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
+import okio.ByteString.Companion.encodeUtf8
 
 fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
     val certificate = clientCert.byteInputStream(Charsets.UTF_8).use { stream ->

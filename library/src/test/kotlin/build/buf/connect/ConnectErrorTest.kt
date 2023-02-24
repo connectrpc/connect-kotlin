@@ -27,16 +27,16 @@ class ConnectErrorTest {
     fun connectErrorParsing() {
         val errorDetail = ConnectErrorDetail(
             "type",
-            "value".encodeUtf8()
+            "value".encodeUtf8(),
         )
         whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
         val connectError = ConnectError(
             code = Code.UNKNOWN,
             details = listOf(
                 errorDetail,
-                errorDetail
+                errorDetail,
             ),
-            errorDetailParser = errorDetailParser
+            errorDetailParser = errorDetailParser,
         )
         val parsedResult = connectError.unpackedDetails(String::class)
         assertThat(parsedResult).contains("unpacked_value", "unpacked_value")
@@ -46,14 +46,14 @@ class ConnectErrorTest {
     fun completionParsingUnset() {
         val errorDetail = ConnectErrorDetail(
             "type",
-            "value".encodeUtf8()
+            "value".encodeUtf8(),
         )
         whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
         val connectError = ConnectError(
             code = Code.UNKNOWN,
             details = listOf(
-                errorDetail
-            )
+                errorDetail,
+            ),
         )
         val parsedResult = connectError.unpackedDetails(String::class)
         assertThat(parsedResult).isEmpty()

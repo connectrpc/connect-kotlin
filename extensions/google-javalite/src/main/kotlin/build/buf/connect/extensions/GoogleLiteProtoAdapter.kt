@@ -19,16 +19,16 @@ import build.buf.connect.codecNameProto
 import com.google.protobuf.GeneratedMessageLite
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
+import kotlin.reflect.KClass
 import okio.Buffer
 import okio.BufferedSource
-import kotlin.reflect.KClass
 
 /**
  * Adapter to use Google's protobuf-javalite runtime for
  * deserializing and serializing data types.
  */
 internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
-    clazz: KClass<E>
+    clazz: KClass<E>,
 ) : Codec<E> {
     /**
      * Casting assumes the user is using Google's MessageLite type.

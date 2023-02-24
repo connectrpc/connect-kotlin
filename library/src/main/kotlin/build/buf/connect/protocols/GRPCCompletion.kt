@@ -29,5 +29,5 @@ internal data class GRPCCompletion(
     // Message data.
     val message: ByteString,
     // List of error details.
-    val errorDetails: List<ConnectErrorDetail>
+    val errorDetails: List<ConnectErrorDetail>,
 )

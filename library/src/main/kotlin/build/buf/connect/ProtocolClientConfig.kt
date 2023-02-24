@@ -40,7 +40,7 @@ class ProtocolClientConfig(
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
     // Compression pools that provide support for the provided `compressionName`, as well as any
     // other compression methods that need to be supported for inbound responses.
-    compressionPools: List<CompressionPool> = listOf(GzipCompressionPool)
+    compressionPools: List<CompressionPool> = listOf(GzipCompressionPool),
 ) {
     private val internalInterceptorFactoryList = mutableListOf<(ProtocolClientConfig) -> Interceptor>()
     private val compressionPools = mutableMapOf<String, CompressionPool>()
@@ -106,7 +106,7 @@ class ProtocolClientConfig(
     }
 
     private fun chain(
-        interceptorFactories: List<(ProtocolClientConfig) -> Interceptor>
+        interceptorFactories: List<(ProtocolClientConfig) -> Interceptor>,
     ): Interceptor {
         val interceptors = interceptorFactories.map { factory -> factory(this) }
         return object : Interceptor {
@@ -126,7 +126,7 @@ class ProtocolClientConfig(
                             response = unaryFunction.responseFunction(response)
                         }
                         response
-                    }
+                    },
                 )
             }
 
@@ -153,7 +153,7 @@ class ProtocolClientConfig(
                             result = streamFunction.streamResultFunction(result)
                         }
                         result
-                    }
+                    },
                 )
             }
         }

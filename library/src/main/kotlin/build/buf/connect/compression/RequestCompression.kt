@@ -23,7 +23,7 @@ data class RequestCompression(
     // The minimum number of bytes that a request message should be for compression to be used.
     val minBytes: Int,
     // The compression pool that should be used for compressing outbound requests.
-    val compressionPool: CompressionPool
+    val compressionPool: CompressionPool,
 ) {
     /**
      * Checks if the input buffer meets the compression requirements.

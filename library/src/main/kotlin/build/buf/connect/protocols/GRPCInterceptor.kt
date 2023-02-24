@@ -33,7 +33,7 @@ import okio.Buffer
  * https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
  */
 internal class GRPCInterceptor(
-    private val clientConfig: ProtocolClientConfig
+    private val clientConfig: ProtocolClientConfig,
 ) : Interceptor {
     private val serializationStrategy = clientConfig.serializationStrategy
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
@@ -48,7 +48,7 @@ internal class GRPCInterceptor(
                     requestHeaders.put(
                         GRPC_ACCEPT_ENCODING,
                         clientConfig.compressionPools()
-                            .map { compressionPool -> compressionPool.name() }
+                            .map { compressionPool -> compressionPool.name() },
                     )
                 }
                 val requestMessage = Buffer().use { buffer ->
@@ -62,14 +62,14 @@ internal class GRPCInterceptor(
                 val envelopedMessage = Envelope.pack(
                     requestMessage,
                     requestCompression?.compressionPool,
-                    requestCompression?.minBytes
+                    requestCompression?.minBytes,
                 )
                 HTTPRequest(
                     url = request.url,
                     // The underlying content type is overridden here.
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
                     headers = requestHeaders.withGRPCRequestHeaders(),
-                    message = envelopedMessage.readByteArray()
+                    message = envelopedMessage.readByteArray(),
                 )
             },
             responseFunction = { response ->
@@ -85,7 +85,7 @@ internal class GRPCInterceptor(
                 if (code == Code.OK) {
                     val (_, message) = Envelope.unpackWithHeaderByte(
                         response.message.buffer,
-                        compressionPool
+                        compressionPool,
                     )
                     HTTPResponse(
                         code = code,
@@ -93,7 +93,7 @@ internal class GRPCInterceptor(
                         message = message,
                         trailers = trailers,
                         error = response.error,
-                        tracingInfo = response.tracingInfo
+                        tracingInfo = response.tracingInfo,
                     )
                 } else {
                     val result = Buffer()
@@ -110,12 +110,12 @@ internal class GRPCInterceptor(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),
-                            details = completion?.errorDetails ?: emptyList()
+                            details = completion?.errorDetails ?: emptyList(),
                         ),
-                        tracingInfo = response.tracingInfo
+                        tracingInfo = response.tracingInfo,
                     )
                 }
-            }
+            },
         )
     }
 
@@ -126,7 +126,7 @@ internal class GRPCInterceptor(
                     url = request.url,
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
                     headers = request.headers.withGRPCRequestHeaders(),
-                    message = request.message
+                    message = request.message,
                 )
             },
             requestBodyFunction = { buffer ->
@@ -143,7 +143,7 @@ internal class GRPCInterceptor(
                     onMessage = { result ->
                         val (_, unpackedMessage) = Envelope.unpackWithHeaderByte(
                             result.message,
-                            responseCompressionPool
+                            responseCompressionPool,
                         )
                         StreamResult.Message(unpackedMessage)
                     },
@@ -162,7 +162,7 @@ internal class GRPCInterceptor(
                                 message = message?.utf8(),
                                 exception = result.error,
                                 details = details ?: emptyList(),
-                                metadata = streamTrailers
+                                metadata = streamTrailers,
                             )
                         } else {
                             // Successful call.
@@ -171,12 +171,12 @@ internal class GRPCInterceptor(
                         StreamResult.Complete(
                             code = connectError?.code ?: Code.OK,
                             error = connectError,
-                            trailers = streamTrailers
+                            trailers = streamTrailers,
                         )
-                    }
+                    },
                 )
                 streamResult
-            }
+            },
         )
     }
 

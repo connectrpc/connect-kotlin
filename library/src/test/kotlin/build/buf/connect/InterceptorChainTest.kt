@@ -19,12 +19,12 @@ import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
 import build.buf.connect.protocols.Envelope
 import build.buf.connect.protocols.NetworkProtocol
+import java.net.URL
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
-import java.net.URL
 
 class InterceptorChainTest {
     private lateinit var streamingChain: StreamFunction
@@ -44,13 +44,13 @@ class InterceptorChainTest {
             },
             { _: ProtocolClientConfig ->
                 SimpleInterceptor("4")
-            }
+            },
         )
         val protocolClientConfig = ProtocolClientConfig(
             host = "host",
             serializationStrategy = mock { },
             networkProtocol = NetworkProtocol.CONNECT,
-            interceptors = interceptorFactories
+            interceptors = interceptorFactories,
         )
         unaryChain = protocolClientConfig.createInterceptorChain()
         streamingChain = protocolClientConfig.createStreamingInterceptorChain()
@@ -105,7 +105,7 @@ class InterceptorChainTest {
                         it.url,
                         it.contentType,
                         headers,
-                        it.message
+                        it.message,
                     )
                 },
                 responseFunction = {
@@ -119,9 +119,9 @@ class InterceptorChainTest {
                         it.message,
                         it.trailers,
                         it.tracingInfo,
-                        it.error
+                        it.error,
                     )
-                }
+                },
             )
         }
 
@@ -136,7 +136,7 @@ class InterceptorChainTest {
                         it.url,
                         it.contentType,
                         headers,
-                        it.message
+                        it.message,
                     )
                 },
                 requestBodyFunction = {
@@ -152,9 +152,9 @@ class InterceptorChainTest {
                             StreamResult.Headers(headers)
                         },
                         onMessage = { it },
-                        onCompletion = { it }
+                        onCompletion = { it },
                     )
-                }
+                },
             )
         }
     }

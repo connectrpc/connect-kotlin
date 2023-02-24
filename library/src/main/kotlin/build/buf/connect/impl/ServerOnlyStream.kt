@@ -23,7 +23,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
  * Concrete implementation of `ServerOnlyStreamInterface`.
  */
 internal class ServerOnlyStream<Input, Output>(
-    private val messageStream: BidirectionalStreamInterface<Input, Output>
+    private val messageStream: BidirectionalStreamInterface<Input, Output>,
 ) : ServerOnlyStreamInterface<Input, Output> {
     override fun resultChannel(): ReceiveChannel<StreamResult<Output>> {
         return messageStream.resultChannel()

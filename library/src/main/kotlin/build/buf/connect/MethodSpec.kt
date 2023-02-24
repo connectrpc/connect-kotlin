@@ -27,5 +27,5 @@ import kotlin.reflect.KClass
 class MethodSpec<Input : Any, Output : Any>(
     val path: String,
     val requestClass: KClass<Input>,
-    val responseClass: KClass<Output>
+    val responseClass: KClass<Output>,
 )

@@ -20,9 +20,9 @@ import build.buf.connect.ErrorDetailParser
 import build.buf.google.rpc.Status
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
+import kotlin.reflect.KClass
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
-import kotlin.reflect.KClass
 
 internal object JavaLiteErrorParser : ErrorDetailParser {
     /**
@@ -47,7 +47,7 @@ internal object JavaLiteErrorParser : ErrorDetailParser {
             ConnectErrorDetail(
                 type = msg.typeUrl,
                 payload = msg.value.toStringUtf8().decodeBase64()
-                    ?: msg.value.toStringUtf8().encodeUtf8()
+                    ?: msg.value.toStringUtf8().encodeUtf8(),
             )
         }
     }

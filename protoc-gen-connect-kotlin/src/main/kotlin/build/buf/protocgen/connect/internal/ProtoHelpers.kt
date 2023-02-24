@@ -75,7 +75,7 @@ internal const val THIN_SEPARATOR = "// ----------------------------------------
  * When a key is present several times, only the last value is retained.
  */
 internal fun parseGeneratorParameter(
-    text: String
+    text: String,
 ): Map<String, String> {
     if (text.isEmpty()) {
         return emptyMap()
@@ -168,7 +168,7 @@ internal fun underscoresToCamelCase(field: Descriptors.FieldDescriptor): String 
  * "FooBarBaz".
  */
 internal fun underscoresToCapitalizedCamelCase(
-    field: Descriptors.FieldDescriptor
+    field: Descriptors.FieldDescriptor,
 ): String {
     return underscoresToCamelCaseImpl(getFieldName(field), true)
 }
@@ -323,7 +323,7 @@ internal fun getPrimitiveTypeName(type: Descriptors.FieldDescriptor.JavaType): S
  * enum and message types.
  */
 internal fun getBoxedPrimitiveTypeName(
-    type: Descriptors.FieldDescriptor.JavaType?
+    type: Descriptors.FieldDescriptor.JavaType?,
 ): String? {
     return when (type) {
         Descriptors.FieldDescriptor.JavaType.INT -> "java.lang.Integer"
@@ -343,8 +343,10 @@ internal fun getBoxedPrimitiveTypeName(
  * Returns whether this message keeps track of unknown fields.
  */
 internal fun hasUnknownField(descriptor: Descriptors.Descriptor): Boolean {
-    return (descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+    return (
+        descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+        )
 }
 
 /**
@@ -353,49 +355,63 @@ internal fun hasUnknownField(descriptor: Descriptors.Descriptor): Boolean {
  * implementations exist?
  */
 internal fun hasGeneratedMethods(descriptor: Descriptors.Descriptor): Boolean {
-    return (descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.CODE_SIZE)
+    return (
+        descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.CODE_SIZE
+        )
 }
 
 /**
  * Returns whether this message has descriptor and reflection methods?
  */
 internal fun hasDescriptorMethods(descriptor: Descriptors.Descriptor): Boolean {
-    return (descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+    return (
+        descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+        )
 }
 
 /**
  * Returns whether this enum has descriptor and reflection methods?
  */
 internal fun hasDescriptorMethods(descriptor: Descriptors.EnumDescriptor): Boolean {
-    return (descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+    return (
+        descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+        )
 }
 
 /**
  * Returns whether this service has descriptor and reflection methods?
  */
 internal fun hasDescriptorMethods(descriptor: Descriptors.ServiceDescriptor): Boolean {
-    return (descriptor.file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+    return (
+        descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+        )
 }
 
 /**
  * Returns whether this file has descriptor and reflection methods?
  */
 internal fun hasDescriptorMethods(file: Descriptors.FileDescriptor): Boolean {
-    return (file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+    return (
+        file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+        )
 }
 
 /**
  * Returns whether generic services should be generated for this file.
  */
 internal fun hasGenericServices(file: Descriptors.FileDescriptor): Boolean {
-    return (file.services.isNotEmpty()
-            && (file.options.optimizeFor
-            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME) && file.options.javaGenericServices)
+    return (
+        file.services.isNotEmpty() &&
+            (
+                file.options.optimizeFor
+                    != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME
+                ) && file.options.javaGenericServices
+        )
 }
 
 /**
@@ -423,7 +439,7 @@ private fun getFieldName(field: Descriptors.FieldDescriptor): String {
  */
 private fun underscoresToCamelCaseImpl(
     input: String,
-    capNextLetter: Boolean
+    capNextLetter: Boolean,
 ): String {
     var capNextLetter = capNextLetter
     val result = StringBuilder(input.length)

@@ -20,11 +20,11 @@ import build.buf.connect.demo.eliza.v1.ElizaServiceClient
 import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
+import java.time.Duration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import java.time.Duration
 
 class Main {
     companion object {
@@ -40,12 +40,12 @@ class Main {
                             .readTimeout(Duration.ofMinutes(10))
                             .writeTimeout(Duration.ofMinutes(10))
                             .callTimeout(Duration.ofMinutes(10))
-                            .build()
+                            .build(),
                     ),
                     ProtocolClientConfig(
                         host = host,
-                        serializationStrategy = GoogleJavaLiteProtobufStrategy()
-                    )
+                        serializationStrategy = GoogleJavaLiteProtobufStrategy(),
+                    ),
                 )
                 val elizaServiceClient = ElizaServiceClient(client)
                 connectStreaming(elizaServiceClient)
@@ -63,7 +63,7 @@ class Main {
                             // Update the view with the response.
                             val elizaResponse = result.message
                             println(elizaResponse.sentence)
-                        }
+                        },
                     )
                 }
             }

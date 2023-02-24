@@ -31,7 +31,7 @@ data class ConnectError constructor(
     // List of typed errors that were provided by the server.
     val details: List<ConnectErrorDetail> = emptyList(),
     // Additional key-values that were provided by the server.
-    val metadata: Headers = emptyMap()
+    val metadata: Headers = emptyMap(),
 ) : Throwable(message, exception) {
 
     /**
@@ -60,7 +60,7 @@ data class ConnectError constructor(
             message,
             exception,
             details,
-            metadata
+            metadata,
         )
     }
 }

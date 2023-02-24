@@ -47,7 +47,7 @@ interface HTTPClientInterface {
 
 class Stream(
     private val onSend: (Buffer) -> Unit,
-    private val onClose: () -> Unit
+    private val onClose: () -> Unit,
 ) {
     fun send(buffer: Buffer) {
         onSend(buffer)

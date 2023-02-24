@@ -23,6 +23,7 @@ import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.Stream
 import build.buf.connect.http.TracingInfo
+import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
@@ -31,13 +32,12 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.Buffer
-import java.io.IOException
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
  */
 class ConnectOkHttpClient(
-    val client: OkHttpClient = OkHttpClient()
+    val client: OkHttpClient = OkHttpClient(),
 ) : HTTPClientInterface {
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
@@ -57,46 +57,48 @@ class ConnectOkHttpClient(
             newCall.cancel()
         }
         try {
-            newCall.enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    val code = if (e.message?.lowercase() == "canceled") {
-                        Code.CANCELED
-                    } else {
-                        Code.UNKNOWN
-                    }
-                    onResult(
-                        HTTPResponse(
-                            code = code,
-                            headers = emptyMap(),
-                            message = Buffer(),
-                            trailers = emptyMap(),
-                            error = ConnectError(
-                                code,
-                                message = e.message,
-                                exception = e
+            newCall.enqueue(
+                object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        val code = if (e.message?.lowercase() == "canceled") {
+                            Code.CANCELED
+                        } else {
+                            Code.UNKNOWN
+                        }
+                        onResult(
+                            HTTPResponse(
+                                code = code,
+                                headers = emptyMap(),
+                                message = Buffer(),
+                                trailers = emptyMap(),
+                                error = ConnectError(
+                                    code,
+                                    message = e.message,
+                                    exception = e,
+                                ),
+                                tracingInfo = null,
                             ),
-                            tracingInfo = null
                         )
-                    )
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    val responseBuffer = response.body?.source()?.use { bufferedSource ->
-                        val buffer = Buffer()
-                        buffer.writeAll(bufferedSource)
-                        buffer
                     }
-                    onResult(
-                        HTTPResponse(
-                            code = Code.fromHTTPStatus(response.code),
-                            headers = response.headers.toLowerCaseKeysMultiMap(),
-                            message = responseBuffer ?: Buffer(),
-                            trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                            tracingInfo = TracingInfo(response.code)
+
+                    override fun onResponse(call: Call, response: Response) {
+                        val responseBuffer = response.body?.source()?.use { bufferedSource ->
+                            val buffer = Buffer()
+                            buffer.writeAll(bufferedSource)
+                            buffer
+                        }
+                        onResult(
+                            HTTPResponse(
+                                code = Code.fromHTTPStatus(response.code),
+                                headers = response.headers.toLowerCaseKeysMultiMap(),
+                                message = responseBuffer ?: Buffer(),
+                                trailers = response.trailers().toLowerCaseKeysMultiMap(),
+                                tracingInfo = TracingInfo(response.code),
+                            ),
                         )
-                    )
-                }
-            })
+                    }
+                },
+            )
         } catch (e: Throwable) {
             onResult(
                 HTTPResponse(
@@ -107,10 +109,10 @@ class ConnectOkHttpClient(
                     error = ConnectError(
                         Code.UNKNOWN,
                         message = e.message,
-                        exception = e
+                        exception = e,
                     ),
-                    tracingInfo = null
-                )
+                    tracingInfo = null,
+                ),
             )
         }
         return cancelable

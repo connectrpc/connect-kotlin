@@ -28,5 +28,5 @@ class HTTPRequest(
     // Additional outbound headers for the request.
     val headers: Headers,
     // Body data to send with the request.
-    val message: ByteArray? = null
+    val message: ByteArray? = null,
 )

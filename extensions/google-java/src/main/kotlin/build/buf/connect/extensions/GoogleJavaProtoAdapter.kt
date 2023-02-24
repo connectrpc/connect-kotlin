@@ -18,16 +18,16 @@ import build.buf.connect.Codec
 import build.buf.connect.codecNameProto
 import com.google.protobuf.GeneratedMessageV3
 import com.google.protobuf.Internal
+import kotlin.reflect.KClass
 import okio.Buffer
 import okio.BufferedSource
-import kotlin.reflect.KClass
 
 /**
  * Adapter to use Google's protobuf-java runtime for
  * deserializing and serializing data types.
  */
 internal class GoogleJavaProtoAdapter<E : GeneratedMessageV3>(
-    clazz: KClass<E>
+    clazz: KClass<E>,
 ) : Codec<E> {
     /**
      * Casting assumes the user is using Google's GeneratedMessageV3 type.
