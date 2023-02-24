@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
+import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -21,5 +23,15 @@ class PluginGenerationTest {
     fun emptyPackagePresence() {
         val request = SayRequest.newBuilder().setSentence("hello").build()
         assertThat(request.sentence).isEqualTo("hello")
+    }
+
+    @Test
+    fun multiFileEnabled() {
+        assertThat(EnabledServiceClient::class.java).isNotNull
+    }
+
+    @Test
+    fun multiFileDisabled() {
+        assertThat(DisabledServiceClient::class.java).isNotNull
     }
 }

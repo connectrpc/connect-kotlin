@@ -1,7 +1,4 @@
 version: v1
-managed:
-  enabled: true
-  java_package_prefix: "build"
 plugins:
   - name: connect-kotlin
     out: src/test/java/
