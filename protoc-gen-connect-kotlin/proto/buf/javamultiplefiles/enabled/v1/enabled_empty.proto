@@ -20,3 +20,8 @@ option java_multiple_files = true;
 
 message EnabledEmpty {
 }
+
+service EnabledEmptyService {
+  rpc EnabledEmptyRPC(EnabledEmpty) returns (EnabledEmpty);
+}
+

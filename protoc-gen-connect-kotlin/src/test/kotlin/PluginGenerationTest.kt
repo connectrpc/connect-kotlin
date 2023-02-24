@@ -14,6 +14,7 @@
 
 import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
+import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -21,7 +22,7 @@ class PluginGenerationTest {
 
     @Test
     fun emptyPackagePresence() {
-        val request = SayRequest.newBuilder().setSentence("hello").build()
+        val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
         assertThat(request.sentence).isEqualTo("hello")
     }
 
@@ -33,5 +34,10 @@ class PluginGenerationTest {
     @Test
     fun multiFileDisabled() {
         assertThat(DisabledServiceClient::class.java).isNotNull
+    }
+
+    @Test
+    fun multiFileUnspecified() {
+        assertThat(UnspecifiedServiceClient::class.java).isNotNull
     }
 }

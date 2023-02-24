@@ -22,10 +22,8 @@ import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
-import build.buf.protocgen.connect.internal.getClassName
 import build.buf.protocgen.connect.internal.getFileClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
-import build.buf.protocgen.connect.internal.getJavaFileName
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName
@@ -125,8 +123,8 @@ class Generator : CodeGenerator {
             .defaultValue("%L", "emptyMap()")
             .build()
         for (method in methods) {
-            val inputClassName = ClassName(getFileJavaPackage(method.inputType.file), getFileClassName(method.inputType.file), method.inputType.name)
-            val outputClassName = ClassName(getFileJavaPackage(method.outputType.file), getFileClassName(method.outputType.file), method.outputType.name)
+            val inputClassName = classNameFromType(method.inputType)
+            val outputClassName = classNameFromType(method.outputType)
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingBuilder = FunSpec.builder(method.name.lowerCamelCase())
                     .addModifiers(KModifier.ABSTRACT)
@@ -206,8 +204,9 @@ class Generator : CodeGenerator {
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
-            val inputClassName = ClassName(getFileJavaPackage(method.inputType.file), getFileClassName(method.inputType.file), method.inputType.name)
-            val outputClassName = ClassName(getFileJavaPackage(method.outputType.file), getFileClassName(method.outputType.file), method.outputType.name)
+            val inputType = method.inputType
+            val inputClassName = classNameFromType(inputType)
+            val outputClassName = classNameFromType(method.outputType)
             val methodCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
                 .addStatement("\"$packageName.$serviceName/${method.name}\",")
@@ -308,6 +307,13 @@ class Generator : CodeGenerator {
             }
         }
         return functions
+    }
+
+    private fun classNameFromType(inputType: Descriptors.Descriptor): ClassName {
+        if (inputType.file.options.javaMultipleFiles) {
+            return ClassName(getFileJavaPackage(inputType.file), inputType.name)
+        }
+        return ClassName(getFileJavaPackage(inputType.file), getFileClassName(inputType.file), inputType.name)
     }
 }
 

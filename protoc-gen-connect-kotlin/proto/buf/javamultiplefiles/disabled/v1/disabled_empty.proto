@@ -20,3 +20,7 @@ option java_multiple_files = false;
 
 message DisabledEmpty {
 }
+
+service DisabledEmptyService {
+  rpc DisabledEmptyRPC(DisabledEmpty) returns (DisabledEmpty);
+}

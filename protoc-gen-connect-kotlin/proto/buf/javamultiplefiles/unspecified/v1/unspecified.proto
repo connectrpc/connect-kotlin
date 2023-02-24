@@ -14,10 +14,19 @@
 
 syntax = "proto3";
 
-package buf.javamultiplefiles.missing.v1;
+package buf.javamultiplefiles.unspecified.v1;
 
 // Avoid using this option.
 //option java_multiple_files = false;
 
-message MissingEmpty {
+message UnspecifiedRequest {
+    string sentence = 1;
+}
+
+message UnspecifiedResponse {
+    string sentence = 1;
+}
+
+service UnspecifiedService {
+    rpc UnspecifiedRPC(UnspecifiedRequest) returns (UnspecifiedResponse) {}
 }
