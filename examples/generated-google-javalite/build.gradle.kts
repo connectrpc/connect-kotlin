@@ -19,7 +19,7 @@ sourceSets {
 
 dependencies {
     implementation(libs.protobuf.javalite)
-    implementation(project(":extensions:google-javalite"))
+    api(project(":extensions:google-javalite"))
 
     implementation(project(":okhttp"))
 }

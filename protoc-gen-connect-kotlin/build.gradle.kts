@@ -25,4 +25,7 @@ dependencies {
     implementation(project(":okhttp"))
     implementation(libs.protobuf.java)
     implementation(libs.kotlinpoet)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.assertj)
 }

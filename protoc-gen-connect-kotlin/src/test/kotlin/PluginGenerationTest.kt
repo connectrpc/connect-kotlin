@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
-message SayRequest {
-  string sentence = 1;
-}
+class PluginGenerationTest {
 
-message SayResponse {
-  string sentence = 1;
-}
-
-service ElizaService {
-  rpc Say(SayRequest) returns (SayResponse) {}
+    @Test
+    fun emptyPackagePresence() {
+        val request = SayRequest.newBuilder().setSentence("hello").build()
+        assertThat(request.sentence).isEqualTo("hello")
+    }
 }

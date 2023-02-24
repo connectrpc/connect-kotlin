@@ -1,0 +1,460 @@
+// Copyright 2022-2023 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package build.buf.protocgen.connect.internal
+
+import com.google.protobuf.DescriptorProtos
+import com.google.protobuf.Descriptors
+
+/**
+ * Various helper methods, particularly useful when generating Java code.
+ * Original code from: https://codereview.appspot.com/912042.
+ *
+ * @author t.broyer@ltgt.net Thomas Broyer
+ * Based on the initial work of:
+ *  @author kenton@google.com Kenton Varda
+ * Based on original Protocol Buffers design by
+ *  Sanjay Ghemawat, Jeff Dean, and others.
+ */
+/**
+ * Name of the outer class scope insertion point.
+ */
+internal fun outerClassScopeInsertionPoint(): String = "outer_class_scope"
+
+/**
+ * Returns the insertion point name for a given message's class scope.
+ */
+internal fun getClassScopeInsertionPoint(descriptor: Descriptors.Descriptor): String {
+    return "class_scope:" + descriptor.fullName
+}
+
+/**
+ * Returns the insertion point name for a given message's builder class scope.
+ */
+internal fun getBuilderScopeInsertionPoint(descriptor: Descriptors.Descriptor): String {
+    return "builder_scope:" + descriptor.fullName
+}
+
+/**
+ * Returns the insertion point name for a given enum's scope.
+ */
+internal fun getEnumScopeInsertionPoint(descriptor: Descriptors.EnumDescriptor): String {
+    return "enum_scope:" + descriptor.fullName
+}
+
+/**
+ * Commonly-used separator comments (a line of '=').
+ */
+internal const val THICK_SEPARATOR = "// ===================================================================\n"
+
+/**
+ * Commonly-used separator comments (a line of '-').
+ */
+internal const val THIN_SEPARATOR = "// -------------------------------------------------------------------\n"
+
+/**
+ * Parses a set of comma-delimited name/value pairs.
+ *
+ *
+ * Several code generators treat the parameter argument as holding a list of
+ * options separated by commas: e.g., `"foo=bar,baz,qux=corge"` parses
+ * to the pairs: `("foo", "bar"), ("baz", ""), ("qux", "corge")`.
+ *
+ *
+ * When a key is present several times, only the last value is retained.
+ */
+internal fun parseGeneratorParameter(
+    text: String
+): Map<String, String> {
+    if (text.isEmpty()) {
+        return emptyMap()
+    }
+    val ret: MutableMap<String, String> = HashMap()
+    val parts = text.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    for (part in parts) {
+        if (part.isEmpty()) {
+            continue
+        }
+        val equalsPos = part.indexOf('=')
+        var key: String
+        var value: String
+        if (equalsPos < 0) {
+            key = part
+            value = ""
+        } else {
+            key = part.substring(0, equalsPos)
+            value = part.substring(equalsPos + 1)
+        }
+        ret[key] = value
+    }
+    return ret
+}
+
+/**
+ * Returns the Java file name (and path) for a given message.
+ *
+ * This depends on the `java_package`, `package` and
+ * `java_multiple_files` options specified in the .proto file.
+ */
+internal fun getProtocJavaFileName(descriptor: Descriptors.Descriptor): String {
+    var descriptor = descriptor
+    val fullName: String
+    if (descriptor.file.options.javaMultipleFiles) {
+        var containingType: Descriptors.Descriptor
+        while (descriptor.containingType.also { containingType = it } != null) {
+            descriptor = containingType
+        }
+        fullName = getClassName(descriptor)
+    } else {
+        fullName = getClassName(descriptor.file)
+    }
+    return fullName.replace('.', '/') + ".java"
+}
+
+/**
+ * Returns the Java file name (and path) for a given enum.
+ *
+ * This depends on the `java_package`, `package` and
+ * `java_multiple_files` options specified in the .proto file.
+ */
+internal fun getProtocJavaFileName(descriptor: Descriptors.EnumDescriptor): String {
+    if (descriptor.containingType != null) {
+        return getProtocJavaFileName(descriptor.containingType)
+    }
+    val fullName: String = if (descriptor.file.options.javaMultipleFiles) {
+        getClassName(descriptor)
+    } else {
+        getClassName(descriptor.file)
+    }
+    return fullName.replace('.', '/') + ".java"
+}
+
+/**
+ * Returns the Java file name (and path) for a given service.
+ *
+ * This depends on the `java_package`, `package` and
+ * `java_multiple_files` options specified in the .proto file.
+ */
+internal fun getProtocJavaFileName(descriptor: Descriptors.ServiceDescriptor): String {
+    val fullName: String = if (descriptor.file.options.javaMultipleFiles) {
+        getClassName(descriptor)
+    } else {
+        getClassName(descriptor.file)
+    }
+    return fullName.replace('.', '/') + ".java"
+}
+
+/**
+ * Converts the field's name to camel-case, e.g. "foo_bar_baz" becomes
+ * "fooBarBaz".
+ */
+internal fun underscoresToCamelCase(field: Descriptors.FieldDescriptor): String {
+    return underscoresToCamelCaseImpl(getFieldName(field), false)
+}
+
+/**
+ * Converts the field's name to camel-case, e.g. "foo_bar_baz" becomes
+ * "FooBarBaz".
+ */
+internal fun underscoresToCapitalizedCamelCase(
+    field: Descriptors.FieldDescriptor
+): String {
+    return underscoresToCamelCaseImpl(getFieldName(field), true)
+}
+
+/**
+ * Converts the method's name to camel-case. (Typically, this merely has the
+ * effect of lower-casing the first letter of the name.)
+ */
+internal fun underscoresToCamelCase(method: Descriptors.MethodDescriptor): String {
+    return underscoresToCamelCaseImpl(method.name, false)
+}
+
+/**
+ * Strips ".proto" or ".protodevel" from the end of a filename.
+ */
+private fun stripProto(filename: String): String {
+    return if (filename.endsWith(".protodevel")) {
+        filename.substring(0, filename.length - ".protodevel".length)
+    } else if (filename.endsWith(".proto")) {
+        filename.substring(0, filename.length - ".proto".length)
+    } else {
+        filename
+    }
+}
+
+/**
+ * Gets the unqualified class name for the file.
+ *
+ * Each .proto file becomes a single Java class, with all its contents nested
+ * in that class, unless the `java_multiple_files` option has been set
+ * to true.
+ */
+private fun getFileClassName(file: Descriptors.FileDescriptor): String {
+    return if (file.options.hasJavaOuterClassname()) {
+        file.options.javaOuterClassname
+    } else {
+        var basename = file.name
+        val lastSlash = basename.lastIndexOf('/')
+        if (lastSlash >= 0) {
+            basename = basename.substring(lastSlash + 1)
+        }
+        underscoresToCamelCaseImpl(stripProto(basename), true)
+    }
+}
+
+/**
+ * Returns the file's Java package name.
+ *
+ * This depends on the `java_package` and `package` and options
+ * specified in the .proto file.
+ */
+internal fun getFileJavaPackage(file: Descriptors.FileDescriptor): String {
+    return if (file.options.hasJavaPackage()) {
+        file.options.javaPackage
+    } else {
+        file.getPackage()
+    }
+}
+
+/**
+ * Converts the given fully-qualified name in the proto namespace to its
+ * fully-qualified name in the Java namespace, given that it is in the given
+ * file.
+ */
+private fun toJavaName(fullName: String, file: Descriptors.FileDescriptor): String {
+    val result = StringBuilder()
+    if (file.options.javaMultipleFiles) {
+        result.append(getFileJavaPackage(file))
+    } else {
+        result.append(getClassName(file))
+    }
+    if (result.isNotEmpty()) {
+        result.append('.')
+    }
+    if (file.getPackage().isEmpty()) {
+        result.append(fullName)
+    } else {
+        // Strip the proto package from full_name since we've replaced it
+        // with the Java package.
+        result.append(fullName.substring(file.getPackage().length + 1))
+    }
+    return result.toString()
+}
+
+/**
+ * Returns the fully-qualified class name corresponding to the given
+ * message descriptor.
+ */
+internal fun getClassName(descriptor: Descriptors.Descriptor): String {
+    return toJavaName(descriptor.fullName, descriptor.file)
+}
+
+/**
+ * Returns the fully-qualified class name corresponding to the given
+ * enum descriptor.
+ */
+internal fun getClassName(descriptor: Descriptors.EnumDescriptor): String {
+    return toJavaName(descriptor.fullName, descriptor.file)
+}
+
+/**
+ * Returns the fully-qualified class name corresponding to the given
+ * service descriptor.
+ */
+internal fun getClassName(descriptor: Descriptors.ServiceDescriptor): String {
+    return toJavaName(descriptor.fullName, descriptor.file)
+}
+
+/**
+ * Returns the fully-qualified class name corresponding to the given
+ * file descriptor.
+ */
+internal fun getClassName(descriptor: Descriptors.FileDescriptor): String {
+    val result = StringBuilder(getFileJavaPackage(descriptor))
+    if (result.isNotEmpty()) {
+        result.append('.')
+    }
+    result.append(getFileClassName(descriptor))
+    return result.toString()
+}
+
+/**
+ * Returns the unqualified name that should be used for a field's field
+ * number constant.
+ */
+internal fun getFieldConstantName(field: Descriptors.FieldDescriptor): String {
+    return field.name.uppercase() + "_FIELD_NUMBER"
+}
+
+/**
+ * Returns the type name for a boxed primitive type, e.g. "int" for
+ * [JavaType.INT]. Returns `null` for enum and message types.
+ */
+internal fun getPrimitiveTypeName(type: Descriptors.FieldDescriptor.JavaType): String? {
+    return when (type) {
+        Descriptors.FieldDescriptor.JavaType.INT -> "int"
+        Descriptors.FieldDescriptor.JavaType.LONG -> "long"
+        Descriptors.FieldDescriptor.JavaType.FLOAT -> "float"
+        Descriptors.FieldDescriptor.JavaType.DOUBLE -> "double"
+        Descriptors.FieldDescriptor.JavaType.BOOLEAN -> "boolean"
+        Descriptors.FieldDescriptor.JavaType.STRING -> "java.lang.String"
+        Descriptors.FieldDescriptor.JavaType.BYTE_STRING -> "com.google.protobuf.ByteString"
+        Descriptors.FieldDescriptor.JavaType.ENUM -> null
+        Descriptors.FieldDescriptor.JavaType.MESSAGE -> null
+        else -> throw IllegalArgumentException()
+    }
+}
+
+/**
+ * Returns the fully-qualified class name for a boxed primitive type, e.g.
+ * "java.lang.Integer" for [JavaType.INT]. Returns `null` for
+ * enum and message types.
+ */
+internal fun getBoxedPrimitiveTypeName(
+    type: Descriptors.FieldDescriptor.JavaType?
+): String? {
+    return when (type) {
+        Descriptors.FieldDescriptor.JavaType.INT -> "java.lang.Integer"
+        Descriptors.FieldDescriptor.JavaType.LONG -> "java.lang.Long"
+        Descriptors.FieldDescriptor.JavaType.FLOAT -> "java.lang.Float"
+        Descriptors.FieldDescriptor.JavaType.DOUBLE -> "java.lang.Double"
+        Descriptors.FieldDescriptor.JavaType.BOOLEAN -> "java.lang.Boolean"
+        Descriptors.FieldDescriptor.JavaType.STRING -> "java.lang.String"
+        Descriptors.FieldDescriptor.JavaType.BYTE_STRING -> "com.google.protobuf.ByteString"
+        Descriptors.FieldDescriptor.JavaType.ENUM -> null
+        Descriptors.FieldDescriptor.JavaType.MESSAGE -> null
+        else -> throw IllegalArgumentException()
+    }
+}
+
+/**
+ * Returns whether this message keeps track of unknown fields.
+ */
+internal fun hasUnknownField(descriptor: Descriptors.Descriptor): Boolean {
+    return (descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+}
+
+/**
+ * Returns whether this message has generated parsing, serialization,
+ * and other standard methods for which reflection-based fallback
+ * implementations exist?
+ */
+internal fun hasGeneratedMethods(descriptor: Descriptors.Descriptor): Boolean {
+    return (descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.CODE_SIZE)
+}
+
+/**
+ * Returns whether this message has descriptor and reflection methods?
+ */
+internal fun hasDescriptorMethods(descriptor: Descriptors.Descriptor): Boolean {
+    return (descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+}
+
+/**
+ * Returns whether this enum has descriptor and reflection methods?
+ */
+internal fun hasDescriptorMethods(descriptor: Descriptors.EnumDescriptor): Boolean {
+    return (descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+}
+
+/**
+ * Returns whether this service has descriptor and reflection methods?
+ */
+internal fun hasDescriptorMethods(descriptor: Descriptors.ServiceDescriptor): Boolean {
+    return (descriptor.file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+}
+
+/**
+ * Returns whether this file has descriptor and reflection methods?
+ */
+internal fun hasDescriptorMethods(file: Descriptors.FileDescriptor): Boolean {
+    return (file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME)
+}
+
+/**
+ * Returns whether generic services should be generated for this file.
+ */
+internal fun hasGenericServices(file: Descriptors.FileDescriptor): Boolean {
+    return (file.services.isNotEmpty()
+            && (file.options.optimizeFor
+            != DescriptorProtos.FileOptions.OptimizeMode.LITE_RUNTIME) && file.options.javaGenericServices)
+}
+
+/**
+ * Returns the name for the given field (special-casing groups).
+ */
+private fun getFieldName(field: Descriptors.FieldDescriptor): String {
+    // Groups are hacky: The name of the field is just the lower-cased name
+    // of the group type. In Java, though, we would like to retain the
+    // original capitalization of the type name.
+    return if (field.type == Descriptors.FieldDescriptor.Type.GROUP) {
+        field.messageType.name
+    } else {
+        field.name
+    }
+}
+
+/**
+ * Converts the given input to camel-case, specifying whether the first
+ * letter should be upper-case or lower-case.
+ *
+ * @param input         string to be converted
+ * @param capNextLetter `true` if the first letter should be turned to
+ * upper-case.
+ * @return the camel-cased string
+ */
+private fun underscoresToCamelCaseImpl(
+    input: String,
+    capNextLetter: Boolean
+): String {
+    var capNextLetter = capNextLetter
+    val result = StringBuilder(input.length)
+    var i = 0
+    val l = input.length
+    while (i < l) {
+        val c = input[i]
+        capNextLetter = if ('a' <= c && c <= 'z') {
+            if (capNextLetter) {
+                result.append((c.code + ('A'.code - 'a'.code)).toChar())
+            } else {
+                result.append(c)
+            }
+            false
+        } else if ('A' <= c && c <= 'Z') {
+            if (i == 0 && !capNextLetter) {
+                // Force first letter to lower-case unless explicitly told
+                // to capitalize it.
+                result.append((c.code + ('a'.code - 'A'.code)).toChar())
+            } else {
+                // Capital letters after the first are left as-is.
+                result.append(c)
+            }
+            false
+        } else if ('0' <= c && c <= '9') {
+            result.append(c)
+            true
+        } else {
+            true
+        }
+        i++
+    }
+    return result.toString()
+}

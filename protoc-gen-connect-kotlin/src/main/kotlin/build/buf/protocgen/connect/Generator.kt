@@ -22,6 +22,8 @@ import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
+import build.buf.protocgen.connect.internal.getClassName
+import build.buf.protocgen.connect.internal.getFileJavaPackage
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName
@@ -58,7 +60,7 @@ class Generator : CodeGenerator {
         this.descriptorSource = descriptorSource
 
         for (fileName in request.fileToGenerateList) {
-            val file = descriptorSource.findFileByName(fileName)!!
+            val file = descriptorSource.findFileByName(fileName) ?: throw RuntimeException("no descriptor sources found.")
             if (file.services.isEmpty()) {
                 // Avoid generating files with no service definitions.
                 continue
@@ -72,7 +74,7 @@ class Generator : CodeGenerator {
 
     private fun parseFile(file: Descriptors.FileDescriptor): Map<ClassName, FileSpec> {
         val fileSpecs = mutableMapOf<ClassName, FileSpec>()
-        val packageName = ProtoHelpers.getFileJavaPackage(file)
+        val packageName = getFileJavaPackage(file)
         for (service in file.services) {
             val interfaceFileSpec = FileSpec.builder(packageName, file.name)
                 // Manually import `method()` since it is a method and not a class.
@@ -118,8 +120,8 @@ class Generator : CodeGenerator {
             .defaultValue("%L", "emptyMap()")
             .build()
         for (method in methods) {
-            val inputClassName = ClassName.bestGuess(ProtoHelpers.getClassName(method.inputType))
-            val outputClassName = ClassName.bestGuess(ProtoHelpers.getClassName(method.outputType))
+            val inputClassName = ClassName.bestGuess(getClassName(method.inputType))
+            val outputClassName = ClassName.bestGuess(getClassName(method.outputType))
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingBuilder = FunSpec.builder(method.name.lowerCamelCase())
                     .addModifiers(KModifier.ABSTRACT)
@@ -199,8 +201,8 @@ class Generator : CodeGenerator {
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
-            val inputClassName = ClassName.bestGuess(ProtoHelpers.getClassName(method.inputType))
-            val outputClassName = ClassName.bestGuess(ProtoHelpers.getClassName(method.outputType))
+            val inputClassName = ClassName.bestGuess(getClassName(method.inputType))
+            val outputClassName = ClassName.bestGuess(getClassName(method.outputType))
             val methodCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
                 .addStatement("\"$packageName.$serviceName/${method.name}\",")

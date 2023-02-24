@@ -4,7 +4,7 @@ managed:
   java_package_prefix: "build"
 plugins:
   - name: connect-kotlin
-    out: generated/kotlin
-    path: ./protoc-gen-connect-kotlin
+    out: src/test/java/
+    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
   - name: java
-    out: generated/java
+    out: src/test/java/

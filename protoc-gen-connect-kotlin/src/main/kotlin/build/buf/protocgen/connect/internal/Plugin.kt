@@ -27,30 +27,30 @@ import java.io.OutputStream
 
 /**
  * Front-end for protoc code generator plugins written in Kotlin (translated from Java).
- *
+ * Original code from: https://codereview.appspot.com/912042.
  *
  * To implement a protoc plugin in Kotlin, simply write an implementation of
  * [CodeGenerator], then create a main() method like:
  *
- * <pre>`
+ * ```
  * @JvmStatic
  * fun main(args: Array<String>) {
  *   Plugin.run(Generator())
  * }
-`</pre> *
+ * ```
  * To get protoc to use the plugin, you'll have to create a launcher script:
- * <pre>`
+ * ```
  * #!/bin/sh
  * cd `dirname $0`
  * exec java -jar myplugin.jar
-`</pre> *
+ * ```
  * On Windows, if it lives in the same folder as the plugin's JAR, it will
  * probably look like:
- * <pre>`
+ * ```
  * @echo off
  * java -jar "%~dp0\myplugin.jar"
  * exit %errorlevel%
-`</pre> *
+ * ```
  * You'll then have to do one of the following:
  *
  *  * Place the plugin binary somewhere in the `PATH` and give it the
@@ -62,18 +62,18 @@ import java.io.OutputStream
  *  * Place the plugin binary anywhere, with any name, and pass the
  * `--plugin` parameter to protoc to direct it to your plugin like
  * so:
- * <pre>
+ * ```
  * protoc --plugin=protoc-gen-NAME=path/to/myscript --NAME_out=OUT_DIR
-</pre> *
+ * ```
  * On Windows, make sure to include the `.bat` suffix:
- * <pre>
+ * ```
  * protoc --plugin=protoc-gen-NAME=path/to/myscript.bat --NAME_out=OUT_DIR
-</pre> *
+ * ```
  *
  *
  * @author t.broyer@ltgt.net Thomas Broyer
- * <br></br>Based on the initial work of:
- * @author kenton@google.com Kenton Varda
+ * Based on the initial work of:
+ *  @author kenton@google.com Kenton Varda
  */
 object Plugin {
     /**
