@@ -1,0 +1,6 @@
+version: v1
+lint:
+  use:
+    - DEFAULT
+  ignore:
+    - no_package.proto
