@@ -28,19 +28,19 @@ import com.grpc.testing.payload
 import com.grpc.testing.responseParameters
 import com.grpc.testing.simpleRequest
 import com.grpc.testing.streamingOutputCallRequest
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
 
 class TestServiceClientSuite(
     client: ProtocolClient,
-    private val shortTimeoutClient: ProtocolClient,
+    private val shortTimeoutClient: ProtocolClient
 ) : TestSuite {
     private val testServiceConnectClient = TestServiceClient(client)
     private val unimplementedServiceClient = UnimplementedServiceClient(client)
@@ -106,7 +106,7 @@ class TestServiceClientSuite(
                         },
                         onCompletion = {
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
@@ -119,7 +119,7 @@ class TestServiceClientSuite(
             stream.send(
                 streamingOutputCallRequest {
                     responseParameters.addAll(parameters)
-                },
+                }
             )
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
@@ -139,14 +139,14 @@ class TestServiceClientSuite(
                         onCompletion = { result ->
                             assertThat(result.error).isNull()
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
             stream.send(
                 streamingOutputCallRequest {
                     responseParameters.addAll(emptyList())
-                },
+                }
             )
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
@@ -164,7 +164,7 @@ class TestServiceClientSuite(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(trailingValue.b64Encode()),
+                trailingKey to listOf(trailingValue.b64Encode())
             )
         val message = simpleRequest {
             responseSize = size
@@ -192,8 +192,8 @@ class TestServiceClientSuite(
         val stream = testServiceConnectClient.streamingOutputCall(
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(trailingValue.b64Encode()),
-            ),
+                trailingKey to listOf(trailingValue.b64Encode())
+            )
         )
         withContext(Dispatchers.IO) {
             val job = async {
@@ -213,14 +213,14 @@ class TestServiceClientSuite(
                             assertThat(responseTrailers[trailingKey]).isEqualTo(listOf(trailingValue.b64Encode()))
                             assertThat(result.error).isNull()
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
             stream.send(
                 streamingOutputCallRequest {
                     responseParameters.add(responseParameters { this.size = size })
-                },
+                }
             )
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
@@ -256,7 +256,7 @@ class TestServiceClientSuite(
                     code = 2
                     message = statusMessage
                 }
-            },
+            }
         )
         response.failure { errorResponse ->
             val error = errorResponse.error
@@ -280,7 +280,7 @@ class TestServiceClientSuite(
                 responseParameters {
                     size = 31415
                     intervalUs = 50_000
-                },
+                }
             )
         }
         val stream = client.streamingOutputCall()
@@ -293,7 +293,7 @@ class TestServiceClientSuite(
                             assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
                             assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
@@ -320,7 +320,7 @@ class TestServiceClientSuite(
                         onCompletion = { result ->
                             assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
@@ -347,7 +347,7 @@ class TestServiceClientSuite(
                         onCompletion = { result ->
                             assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
@@ -395,10 +395,10 @@ class TestServiceClientSuite(
                             assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                             assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
                             assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
-                                expectedErrorDetail,
+                                expectedErrorDetail
                             )
                             countDownLatch.countDown()
-                        },
+                        }
                     )
                 }
             }
@@ -406,7 +406,7 @@ class TestServiceClientSuite(
                 31415,
                 9,
                 2653,
-                58979,
+                58979
             )
             val parameters = sizes.mapIndexed { index, value ->
                 responseParameters {
@@ -418,7 +418,7 @@ class TestServiceClientSuite(
             stream.send(
                 streamingOutputCallRequest {
                     responseParameters.addAll(parameters)
-                },
+                }
             )
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()

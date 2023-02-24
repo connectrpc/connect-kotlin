@@ -78,5 +78,5 @@ class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
 data class MessageData(
     val message: String,
-    val isEliza: Boolean,
+    val isEliza: Boolean
 )

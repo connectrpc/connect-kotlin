@@ -55,7 +55,7 @@ class Generator : CodeGenerator {
     override fun generate(
         request: PluginProtos.CodeGeneratorRequest,
         descriptorSource: Plugin.DescriptorSource,
-        response: Plugin.Response,
+        response: Plugin.Response
     ) {
         this.descriptorSource = descriptorSource
 
@@ -101,11 +101,11 @@ class Generator : CodeGenerator {
 
     private fun serviceClientInterface(
         packageName: String,
-        service: Descriptors.ServiceDescriptor,
+        service: Descriptors.ServiceDescriptor
     ): TypeSpec {
         val interfaceBuilder = TypeSpec.interfaceBuilder(serviceClientInterfaceClassName(packageName, service))
         val functionSpecs = interfaceMethods(
-            service.methods,
+            service.methods
         )
         return interfaceBuilder
             .addFunctions(functionSpecs)
@@ -113,7 +113,7 @@ class Generator : CodeGenerator {
     }
 
     private fun interfaceMethods(
-        methods: List<Descriptors.MethodDescriptor>,
+        methods: List<Descriptors.MethodDescriptor>
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         val headerParameterSpec = ParameterSpec.builder("headers", HEADERS_CLASS_NAME)
@@ -129,7 +129,7 @@ class Generator : CodeGenerator {
                     .addParameter(headerParameterSpec)
                     .returns(
                         BidirectionalStreamInterface::class.asClassName()
-                            .parameterizedBy(inputClassName, outputClassName),
+                            .parameterizedBy(inputClassName, outputClassName)
                     )
                 functions.add(streamingBuilder.build())
             } else if (method.isServerStreaming) {
@@ -138,7 +138,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
                     .returns(
-                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
                     )
                     .build()
                 functions.add(serverStreamingFunction)
@@ -148,7 +148,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
                     .returns(
-                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
                     )
                     .build()
                 functions.add(clientStreamingFunction)
@@ -169,7 +169,7 @@ class Generator : CodeGenerator {
     private fun serviceClientImplementation(
         packageName: String,
         javaPackageName: String,
-        service: Descriptors.ServiceDescriptor,
+        service: Descriptors.ServiceDescriptor
     ): TypeSpec {
         // The javaPackageName is used instead of the package name for imports and code references.
         val classBuilder = TypeSpec.classBuilder(serviceClientImplementationClassName(javaPackageName, service))
@@ -177,17 +177,17 @@ class Generator : CodeGenerator {
             .primaryConstructor(
                 FunSpec.constructorBuilder()
                     .addParameter("client", ProtocolClientInterface::class)
-                    .build(),
+                    .build()
             )
             .addProperty(
                 PropertySpec.builder("client", ProtocolClientInterface::class, KModifier.PRIVATE)
                     .initializer("client")
-                    .build(),
+                    .build()
             )
         val functionSpecs = implementationMethods(
             packageName,
             service.name,
-            service.methods,
+            service.methods
         )
         return classBuilder
             .addFunctions(functionSpecs)
@@ -197,7 +197,7 @@ class Generator : CodeGenerator {
     private fun implementationMethods(
         packageName: String,
         serviceName: String,
-        methods: List<Descriptors.MethodDescriptor>,
+        methods: List<Descriptors.MethodDescriptor>
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
@@ -221,8 +221,8 @@ class Generator : CodeGenerator {
                         BidirectionalStreamInterface::class.asClassName()
                             .parameterizedBy(
                                 inputClassName,
-                                outputClassName,
-                            ),
+                                outputClassName
+                            )
                     )
                     .addStatement(
                         "return %L",
@@ -233,7 +233,7 @@ class Generator : CodeGenerator {
                             .add(methodCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build(),
+                            .build()
                     )
                     .build()
                 functions.add(streamingFunction)
@@ -243,7 +243,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
                     .returns(
-                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
                     )
                     .addStatement(
                         "return %L",
@@ -254,7 +254,7 @@ class Generator : CodeGenerator {
                             .add(methodCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build(),
+                            .build()
                     )
                     .build()
                 functions.add(serverStreamingFunction)
@@ -264,7 +264,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
                     .returns(
-                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
                     )
                     .addStatement(
                         "return %L",
@@ -275,7 +275,7 @@ class Generator : CodeGenerator {
                             .add(methodCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build(),
+                            .build()
                     )
                     .build()
                 functions.add(clientStreamingFunction)
@@ -296,7 +296,7 @@ class Generator : CodeGenerator {
                             .add(methodCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build(),
+                            .build()
                     )
                     .build()
                 functions.add(unarySuspendFunction)

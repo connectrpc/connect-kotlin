@@ -28,7 +28,6 @@ import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import java.net.URL
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import okio.internal.commonAsUtf8ToByteArray
@@ -38,6 +37,7 @@ import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import java.net.URL
 
 class GRPCInterceptorTest {
 
@@ -60,7 +60,7 @@ class GRPCInterceptorTest {
     fun requestHeaders() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcInterceptor.unaryFunction()
@@ -69,8 +69,8 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value")),
-            ),
+                headers = mapOf("key" to listOf("value"))
+            )
         )
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
@@ -82,7 +82,7 @@ class GRPCInterceptorTest {
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcInterceptor.unaryFunction()
@@ -92,8 +92,8 @@ class GRPCInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
-            ),
+                message = "message".commonAsUtf8ToByteArray()
+            )
         )
         val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
         assertThat(message.readUtf8()).isEqualTo("message")
@@ -105,7 +105,7 @@ class GRPCInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcInterceptor.unaryFunction()
@@ -115,8 +115,8 @@ class GRPCInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
-            ),
+                message = "message".commonAsUtf8ToByteArray()
+            )
         )
         val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
         val decompressed = GzipCompressionPool.decompress(message)
@@ -128,7 +128,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
 
         )
         val grpcInterceptor = GRPCInterceptor(config)
@@ -143,10 +143,10 @@ class GRPCInterceptorTest {
                 headers = emptyMap(),
                 message = envelopedMessage,
                 trailers = mapOf(
-                    GRPC_STATUS_TRAILER to listOf("${Code.OK.value}"),
+                    GRPC_STATUS_TRAILER to listOf("${Code.OK.value}")
                 ),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -156,7 +156,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcInterceptor.unaryFunction()
@@ -168,10 +168,10 @@ class GRPCInterceptorTest {
                 headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
                 message = envelopedMessage,
                 trailers = mapOf(
-                    GRPC_STATUS_TRAILER to listOf("${Code.OK.value}"),
+                    GRPC_STATUS_TRAILER to listOf("${Code.OK.value}")
                 ),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -183,14 +183,14 @@ class GRPCInterceptorTest {
             listOf(
                 ConnectErrorDetail(
                     "type",
-                    "value".encodeUtf8(),
-                ),
-            ),
+                    "value".encodeUtf8()
+                )
+            )
         )
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcInterceptor.unaryFunction()
@@ -200,9 +200,9 @@ class GRPCInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value",
-                ),
-            ),
+                    "value"
+                )
+            )
         )
         val adapter = moshi.adapter(ErrorPayloadJSON::class.java)
         val json = adapter.toJson(error)
@@ -215,10 +215,10 @@ class GRPCInterceptorTest {
                 trailers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}"),
                     GRPC_MESSAGE_TRAILER to listOf("no more resources!"),
-                    GRPC_STATUS_DETAILS_TRAILERS to listOf(statusDetails),
+                    GRPC_STATUS_DETAILS_TRAILERS to listOf(statusDetails)
                 ),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         assertThat(response.error!!.message).isEqualTo("no more resources!")
@@ -231,7 +231,7 @@ class GRPCInterceptorTest {
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -242,8 +242,8 @@ class GRPCInterceptorTest {
                 emptyMap(),
                 Buffer(),
                 emptyMap(),
-                TracingInfo(888),
-            ),
+                TracingInfo(888)
+            )
         )
         assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
     }
@@ -257,7 +257,7 @@ class GRPCInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -268,9 +268,9 @@ class GRPCInterceptorTest {
                 contentType = "",
                 headers = mapOf(
                     // Doesn't get passed as headers.
-                    GRPC_ENCODING to listOf("gzip"),
-                ),
-            ),
+                    GRPC_ENCODING to listOf("gzip")
+                )
+            )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
         assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
@@ -282,7 +282,7 @@ class GRPCInterceptorTest {
     fun streamingRequestHeadersWithoutAnyCompression() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -291,8 +291,8 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value")),
-            ),
+                headers = mapOf("key" to listOf("value"))
+            )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
         assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
@@ -303,7 +303,7 @@ class GRPCInterceptorTest {
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -318,7 +318,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -333,7 +333,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -341,9 +341,9 @@ class GRPCInterceptorTest {
         val result = streamFunction.streamResultFunction(
             StreamResult.Headers(
                 mapOf(
-                    "key" to listOf("value"),
-                ),
-            ),
+                    "key" to listOf("value")
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
@@ -356,7 +356,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -366,8 +366,8 @@ class GRPCInterceptorTest {
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()))
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString()),
-            ),
+                Buffer().write(envelopedMessage.readByteString())
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -380,7 +380,7 @@ class GRPCInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -388,16 +388,16 @@ class GRPCInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
-                    GRPC_ENCODING to listOf(GzipCompressionPool.name()),
-                ),
-            ),
+                    GRPC_ENCODING to listOf(GzipCompressionPool.name())
+                )
+            )
         )
 
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()), GzipCompressionPool, 1)
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString()),
-            ),
+                Buffer().write(envelopedMessage.readByteString())
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -409,7 +409,7 @@ class GRPCInterceptorTest {
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -419,9 +419,9 @@ class GRPCInterceptorTest {
                 code = Code.OK,
                 trailers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("${Code.OK.value}"),
-                    "key" to listOf("value"),
-                ),
-            ),
+                    "key" to listOf("value")
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
@@ -434,7 +434,7 @@ class GRPCInterceptorTest {
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcInterceptor = GRPCInterceptor(config)
         val streamFunction = grpcInterceptor.streamFunction()
@@ -444,9 +444,9 @@ class GRPCInterceptorTest {
                 code = Code.UNKNOWN,
                 error = ConnectError(
                     Code.UNKNOWN,
-                    message = "error_message",
-                ),
-            ),
+                    message = "error_message"
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)

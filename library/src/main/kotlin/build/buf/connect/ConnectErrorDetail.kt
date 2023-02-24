@@ -26,7 +26,7 @@ import okio.ByteString
 // variety of Protobuf messages commonly used as error details.
 data class ConnectErrorDetail constructor(
     val type: String,
-    val payload: ByteString,
+    val payload: ByteString
 ) {
     val pb = AnyError(type, payload)
 }

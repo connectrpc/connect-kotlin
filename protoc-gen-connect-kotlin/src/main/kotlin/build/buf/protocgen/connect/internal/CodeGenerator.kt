@@ -28,6 +28,6 @@ interface CodeGenerator {
     fun generate(
         request: PluginProtos.CodeGeneratorRequest,
         descriptorSource: DescriptorSource,
-        response: Plugin.Response,
+        response: Plugin.Response
     )
 }

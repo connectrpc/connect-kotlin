@@ -22,8 +22,6 @@ import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
-import java.time.Duration
-import kotlin.system.exitProcess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,6 +29,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import java.time.Duration
+import kotlin.system.exitProcess
 
 class Main {
     companion object {
@@ -65,7 +65,7 @@ class Main {
             tag: String,
             host: String,
             client: OkHttpClient,
-            networkProtocol: NetworkProtocol,
+            networkProtocol: NetworkProtocol
         ) {
             val connectClient = ProtocolClient(
                 httpClient = ConnectOkHttpClient(client),
@@ -74,8 +74,8 @@ class Main {
                     serializationStrategy = GoogleJavaLiteProtobufStrategy(),
                     networkProtocol = networkProtocol,
                     requestCompression = RequestCompression(10, GzipCompressionPool),
-                    compressionPools = listOf(GzipCompressionPool),
-                ),
+                    compressionPools = listOf(GzipCompressionPool)
+                )
             )
             val shortTimeoutClient = ProtocolClient(
                 httpClient = ConnectOkHttpClient(client),
@@ -84,8 +84,8 @@ class Main {
                     serializationStrategy = GoogleJavaLiteProtobufStrategy(),
                     networkProtocol = networkProtocol,
                     requestCompression = RequestCompression(10, GzipCompressionPool),
-                    compressionPools = listOf(GzipCompressionPool),
-                ),
+                    compressionPools = listOf(GzipCompressionPool)
+                )
             )
             tests(tag, connectClient, shortTimeoutClient)
         }
@@ -93,7 +93,7 @@ class Main {
         private suspend fun tests(
             tag: String,
             protocolClient: ProtocolClient,
-            shortTimeoutClient: ProtocolClient,
+            shortTimeoutClient: ProtocolClient
         ) {
             val testServiceClientSuite = TestServiceClientSuite(protocolClient, shortTimeoutClient)
             testServiceClientSuite.emptyUnary()

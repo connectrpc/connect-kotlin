@@ -19,5 +19,5 @@ package build.buf.connect.http
  */
 data class TracingInfo(
     // The underlying http status code
-    val httpStatus: Int,
+    val httpStatus: Int
 )

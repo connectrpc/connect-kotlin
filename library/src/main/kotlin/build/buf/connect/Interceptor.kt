@@ -49,11 +49,11 @@ interface Interceptor {
 
 class UnaryFunction(
     val requestFunction: (HTTPRequest) -> HTTPRequest = { it },
-    val responseFunction: (HTTPResponse) -> HTTPResponse = { it },
+    val responseFunction: (HTTPResponse) -> HTTPResponse = { it }
 )
 
 class StreamFunction(
     val requestFunction: (HTTPRequest) -> HTTPRequest = { it },
     val requestBodyFunction: (Buffer) -> Buffer = { it },
-    val streamResultFunction: (StreamResult<Buffer>) -> StreamResult<Buffer> = { it },
+    val streamResultFunction: (StreamResult<Buffer>) -> StreamResult<Buffer> = { it }
 )

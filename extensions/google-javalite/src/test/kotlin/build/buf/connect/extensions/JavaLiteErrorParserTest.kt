@@ -34,7 +34,7 @@ class JavaLiteErrorParserTest {
             .build()
         val serializedError = AnyError(
             "type.googleapis.com/build.buf.connect.generated.v1.Status",
-            proto.toByteArray().toByteString().base64().encodeUtf8(),
+            proto.toByteArray().toByteString().base64().encodeUtf8()
         )
         val unpacked = parser.unpack(serializedError, Status::class)
         assertThat(unpacked!!.code).isEqualTo(123)
@@ -60,13 +60,13 @@ class JavaLiteErrorParserTest {
                 com.google.protobuf.Any.newBuilder()
                     .setTypeUrl("any_message_1")
                     .setValue(ByteString.copyFrom("value_1".encodeUtf8().base64().encodeToByteArray()))
-                    .build(),
+                    .build()
             )
             .addDetails(
                 com.google.protobuf.Any.newBuilder()
                     .setTypeUrl("any_message_2")
                     .setValue(ByteString.copyFrom("value_2".encodeUtf8().base64().encodeToByteArray()))
-                    .build(),
+                    .build()
             )
             .build()
         val details = parser.parseDetails(proto.toByteArray())

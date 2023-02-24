@@ -104,14 +104,14 @@ object Plugin {
         }
         files = asDescriptors(request.protoFileList)
         val output = CodedOutputStream.newInstance(
-            environment.outputStream(),
+            environment.outputStream()
         )
         try {
             // go ahead and write response preamble
             PluginProtos.CodeGeneratorResponse
                 .newBuilder() // add more here as more features are introduced and then supported
                 .setSupportedFeatures(
-                    toFeatureBitmask(PluginProtos.CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL),
+                    toFeatureBitmask(PluginProtos.CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL)
                 )
                 .build()
                 .writeTo(output)
@@ -152,7 +152,7 @@ object Plugin {
 
     private fun addAllExtensionsFromMessage(
         registry: ExtensionRegistry,
-        message: Descriptors.Descriptor,
+        message: Descriptors.Descriptor
     ) {
         for (ext in message.extensions) {
             if (ext.type == Descriptors.FieldDescriptor.Type.MESSAGE) {
@@ -182,7 +182,7 @@ object Plugin {
                     ?: throw PluginException(
                         "protoc asked plugin to generate a file " +
                             "but did not provide a descriptor for a dependency (or " +
-                            "provided it after the file that depends on it): ${protoFile.getDependency(i)}",
+                            "provided it after the file that depends on it): ${protoFile.getDependency(i)}"
                     )
                 dependencies[i] = dependency
                 i++
@@ -190,7 +190,7 @@ object Plugin {
             try {
                 filesByName[protoFile.name] = Descriptors.FileDescriptor.buildFrom(
                     protoFile,
-                    dependencies,
+                    dependencies
                 )
             } catch (e: Descriptors.DescriptorValidationException) {
                 throw PluginException(e)
@@ -268,7 +268,7 @@ object Plugin {
                 // Protocol format guarantees that concatenated messages are parsed as
                 // if they had been merged in a single message prior to being serialized.
                 PluginProtos.CodeGeneratorResponse.newBuilder().addFile(file).build().writeTo(
-                    output,
+                    output
                 )
                 output.flush()
             } catch (e: IOException) {

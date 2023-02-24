@@ -19,9 +19,6 @@ import build.buf.connect.ConnectError
 import build.buf.connect.StreamResult
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
-import java.io.IOException
-import java.io.InterruptedIOException
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.Callback
@@ -37,6 +34,9 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.Pipe
 import okio.buffer
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Extension function for OkHttpClient to initialize a stream.
@@ -45,7 +45,7 @@ import okio.buffer
  */
 internal fun OkHttpClient.initializeStream(
     request: HTTPRequest,
-    onResult: suspend (StreamResult<Buffer>) -> Unit,
+    onResult: suspend (StreamResult<Buffer>) -> Unit
 ): Stream {
     val isClosed = AtomicBoolean(false)
     val duplexRequestBody = PipeDuplexRequestBody(request.contentType.toMediaType())
@@ -74,13 +74,13 @@ internal fun OkHttpClient.initializeStream(
             } catch (_: Throwable) {
                 // No-op
             }
-        },
+        }
     )
 }
 
 private class ResponseCallback(
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
-    private val isClosed: AtomicBoolean,
+    private val isClosed: AtomicBoolean
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
         runBlocking {
@@ -104,7 +104,7 @@ private class ResponseCallback(
                 val finalResult = StreamResult.Complete<Buffer>(
                     code = code,
                     trailers = response.safeTrailers() ?: emptyMap(),
-                    error = ConnectError(code = code),
+                    error = ConnectError(code = code)
                 )
                 onResult(finalResult)
                 return@runBlocking
@@ -116,7 +116,7 @@ private class ResponseCallback(
                         while (!sourceBuffer.safeExhausted() && !isClosed.get()) {
                             val buffer = readStream(sourceBuffer)
                             val streamResult = StreamResult.Message(
-                                message = buffer,
+                                message = buffer
                             )
                             onResult(streamResult)
                         }
@@ -128,7 +128,7 @@ private class ResponseCallback(
                         val finalResult = StreamResult.Complete<Buffer>(
                             code = code,
                             trailers = response.safeTrailers() ?: emptyMap(),
-                            error = exception,
+                            error = exception
                         )
                         onResult(finalResult)
                     }
@@ -181,7 +181,7 @@ private class ResponseCallback(
 
 internal class PipeDuplexRequestBody(
     private val contentType: MediaType?,
-    pipeMaxBufferSize: Long = 1024 * 1024,
+    pipeMaxBufferSize: Long = 1024 * 1024
 ) : RequestBody() {
     private val pipe = Pipe(pipeMaxBufferSize)
 

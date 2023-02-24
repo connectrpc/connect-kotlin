@@ -38,5 +38,5 @@ class HTTPResponse(
     // null in cases where no response was received from the server.
     val tracingInfo: TracingInfo?,
     // The accompanying error, if the request failed.
-    val error: ConnectError? = null,
+    val error: ConnectError? = null
 )

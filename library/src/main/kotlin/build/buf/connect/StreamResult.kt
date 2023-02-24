@@ -20,7 +20,7 @@ package build.buf.connect
  * A typical stream receives `Headers > Message > Message > Message ... > Complete`
  */
 sealed class StreamResult<Output> constructor(
-    val error: Throwable? = null,
+    val error: Throwable? = null
 ) {
     // Headers have been received over the stream.
     class Headers<Output>(val headers: build.buf.connect.Headers) : StreamResult<Output>()
@@ -53,7 +53,7 @@ sealed class StreamResult<Output> constructor(
     fun <Result> fold(
         onHeaders: (Headers<Output>) -> Result,
         onMessage: (Message<Output>) -> Result,
-        onCompletion: (Complete<Output>) -> Result,
+        onCompletion: (Complete<Output>) -> Result
     ): Result {
         return when (this) {
             is Headers -> {
@@ -78,7 +78,7 @@ sealed class StreamResult<Output> constructor(
     fun <Result> maybeFold(
         onHeaders: (Headers<Output>) -> Result? = { null },
         onMessage: (Message<Output>) -> Result? = { null },
-        onCompletion: (Complete<Output>) -> Result? = { null },
+        onCompletion: (Complete<Output>) -> Result? = { null }
     ): Result? {
         return when (this) {
             is Headers -> {

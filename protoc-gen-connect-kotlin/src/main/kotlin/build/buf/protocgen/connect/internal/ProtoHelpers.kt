@@ -75,7 +75,7 @@ internal const val THIN_SEPARATOR = "// ----------------------------------------
  * When a key is present several times, only the last value is retained.
  */
 internal fun parseGeneratorParameter(
-    text: String,
+    text: String
 ): Map<String, String> {
     if (text.isEmpty()) {
         return emptyMap()
@@ -168,7 +168,7 @@ internal fun underscoresToCamelCase(field: Descriptors.FieldDescriptor): String 
  * "FooBarBaz".
  */
 internal fun underscoresToCapitalizedCamelCase(
-    field: Descriptors.FieldDescriptor,
+    field: Descriptors.FieldDescriptor
 ): String {
     return underscoresToCamelCaseImpl(getFieldName(field), true)
 }
@@ -323,7 +323,7 @@ internal fun getPrimitiveTypeName(type: Descriptors.FieldDescriptor.JavaType): S
  * enum and message types.
  */
 internal fun getBoxedPrimitiveTypeName(
-    type: Descriptors.FieldDescriptor.JavaType?,
+    type: Descriptors.FieldDescriptor.JavaType?
 ): String? {
     return when (type) {
         Descriptors.FieldDescriptor.JavaType.INT -> "java.lang.Integer"
@@ -439,7 +439,7 @@ private fun getFieldName(field: Descriptors.FieldDescriptor): String {
  */
 private fun underscoresToCamelCaseImpl(
     input: String,
-    capNextLetter: Boolean,
+    capNextLetter: Boolean
 ): String {
     var capNextLetter = capNextLetter
     val result = StringBuilder(input.length)

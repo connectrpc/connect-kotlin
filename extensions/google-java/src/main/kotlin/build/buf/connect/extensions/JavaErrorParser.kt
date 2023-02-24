@@ -19,9 +19,9 @@ import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.ErrorDetailParser
 import build.buf.google.rpc.Status
 import com.google.protobuf.Message
-import kotlin.reflect.KClass
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
+import kotlin.reflect.KClass
 
 private const val TYPE_URL_PREFIX = "type.googleapis.com/"
 
@@ -54,7 +54,7 @@ internal object JavaErrorParser : ErrorDetailParser {
                 // Try to decode via base64 and if that fails, use the original value.
                 // Connect unary ends up encoding the payload as base64. GRPC and GRPC-Web
                 // both do not encode this payload as base64 so decodeBase64() returns null.
-                msg.value.toStringUtf8().decodeBase64() ?: msg.value.toStringUtf8().encodeUtf8(),
+                msg.value.toStringUtf8().decodeBase64() ?: msg.value.toStringUtf8().encodeUtf8()
             )
         }
     }

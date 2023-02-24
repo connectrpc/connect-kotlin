@@ -23,7 +23,6 @@ import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.Stream
 import build.buf.connect.http.TracingInfo
-import java.io.IOException
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
@@ -32,12 +31,13 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.Buffer
+import java.io.IOException
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
  */
 class ConnectOkHttpClient(
-    val client: OkHttpClient = OkHttpClient(),
+    val client: OkHttpClient = OkHttpClient()
 ) : HTTPClientInterface {
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
@@ -74,10 +74,10 @@ class ConnectOkHttpClient(
                                 error = ConnectError(
                                     code,
                                     message = e.message,
-                                    exception = e,
+                                    exception = e
                                 ),
-                                tracingInfo = null,
-                            ),
+                                tracingInfo = null
+                            )
                         )
                     }
 
@@ -93,11 +93,11 @@ class ConnectOkHttpClient(
                                 headers = response.headers.toLowerCaseKeysMultiMap(),
                                 message = responseBuffer ?: Buffer(),
                                 trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                                tracingInfo = TracingInfo(response.code),
-                            ),
+                                tracingInfo = TracingInfo(response.code)
+                            )
                         )
                     }
-                },
+                }
             )
         } catch (e: Throwable) {
             onResult(
@@ -109,10 +109,10 @@ class ConnectOkHttpClient(
                     error = ConnectError(
                         Code.UNKNOWN,
                         message = e.message,
-                        exception = e,
+                        exception = e
                     ),
-                    tracingInfo = null,
-                ),
+                    tracingInfo = null
+                )
             )
         }
         return cancelable

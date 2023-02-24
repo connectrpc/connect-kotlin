@@ -27,7 +27,6 @@ import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import java.net.URL
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import okio.internal.commonAsUtf8ToByteArray
@@ -37,6 +36,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import java.net.URL
 
 class ConnectInterceptorTest {
     private val errorDetailParser: ErrorDetailParser = mock { }
@@ -60,7 +60,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = emptyList(),
+            compressionPools = emptyList()
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -69,8 +69,8 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value")),
-            ),
+                headers = mapOf("key" to listOf("value"))
+            )
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
@@ -83,7 +83,7 @@ class ConnectInterceptorTest {
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -93,8 +93,8 @@ class ConnectInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
-            ),
+                message = "message".commonAsUtf8ToByteArray()
+            )
         )
         assertThat(request.message!!.commonToUtf8String()).isEqualTo("message")
     }
@@ -105,7 +105,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -115,8 +115,8 @@ class ConnectInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
-            ),
+                message = "message".commonAsUtf8ToByteArray()
+            )
         )
         val decompressed = GzipCompressionPool.decompress(Buffer().write(request.message!!))
         assertThat(decompressed.readUtf8()).isEqualTo("message")
@@ -127,7 +127,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -138,8 +138,8 @@ class ConnectInterceptorTest {
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 trailers = emptyMap(),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -149,7 +149,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -160,8 +160,8 @@ class ConnectInterceptorTest {
                 headers = mapOf(CONTENT_ENCODING to listOf(GzipCompressionPool.name())),
                 message = GzipCompressionPool.compress(Buffer().write("message".encodeUtf8())),
                 trailers = emptyMap(),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -171,7 +171,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -181,9 +181,9 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value",
-                ),
-            ),
+                    "value"
+                )
+            )
         )
         val adapter = moshi.adapter(ErrorPayloadJSON::class.java)
         val json = adapter.toJson(error)
@@ -194,8 +194,8 @@ class ConnectInterceptorTest {
                 message = Buffer().write(json.encodeUtf8()),
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         assertThat(response.error!!.message).isEqualTo("no more resources!")
@@ -209,7 +209,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -220,8 +220,8 @@ class ConnectInterceptorTest {
                 message = Buffer().write("garbage json".encodeUtf8()),
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null,
-            ),
+                tracingInfo = null
+            )
         )
         assertThat(response.error!!.code).isEqualTo(Code.UNKNOWN)
     }
@@ -230,7 +230,7 @@ class ConnectInterceptorTest {
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = ConnectInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -241,8 +241,8 @@ class ConnectInterceptorTest {
                 emptyMap(),
                 Buffer(),
                 emptyMap(),
-                TracingInfo(888),
-            ),
+                TracingInfo(888)
+            )
         )
         assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
     }
@@ -256,7 +256,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -265,8 +265,8 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value")),
-            ),
+                headers = mapOf("key" to listOf("value"))
+            )
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[CONNECT_STREAMING_ACCEPT_ENCODING]).containsExactly(GzipCompressionPool.name())
@@ -280,7 +280,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = emptyList(),
+            compressionPools = emptyList()
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -289,8 +289,8 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value")),
-            ),
+                headers = mapOf("key" to listOf("value"))
+            )
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[CONNECT_STREAMING_ACCEPT_ENCODING]).isNullOrEmpty()
@@ -303,7 +303,7 @@ class ConnectInterceptorTest {
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -318,7 +318,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -333,7 +333,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -342,9 +342,9 @@ class ConnectInterceptorTest {
             StreamResult.Headers(
                 headers = mapOf(
                     "trailer-x-some-key" to listOf("some_value"),
-                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
-                ),
-            ),
+                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
@@ -357,7 +357,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -367,8 +367,8 @@ class ConnectInterceptorTest {
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()))
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString()),
-            ),
+                Buffer().write(envelopedMessage.readByteString())
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -382,7 +382,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -390,16 +390,16 @@ class ConnectInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
-                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
-                ),
-            ),
+                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")
+                )
+            )
         )
 
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()), GzipCompressionPool, 1)
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString()),
-            ),
+                Buffer().write(envelopedMessage.readByteString())
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -411,7 +411,7 @@ class ConnectInterceptorTest {
     fun endStreamOnResponseMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -421,13 +421,13 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value",
-                ),
-            ),
+                    "value"
+                )
+            )
         )
         val endStream = EndStreamResponseJSON(
             error = error,
-            metadata = emptyMap(),
+            metadata = emptyMap()
         )
         val adapter = moshi.adapter(EndStreamResponseJSON::class.java)
         val json = adapter.toJson(endStream)
@@ -439,8 +439,8 @@ class ConnectInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(endStreamMessage.readByteString()),
-            ),
+                Buffer().write(endStreamMessage.readByteString())
+            )
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
@@ -456,15 +456,15 @@ class ConnectInterceptorTest {
     fun endStreamResponseBadJSON() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write("some garbage json".encodeUtf8()),
-            ),
+                Buffer().write("some garbage json".encodeUtf8())
+            )
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
@@ -475,7 +475,7 @@ class ConnectInterceptorTest {
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -484,9 +484,9 @@ class ConnectInterceptorTest {
             StreamResult.Complete(
                 code = Code.OK,
                 trailers = mapOf(
-                    "key" to listOf("value"),
-                ),
-            ),
+                    "key" to listOf("value")
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
@@ -499,7 +499,7 @@ class ConnectInterceptorTest {
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy,
+            serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -509,9 +509,9 @@ class ConnectInterceptorTest {
                 code = Code.UNKNOWN,
                 error = ConnectError(
                     Code.UNKNOWN,
-                    message = "error_message",
-                ),
-            ),
+                    message = "error_message"
+                )
+            )
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
