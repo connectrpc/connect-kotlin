@@ -21,9 +21,11 @@ import build.buf.connect.ProtocolClientInterface
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
+import build.buf.protocgen.connect.internal.Configuration
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
+import build.buf.protocgen.connect.internal.parse
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName
@@ -31,11 +33,14 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 
 /*
  * These are constants since build.buf.connect.Headers and build.buf.connect.http.Cancelable
@@ -48,9 +53,11 @@ import com.squareup.kotlinpoet.asClassName
  * move off of type aliases, this can be changed without user API breakage.
  */
 private val HEADERS_CLASS_NAME = ClassName("build.buf.connect", "Headers")
+private val CANCELLABLE_CLASS_NAME = ClassName("build.buf.connect.http", "Cancelable")
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
+    private lateinit var configuration: Configuration
 
     override fun generate(
         request: PluginProtos.CodeGeneratorRequest,
@@ -58,7 +65,7 @@ class Generator : CodeGenerator {
         response: Plugin.Response
     ) {
         this.descriptorSource = descriptorSource
-
+        configuration = parse(request.parameter)
         for (fileName in request.fileToGenerateList) {
             val file = descriptorSource.findFileByName(fileName) ?: throw RuntimeException("no descriptor sources found.")
             if (file.services.isEmpty()) {
@@ -161,6 +168,21 @@ class Generator : CodeGenerator {
                     .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
                     .build()
                 functions.add(unarySuspendFunction)
+                if (configuration.callbackSignature) {
+                    val callbackType = LambdaTypeName.get(
+                        receiver = ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
+                        returnType = Unit::class.java.asTypeName()
+                    )
+                    val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .addParameter("onResult", callbackType)
+                        .returns(CANCELLABLE_CLASS_NAME)
+                        .build()
+                    functions.add(unaryCallbackFunction)
+                }
             }
         }
         return functions
