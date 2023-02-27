@@ -24,7 +24,7 @@ internal data class Configuration(
     // Enable or disable callback signature generation.
     val generateCallbackMethods: Boolean,
     // Enable or disable coroutine signature generation.
-    val generateCoroutineMethods: Boolean,
+    val generateCoroutineMethods: Boolean
 )
 
 /**
@@ -39,6 +39,6 @@ internal fun parse(input: String): Configuration {
     val parameters = parseGeneratorParameter(input)
     return Configuration(
         generateCallbackMethods = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false,
-        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true, // Defaulted to true.
+        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true // Defaulted to true.
     )
 }

@@ -118,7 +118,7 @@ class Main {
 
         private suspend fun callbackTests(
             tag: String,
-            protocolClient: ProtocolClient,
+            protocolClient: ProtocolClient
         ) {
             val testServiceClientSuite = TestServiceClientCallbackSuite(protocolClient)
             testServiceClientSuite.emptyUnary()

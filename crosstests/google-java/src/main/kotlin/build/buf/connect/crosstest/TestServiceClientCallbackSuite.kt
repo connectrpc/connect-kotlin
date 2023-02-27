@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
 class TestServiceClientCallbackSuite(
-    client: ProtocolClient,
+    client: ProtocolClient
 ) : UnaryCallbackTestSuite {
     private val testServiceConnectClient = TestServiceClient(client)
     private val unimplementedServiceClient = UnimplementedServiceClient(client)
