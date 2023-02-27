@@ -110,7 +110,6 @@ is available on the [connect.build website][getting-started].
 |---------------------|:--------:|:-----------:|:--------------:|-------------------------------------------------|
 | `callbackSignature` | Boolean  |   `false`   |       No       | Generate callback signatures for unary methods. |
 
-
 ## Example Apps
 
 Example apps are available in [`/examples`](./examples). First, run `make generate` to generate 
