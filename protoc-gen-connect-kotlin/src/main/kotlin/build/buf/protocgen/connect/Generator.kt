@@ -307,12 +307,12 @@ class Generator : CodeGenerator {
 
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
         // Get the package of the descriptor's file.
-        // e.g. "build.buf.connect"
+        // e.g. "build.buf.connect".
         val packageName = getFileJavaPackage(descriptor.file)
         // Get the fully qualified class name of the descriptor
         // and subtract the file's package.
         // e.g. "build.buf.connect.EmptyMessage.InnerMessage"
-        // becomes ["EmptyMessage", "InnerMessage"]
+        // becomes ["EmptyMessage", "InnerMessage"].
         val names = getClassName(descriptor)
             .removePrefix(packageName)
             .removePrefix(".")
@@ -320,7 +320,7 @@ class Generator : CodeGenerator {
         // Case when there is a nested entity.
         // e.g Nested message definitions and messages within "*OuterClass.java".
         if (names.size > 1) {
-            return ClassName(packageName, names.first(), *names.subList(1, names.size - 1).toTypedArray())
+            return ClassName(packageName, names.first(), *names.subList(1, names.size).toTypedArray())
         }
         return ClassName(packageName, names.first())
     }

@@ -84,7 +84,7 @@ internal fun getProtocJavaFileName(descriptor: Descriptors.Descriptor): String {
         }
         fullName = getClassName(descriptor)
     } else {
-        fullName = getClassName(descriptor.file)
+        fullName = getClassNameForFile(descriptor.file)
     }
     return fullName.replace('.', '/') + ".java"
 }
@@ -102,7 +102,7 @@ internal fun getProtocJavaFileName(descriptor: Descriptors.EnumDescriptor): Stri
     val fullName: String = if (descriptor.file.options.javaMultipleFiles) {
         getClassName(descriptor)
     } else {
-        getClassName(descriptor.file)
+        getClassNameForFile(descriptor.file)
     }
     return fullName.replace('.', '/') + ".java"
 }
@@ -117,7 +117,7 @@ internal fun getProtocJavaFileName(descriptor: Descriptors.ServiceDescriptor): S
     val fullName: String = if (descriptor.file.options.javaMultipleFiles) {
         getClassName(descriptor)
     } else {
-        getClassName(descriptor.file)
+        getClassNameForFile(descriptor.file)
     }
     return fullName.replace('.', '/') + ".java"
 }
@@ -222,7 +222,7 @@ fun getJavaFileName(descriptor: Descriptors.Descriptor): String {
         }
         fullName = getClassName(descriptor)
     } else {
-        fullName = getClassName(descriptor.file)
+        fullName = getClassNameForFile(descriptor.file)
     }
     return fullName.replace('.', '/') + ".java"
 }
@@ -237,7 +237,7 @@ private fun toJavaName(fullName: String, file: FileDescriptor): String {
     if (file.options.javaMultipleFiles) {
         result.append(getFileJavaPackage(file))
     } else {
-        result.append(getClassName(file))
+        result.append(getClassNameForFile(file))
     }
     if (result.isNotEmpty()) {
         result.append('.')
@@ -280,7 +280,7 @@ internal fun getClassName(descriptor: Descriptors.ServiceDescriptor): String {
  * Returns the fully-qualified class name corresponding to the given
  * file descriptor.
  */
-internal fun getClassName(descriptor: FileDescriptor): String {
+internal fun getClassNameForFile(descriptor: FileDescriptor): String {
     val result = StringBuilder(getFileJavaPackage(descriptor))
     if (result.isNotEmpty()) {
         result.append('.')

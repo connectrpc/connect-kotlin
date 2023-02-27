@@ -28,4 +28,6 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj)
+    testImplementation(libs.mockito)
+    testImplementation(libs.kotlin.coroutines.core)
 }

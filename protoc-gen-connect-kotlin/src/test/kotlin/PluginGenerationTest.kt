@@ -12,17 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import buf.javamultiplefiles.disabled.v1.DisabledEmptyOuterClass
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledInnerMessageServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
+import buf.javamultiplefiles.enabled.v1.EnabledEmptyRPCRequest
 import buf.javamultiplefiles.enabled.v1.EnabledEmptyServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledInnerMessageServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
+import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyOuterClass
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedInnerMessageServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 class PluginGenerationTest {
 
@@ -33,7 +40,21 @@ class PluginGenerationTest {
     }
 
     @Test
+    fun emptyPackageServiceRequest() {
+        val client = ElizaServiceClient(mock { })
+        val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
+        CoroutineScope(Dispatchers.IO).launch {
+            client.say(request, emptyMap())
+        }
+        assertThat(request.sentence).isEqualTo("hello")
+    }
+
+    @Test
     fun multiFileEnabled() {
+        val client = EnabledEmptyServiceClient(mock { })
+        CoroutineScope(Dispatchers.IO).launch {
+            client.enabledEmptyRPC(EnabledEmptyRPCRequest.getDefaultInstance())
+        }
         assertThat(EnabledEmptyServiceClient::class.java).isNotNull
         assertThat(EnabledServiceClient::class.java).isNotNull
         assertThat(EnabledInnerMessageServiceClient::class.java).isNotNull
@@ -41,6 +62,10 @@ class PluginGenerationTest {
 
     @Test
     fun multiFileDisabled() {
+        val client = DisabledEmptyServiceClient(mock { })
+        CoroutineScope(Dispatchers.IO).launch {
+            client.disabledEmptyRPC(DisabledEmptyOuterClass.DisabledEmptyRPCRequest.getDefaultInstance())
+        }
         assertThat(DisabledEmptyServiceClient::class.java).isNotNull
         assertThat(DisabledServiceClient::class.java).isNotNull
         assertThat(DisabledInnerMessageServiceClient::class.java).isNotNull
@@ -48,6 +73,10 @@ class PluginGenerationTest {
 
     @Test
     fun multiFileUnspecified() {
+        val client = UnspecifiedEmptyServiceClient(mock { })
+        CoroutineScope(Dispatchers.IO).launch {
+            client.unspecifiedEmptyRPC(UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCRequest.getDefaultInstance())
+        }
         assertThat(UnspecifiedEmptyServiceClient::class.java).isNotNull
         assertThat(UnspecifiedServiceClient::class.java).isNotNull
         assertThat(UnspecifiedInnerMessageServiceClient::class.java).isNotNull
