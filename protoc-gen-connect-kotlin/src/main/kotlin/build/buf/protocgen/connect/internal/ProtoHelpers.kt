@@ -47,7 +47,7 @@ internal fun parseGeneratorParameter(
     if (text.isEmpty()) {
         return emptyMap()
     }
-    val ret: MutableMap<String, String> = HashMap()
+    val result: MutableMap<String, String> = HashMap()
     val parts = text.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     for (part in parts) {
         if (part.isEmpty()) {
@@ -63,9 +63,10 @@ internal fun parseGeneratorParameter(
             key = part.substring(0, equalsPos)
             value = part.substring(equalsPos + 1)
         }
-        ret[key] = value
+        val normalizedKey = underscoresToCamelCaseImpl(key, false)
+        result[normalizedKey] = value
     }
-    return ret
+    return result
 }
 
 /**

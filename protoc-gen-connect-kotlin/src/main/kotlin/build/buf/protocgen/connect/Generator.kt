@@ -21,9 +21,11 @@ import build.buf.connect.ProtocolClientInterface
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
+import build.buf.protocgen.connect.internal.Configuration
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
+import build.buf.protocgen.connect.internal.parse
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName
@@ -31,11 +33,13 @@ import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
+import com.squareup.kotlinpoet.asTypeName
 
 /*
  * These are constants since build.buf.connect.Headers and build.buf.connect.http.Cancelable
@@ -48,9 +52,11 @@ import com.squareup.kotlinpoet.asClassName
  * move off of type aliases, this can be changed without user API breakage.
  */
 private val HEADERS_CLASS_NAME = ClassName("build.buf.connect", "Headers")
+private val CANCELABLE_CLASS_NAME = ClassName("build.buf.connect.http", "Cancelable")
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
+    private lateinit var configuration: Configuration
 
     override fun generate(
         request: PluginProtos.CodeGeneratorRequest,
@@ -58,7 +64,7 @@ class Generator : CodeGenerator {
         response: Plugin.Response
     ) {
         this.descriptorSource = descriptorSource
-
+        configuration = parse(request.parameter)
         for (fileName in request.fileToGenerateList) {
             val file = descriptorSource.findFileByName(fileName) ?: throw RuntimeException("no descriptor sources found.")
             if (file.services.isEmpty()) {
@@ -92,7 +98,7 @@ class Generator : CodeGenerator {
                 .addFileComment("\n")
                 .addFileComment("Source: ${file.name}\n")
                 // Set the file package for the generated methods.
-                .addType(serviceClientImplementation(file.`package`, packageName, service))
+                .addType(serviceClientImplementation(packageName, service))
                 .build()
             fileSpecs.put(serviceClientImplementationClassName(packageName, service), implementationFileSpec)
         }
@@ -153,21 +159,37 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(clientStreamingFunction)
             } else {
-                val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .addModifiers(KModifier.SUSPEND)
-                    .addParameter("request", inputClassName)
-                    .addParameter(headerParameterSpec)
-                    .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
-                    .build()
-                functions.add(unarySuspendFunction)
+                if (configuration.generateCoroutineMethods) {
+                    val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
+
+                if (configuration.generateCallbackMethods) {
+                    val callbackType = LambdaTypeName.get(
+                        parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
+                        returnType = Unit::class.java.asTypeName()
+                    )
+                    val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .addParameter("onResult", callbackType)
+                        .returns(CANCELABLE_CLASS_NAME)
+                        .build()
+                    functions.add(unaryCallbackFunction)
+                }
             }
         }
         return functions
     }
 
     private fun serviceClientImplementation(
-        packageName: String,
         javaPackageName: String,
         service: Descriptors.ServiceDescriptor
     ): TypeSpec {
@@ -184,31 +206,25 @@ class Generator : CodeGenerator {
                     .initializer("client")
                     .build()
             )
-        val functionSpecs = implementationMethods(
-            packageName,
-            service.name,
-            service.methods
-        )
+        val functionSpecs = implementationMethods(service.methods)
         return classBuilder
             .addFunctions(functionSpecs)
             .build()
     }
 
     private fun implementationMethods(
-        packageName: String,
-        serviceName: String,
         methods: List<Descriptors.MethodDescriptor>
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
-            val methodCallBlock = CodeBlock.builder()
+            val methodSpecCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
-                .addStatement("\"$packageName.$serviceName/${method.name}\",")
+                .addStatement("\"${method.service.fullName}/${method.name}\",")
                 .indent()
                 .addStatement("$inputClassName::class,")
-                .addStatement("$outputClassName::class,")
+                .addStatement("$outputClassName::class")
                 .unindent()
                 .addStatement("),")
                 .build()
@@ -230,7 +246,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.stream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -251,7 +267,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.serverStream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -272,7 +288,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.clientStream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -280,26 +296,55 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(clientStreamingFunction)
             } else {
-                val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addModifiers(KModifier.SUSPEND)
-                    .addModifiers(KModifier.OVERRIDE)
-                    .addParameter("request", inputClassName)
-                    .addParameter("headers", HEADERS_CLASS_NAME)
-                    .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
-                    .addStatement(
-                        "return %L",
-                        CodeBlock.builder()
-                            .addStatement("client.unary(")
-                            .indent()
-                            .addStatement("request,")
-                            .addStatement("headers,")
-                            .add(methodCallBlock)
-                            .unindent()
-                            .addStatement(")")
-                            .build()
+                if (configuration.generateCoroutineMethods) {
+                    val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.SUSPEND)
+                        .addModifiers(KModifier.OVERRIDE)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unary(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
+                if (configuration.generateCallbackMethods) {
+                    val callbackType = LambdaTypeName.get(
+                        parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
+                        returnType = Unit::class.java.asTypeName()
                     )
-                    .build()
-                functions.add(unarySuspendFunction)
+                    val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.OVERRIDE)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .addParameter("onResult", callbackType)
+                        .returns(CANCELABLE_CLASS_NAME)
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unary(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .addStatement("onResult")
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unaryCallbackFunction)
+                }
             }
         }
         return functions

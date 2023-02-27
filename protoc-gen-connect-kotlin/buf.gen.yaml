@@ -3,5 +3,9 @@ plugins:
   - name: connect-kotlin
     out: src/test/java/
     path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+    opt:
+      - generateCallbackMethods=true
+      - generateCoroutineMethods=true
   - name: java
     out: src/test/java/
+

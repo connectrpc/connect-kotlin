@@ -87,10 +87,10 @@ class Main {
                     compressionPools = listOf(GzipCompressionPool)
                 )
             )
-            tests(tag, connectClient, shortTimeoutClient)
+            suspendTests(tag, connectClient, shortTimeoutClient)
         }
 
-        private suspend fun tests(
+        private suspend fun suspendTests(
             tag: String,
             protocolClient: ProtocolClient,
             shortTimeoutClient: ProtocolClient
