@@ -23,6 +23,7 @@ import buf.javamultiplefiles.unspecified.v1.UnspecifiedInnerMessageServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import org.mockito.kotlin.mock
 
 class PluginGenerationTest {
 
@@ -31,6 +32,15 @@ class PluginGenerationTest {
         val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
         assertThat(request.sentence).isEqualTo("hello")
     }
+
+    @Test
+    fun emptyPackageServiceRequest() {
+        val client = ElizaServiceClient(mock {  })
+        val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
+        client.say(request, emptyMap())
+        assertThat(request.sentence).isEqualTo("hello")
+    }
+
 
     @Test
     fun multiFileEnabled() {

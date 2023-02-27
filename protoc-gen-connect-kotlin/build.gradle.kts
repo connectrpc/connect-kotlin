@@ -28,4 +28,5 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.assertj)
+    testImplementation(libs.mockito)
 }
