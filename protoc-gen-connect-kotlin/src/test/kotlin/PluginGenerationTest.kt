@@ -17,6 +17,7 @@ import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledInnerMessageServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledEmptyRPCRequest
+import buf.javamultiplefiles.enabled.v1.EnabledEmptyRPCResponse
 import buf.javamultiplefiles.enabled.v1.EnabledEmptyServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledInnerMessageServiceClient
 import buf.javamultiplefiles.enabled.v1.EnabledServiceClient
@@ -80,5 +81,31 @@ class PluginGenerationTest {
         assertThat(UnspecifiedEmptyServiceClient::class.java).isNotNull
         assertThat(UnspecifiedServiceClient::class.java).isNotNull
         assertThat(UnspecifiedInnerMessageServiceClient::class.java).isNotNull
+    }
+
+    @Test
+    fun callbackSignature() {
+        val unspecifiedEmptyServiceClient = UnspecifiedEmptyServiceClient(mock { })
+        val request = UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCRequest.getDefaultInstance()
+        unspecifiedEmptyServiceClient.unspecifiedEmptyRPC(request) { response ->
+            response.success { success ->
+                assertThat(success.message).isOfAnyClassIn(UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCResponse::class.java)
+
+            }
+        }
+        val disabledEmptyServiceClient = DisabledEmptyServiceClient(mock { })
+        disabledEmptyServiceClient.disabledEmptyRPC(DisabledEmptyOuterClass.DisabledEmptyRPCRequest.getDefaultInstance()) { response ->
+            response.success { success ->
+                success.message
+                assertThat(success.message).isOfAnyClassIn(DisabledEmptyOuterClass.DisabledEmptyRPCResponse::class.java)
+            }
+        }
+        val enabledEmptyServiceClient = EnabledEmptyServiceClient(mock { })
+        enabledEmptyServiceClient.enabledEmptyRPC(EnabledEmptyRPCRequest.getDefaultInstance()) { response ->
+            response.success { success ->
+                success.message
+                assertThat(success.message).isOfAnyClassIn(EnabledEmptyRPCResponse::class.java)
+            }
+        }
     }
 }
