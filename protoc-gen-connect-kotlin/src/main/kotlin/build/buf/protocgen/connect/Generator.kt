@@ -323,7 +323,6 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(unarySuspendFunction)
                 if (configuration.callbackSignature) {
-
                     val callbackType = LambdaTypeName.get(
                         receiver = ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
                         returnType = Unit::class.java.asTypeName()
