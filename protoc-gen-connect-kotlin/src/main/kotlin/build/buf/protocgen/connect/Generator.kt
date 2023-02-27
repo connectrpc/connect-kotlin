@@ -171,7 +171,7 @@ class Generator : CodeGenerator {
                 if (configuration.callbackSignature) {
                     val callbackType = LambdaTypeName.get(
                         parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
-                        returnType = Unit::class.java.asTypeName(),
+                        returnType = Unit::class.java.asTypeName()
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addModifiers(KModifier.ABSTRACT)
@@ -324,7 +324,7 @@ class Generator : CodeGenerator {
                 if (configuration.callbackSignature) {
                     val callbackType = LambdaTypeName.get(
                         parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
-                        returnType = Unit::class.java.asTypeName(),
+                        returnType = Unit::class.java.asTypeName()
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addModifiers(KModifier.OVERRIDE)

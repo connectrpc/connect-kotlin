@@ -90,7 +90,6 @@ class PluginGenerationTest {
         unspecifiedEmptyServiceClient.unspecifiedEmptyRPC(request) { response ->
             response.success { success ->
                 assertThat(success.message).isOfAnyClassIn(UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCResponse::class.java)
-
             }
         }
         val disabledEmptyServiceClient = DisabledEmptyServiceClient(mock { })
