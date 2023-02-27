@@ -20,6 +20,7 @@ internal const val CALLBACK_SIGNATURE = "callbackSignature"
  * The protoc plugin configuration class representation.
  */
 internal data class Configuration(
+    // Enable or disable callback signature generation.
     val callbackSignature: Boolean
 )
 
