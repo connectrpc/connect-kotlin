@@ -1,0 +1,7 @@
+version: v1
+plugins:
+  - name: connect-kotlin
+    out: src/test/java/
+    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+  - name: java
+    out: src/test/java/

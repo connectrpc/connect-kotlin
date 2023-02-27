@@ -16,7 +16,7 @@ $(BIN)/license-headers: Makefile
 	GOBIN=$(abspath $(BIN)) go install github.com/bufbuild/buf/private/pkg/licenseheader/cmd/license-header@$(LICENSE_HEADER_VERSION)
 
 .PHONY: build
-build: buildplugin ## Build the entire project.
+build: generate ## Build the entire project.
 	./gradlew build
 
 .PHONY: buildplugin
@@ -33,6 +33,8 @@ clean: ## Cleans the underlying build.
 	rm -rf crosstests/google-java/src/main/kotlin/generated
 	rm -rf crosstests/google-javalite/src/main/java/generated
 	rm -rf crosstests/google-javalite/src/main/kotlin/generated
+
+	rm -rf protoc-gen-connect-kotlin/src/test/java/
 
 .PHONY: crosstestserverrun
 crosstestserverrun: crosstestserverstop ## Run the server for cross tests.
@@ -62,6 +64,7 @@ crosstestsrunjavalite: ## Run the cross tests for protoc-gen-javalite integratio
 
 .PHONY: generate
 generate: buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
+	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 

@@ -57,46 +57,48 @@ class ConnectOkHttpClient(
             newCall.cancel()
         }
         try {
-            newCall.enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    val code = if (e.message?.lowercase() == "canceled") {
-                        Code.CANCELED
-                    } else {
-                        Code.UNKNOWN
-                    }
-                    onResult(
-                        HTTPResponse(
-                            code = code,
-                            headers = emptyMap(),
-                            message = Buffer(),
-                            trailers = emptyMap(),
-                            error = ConnectError(
-                                code,
-                                message = e.message,
-                                exception = e
-                            ),
-                            tracingInfo = null
+            newCall.enqueue(
+                object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        val code = if (e.message?.lowercase() == "canceled") {
+                            Code.CANCELED
+                        } else {
+                            Code.UNKNOWN
+                        }
+                        onResult(
+                            HTTPResponse(
+                                code = code,
+                                headers = emptyMap(),
+                                message = Buffer(),
+                                trailers = emptyMap(),
+                                error = ConnectError(
+                                    code,
+                                    message = e.message,
+                                    exception = e
+                                ),
+                                tracingInfo = null
+                            )
                         )
-                    )
-                }
+                    }
 
-                override fun onResponse(call: Call, response: Response) {
-                    val responseBuffer = response.body?.source()?.use { bufferedSource ->
-                        val buffer = Buffer()
-                        buffer.writeAll(bufferedSource)
-                        buffer
-                    }
-                    onResult(
-                        HTTPResponse(
-                            code = Code.fromHTTPStatus(response.code),
-                            headers = response.headers.toLowerCaseKeysMultiMap(),
-                            message = responseBuffer ?: Buffer(),
-                            trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                            tracingInfo = TracingInfo(response.code)
+                    override fun onResponse(call: Call, response: Response) {
+                        val responseBuffer = response.body?.source()?.use { bufferedSource ->
+                            val buffer = Buffer()
+                            buffer.writeAll(bufferedSource)
+                            buffer
+                        }
+                        onResult(
+                            HTTPResponse(
+                                code = Code.fromHTTPStatus(response.code),
+                                headers = response.headers.toLowerCaseKeysMultiMap(),
+                                message = responseBuffer ?: Buffer(),
+                                trailers = response.trailers().toLowerCaseKeysMultiMap(),
+                                tracingInfo = TracingInfo(response.code)
+                            )
                         )
-                    )
+                    }
                 }
-            })
+            )
         } catch (e: Throwable) {
             onResult(
                 HTTPResponse(

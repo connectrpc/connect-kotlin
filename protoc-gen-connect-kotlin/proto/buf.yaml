@@ -1,0 +1,9 @@
+version: v1
+lint:
+  use:
+    - DEFAULT
+  allow_comment_ignores: true
+  rpc_allow_same_request_response: true
+  ignore:
+    - no_package.proto
+
