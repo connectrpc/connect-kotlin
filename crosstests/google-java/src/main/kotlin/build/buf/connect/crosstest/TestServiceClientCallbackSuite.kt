@@ -28,6 +28,8 @@ import com.grpc.testing.payload
 import com.grpc.testing.simpleRequest
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.system.measureTimeMillis
 
 class TestServiceClientCallbackSuite(
@@ -54,15 +56,18 @@ class TestServiceClientCallbackSuite(
     }
 
     override suspend fun emptyUnary() = register("empty_unary") {
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
                 assertThat(success.message).isEqualTo(empty {})
+                countDownLatch.countDown()
             }
         }
-
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun largeUnary() = register("large_unary") {
@@ -73,15 +78,18 @@ class TestServiceClientCallbackSuite(
                 body = ByteString.copyFrom(ByteArray(size))
             }
         }
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
                 assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
+                countDownLatch.countDown()
             }
         }
-
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun customMetadata() = register("custom_metadata") {
@@ -99,6 +107,7 @@ class TestServiceClientCallbackSuite(
             responseSize = size
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
@@ -108,9 +117,11 @@ class TestServiceClientCallbackSuite(
             }
             response.success { success ->
                 assertThat(success.message.payload!!.body!!.size()).isEqualTo(size)
+                countDownLatch.countDown()
             }
         }
-
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun statusCodeAndMessage() = register("status_code_and_message") {
@@ -120,22 +131,28 @@ class TestServiceClientCallbackSuite(
                 message = "test status message"
             }
         }
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.error).isNotNull()
                 assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
                 assertThat(errorResponse.error.message).isEqualTo("test status message")
+                countDownLatch.countDown()
             }
             response.success {
                 fail<Unit>("unexpected success")
             }
         }
+
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun specialStatus() = register("special_status") {
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(
             simpleRequest {
                 responseStatus = echoStatus {
@@ -149,23 +166,34 @@ class TestServiceClientCallbackSuite(
                 assertThat(error.code).isEqualTo(Code.UNKNOWN)
                 assertThat(response.code).isEqualTo(Code.UNKNOWN)
                 assertThat(error.message).isEqualTo(statusMessage)
+                countDownLatch.countDown()
             }
             response.success {
                 fail<Unit>("unexpected success")
             }
         }
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun unimplementedMethod() = register("unimplemented_method") {
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            countDownLatch.countDown()
         }
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun unimplementedService() = register("unimplemented_service") {
+        val countDownLatch = CountDownLatch(1)
         unimplementedServiceClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            countDownLatch.countDown()
         }
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 
     override suspend fun failUnary() = register("fail_unary") {
@@ -173,18 +201,22 @@ class TestServiceClientCallbackSuite(
             reason = "soirée 🎉"
             domain = "connect-crosstest"
         }
+        val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
+            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.error
                 assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                 assertThat(error.message).isEqualTo("soirée 🎉")
                 val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
                 assertThat(connectErrorDetails).containsExactly(expectedErrorDetail)
+                countDownLatch.countDown()
             }
             response.success {
                 fail<Unit>("unexpected success")
             }
-            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         }
+        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+        assertThat(countDownLatch.count).isZero()
     }
 }
