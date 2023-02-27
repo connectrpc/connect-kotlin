@@ -428,6 +428,6 @@ class TestServiceClientSuite(
     }
 }
 
-private fun ByteArray.b64Encode(): String {
+internal fun ByteArray.b64Encode(): String {
     return this.toByteString().base64()
 }

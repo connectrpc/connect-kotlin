@@ -52,7 +52,7 @@ import com.squareup.kotlinpoet.asTypeName
  * move off of type aliases, this can be changed without user API breakage.
  */
 private val HEADERS_CLASS_NAME = ClassName("build.buf.connect", "Headers")
-private val CANCELLABLE_CLASS_NAME = ClassName("build.buf.connect.http", "Cancelable")
+private val CANCELABLE_CLASS_NAME = ClassName("build.buf.connect.http", "Cancelable")
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
@@ -159,16 +159,18 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(clientStreamingFunction)
             } else {
-                val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .addModifiers(KModifier.SUSPEND)
-                    .addParameter("request", inputClassName)
-                    .addParameter(headerParameterSpec)
-                    .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
-                    .build()
-                functions.add(unarySuspendFunction)
+                if (configuration.generateCoroutineMethods) {
+                    val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
 
-                if (configuration.callbackSignature) {
+                if (configuration.generateCallbackMethods) {
                     val callbackType = LambdaTypeName.get(
                         parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
                         returnType = Unit::class.java.asTypeName()
@@ -178,7 +180,7 @@ class Generator : CodeGenerator {
                         .addParameter("request", inputClassName)
                         .addParameter(headerParameterSpec)
                         .addParameter("onResult", callbackType)
-                        .returns(CANCELLABLE_CLASS_NAME)
+                        .returns(CANCELABLE_CLASS_NAME)
                         .build()
                     functions.add(unaryCallbackFunction)
                 }
@@ -301,27 +303,29 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(clientStreamingFunction)
             } else {
-                val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addModifiers(KModifier.SUSPEND)
-                    .addModifiers(KModifier.OVERRIDE)
-                    .addParameter("request", inputClassName)
-                    .addParameter("headers", HEADERS_CLASS_NAME)
-                    .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
-                    .addStatement(
-                        "return %L",
-                        CodeBlock.builder()
-                            .addStatement("client.unary(")
-                            .indent()
-                            .addStatement("request,")
-                            .addStatement("headers,")
-                            .add(methodSpecCallBlock)
-                            .unindent()
-                            .addStatement(")")
-                            .build()
-                    )
-                    .build()
-                functions.add(unarySuspendFunction)
-                if (configuration.callbackSignature) {
+                if (configuration.generateCoroutineMethods) {
+                    val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.SUSPEND)
+                        .addModifiers(KModifier.OVERRIDE)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unary(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
+                if (configuration.generateCallbackMethods) {
                     val callbackType = LambdaTypeName.get(
                         parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),
                         returnType = Unit::class.java.asTypeName()
@@ -331,7 +335,7 @@ class Generator : CodeGenerator {
                         .addParameter("request", inputClassName)
                         .addParameter("headers", HEADERS_CLASS_NAME)
                         .addParameter("onResult", callbackType)
-                        .returns(CANCELLABLE_CLASS_NAME)
+                        .returns(CANCELABLE_CLASS_NAME)
                         .addStatement(
                             "return %L",
                             CodeBlock.builder()

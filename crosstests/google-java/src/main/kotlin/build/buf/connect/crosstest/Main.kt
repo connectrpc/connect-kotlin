@@ -87,10 +87,11 @@ class Main {
                     compressionPools = listOf(GzipCompressionPool)
                 )
             )
-            tests(tag, connectClient, shortTimeoutClient)
+            coroutineTests(tag, connectClient, shortTimeoutClient)
+            callbackTests(tag, connectClient)
         }
 
-        private suspend fun tests(
+        private suspend fun coroutineTests(
             tag: String,
             protocolClient: ProtocolClient,
             shortTimeoutClient: ProtocolClient
@@ -111,6 +112,23 @@ class Main {
             testServiceClientSuite.unimplementedServerStreamingService()
             testServiceClientSuite.failUnary()
             testServiceClientSuite.failServerStreaming()
+
+            testServiceClientSuite.test(tag)
+        }
+
+        private suspend fun callbackTests(
+            tag: String,
+            protocolClient: ProtocolClient,
+        ) {
+            val testServiceClientSuite = TestServiceClientCallbackSuite(protocolClient)
+            testServiceClientSuite.emptyUnary()
+            testServiceClientSuite.largeUnary()
+            testServiceClientSuite.customMetadata()
+            testServiceClientSuite.statusCodeAndMessage()
+            testServiceClientSuite.specialStatus()
+            testServiceClientSuite.unimplementedMethod()
+            testServiceClientSuite.unimplementedService()
+            testServiceClientSuite.failUnary()
 
             testServiceClientSuite.test(tag)
         }

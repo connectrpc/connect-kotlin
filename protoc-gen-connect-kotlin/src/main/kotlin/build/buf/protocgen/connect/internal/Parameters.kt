@@ -14,14 +14,17 @@
 
 package build.buf.protocgen.connect.internal
 
-internal const val CALLBACK_SIGNATURE = "callbackSignature"
+internal const val CALLBACK_SIGNATURE = "generateCallbackMethods"
+internal const val COROUTINE_SIGNATURE = "generateCoroutineMethods"
 
 /**
  * The protoc plugin configuration class representation.
  */
 internal data class Configuration(
     // Enable or disable callback signature generation.
-    val callbackSignature: Boolean
+    val generateCallbackMethods: Boolean,
+    // Enable or disable coroutine signature generation.
+    val generateCoroutineMethods: Boolean,
 )
 
 /**
@@ -32,9 +35,10 @@ internal data class Configuration(
  * will internally translate from snake casing to camel
  * casing.
  */
-internal fun parse(parameter: String): Configuration {
-    val parameters = parseGeneratorParameter(parameter)
+internal fun parse(input: String): Configuration {
+    val parameters = parseGeneratorParameter(input)
     return Configuration(
-        callbackSignature = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false
+        generateCallbackMethods = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false,
+        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true, // Defaulted to true.
     )
 }

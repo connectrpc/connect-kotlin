@@ -38,3 +38,15 @@ interface TestSuite {
     suspend fun failUnary()
     suspend fun failServerStreaming()
 }
+
+interface UnaryCallbackTestSuite {
+    suspend fun test(tag: String)
+    suspend fun emptyUnary()
+    suspend fun largeUnary()
+    suspend fun customMetadata()
+    suspend fun statusCodeAndMessage()
+    suspend fun specialStatus()
+    suspend fun unimplementedMethod()
+    suspend fun unimplementedService()
+    suspend fun failUnary()
+}
