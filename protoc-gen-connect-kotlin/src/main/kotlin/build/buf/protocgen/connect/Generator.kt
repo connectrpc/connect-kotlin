@@ -206,17 +206,13 @@ class Generator : CodeGenerator {
                     .initializer("client")
                     .build()
             )
-        val functionSpecs = implementationMethods(
-            service.fullName,
-            service.methods
-        )
+        val functionSpecs = implementationMethods(service.methods)
         return classBuilder
             .addFunctions(functionSpecs)
             .build()
     }
 
     private fun implementationMethods(
-        serviceName: String,
         methods: List<Descriptors.MethodDescriptor>
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
@@ -225,7 +221,7 @@ class Generator : CodeGenerator {
             val outputClassName = classNameFromType(method.outputType)
             val methodSpecCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
-                .addStatement("\"$serviceName/${method.name}\",")
+                .addStatement("\"${method.service.fullName}/${method.name}\",")
                 .indent()
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class")
