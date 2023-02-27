@@ -23,10 +23,7 @@ import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Plugin
 import build.buf.protocgen.connect.internal.getClassName
-import build.buf.protocgen.connect.internal.getClassNameForFile
-import build.buf.protocgen.connect.internal.getFileClassName
 import build.buf.protocgen.connect.internal.getFileJavaPackage
-import build.buf.protocgen.connect.internal.getJavaFileName
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.ClassName

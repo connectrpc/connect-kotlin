@@ -41,14 +41,13 @@ class PluginGenerationTest {
 
     @Test
     fun emptyPackageServiceRequest() {
-        val client = ElizaServiceClient(mock {  })
+        val client = ElizaServiceClient(mock { })
         val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
         CoroutineScope(Dispatchers.IO).launch {
             client.say(request, emptyMap())
         }
         assertThat(request.sentence).isEqualTo("hello")
     }
-
 
     @Test
     fun multiFileEnabled() {
