@@ -98,7 +98,7 @@ class Generator : CodeGenerator {
                 .addFileComment("\n")
                 .addFileComment("Source: ${file.name}\n")
                 // Set the file package for the generated methods.
-                .addType(serviceClientImplementation(file.`package`, packageName, service))
+                .addType(serviceClientImplementation(packageName, service))
                 .build()
             fileSpecs.put(serviceClientImplementationClassName(packageName, service), implementationFileSpec)
         }
@@ -190,7 +190,6 @@ class Generator : CodeGenerator {
     }
 
     private fun serviceClientImplementation(
-        packageName: String,
         javaPackageName: String,
         service: Descriptors.ServiceDescriptor
     ): TypeSpec {
@@ -208,8 +207,7 @@ class Generator : CodeGenerator {
                     .build()
             )
         val functionSpecs = implementationMethods(
-            packageName,
-            service.name,
+            service.fullName,
             service.methods
         )
         return classBuilder
@@ -218,22 +216,16 @@ class Generator : CodeGenerator {
     }
 
     private fun implementationMethods(
-        packageName: String,
         serviceName: String,
         methods: List<Descriptors.MethodDescriptor>
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
-            val path = if (packageName.isNotEmpty()) {
-                "$packageName.$serviceName/${method.name}"
-            } else {
-                "$serviceName/${method.name}"
-            }
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
             val methodSpecCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
-                .addStatement("\"$path\",")
+                .addStatement("\"$serviceName/${method.name}\",")
                 .indent()
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class")
