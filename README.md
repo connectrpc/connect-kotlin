@@ -104,6 +104,13 @@ Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
 is available on the [connect.build website][getting-started].
 
+## Generation Options 
+
+| **Option**          | **Type** | **Default** | **Repeatable** | **Details**                                     |
+|---------------------|:--------:|:-----------:|:--------------:|-------------------------------------------------|
+| `callbackSignature` | Boolean  |   `false`   |       No       | Generate callback signatures for unary methods. |
+
+
 ## Example Apps
 
 Example apps are available in [`/examples`](./examples). First, run `make generate` to generate 

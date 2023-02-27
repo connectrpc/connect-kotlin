@@ -14,7 +14,7 @@
 
 package build.buf.protocgen.connect.internal
 
-internal const val CALLBACK_SIGNATURE = "callback_signature"
+internal const val CALLBACK_SIGNATURE = "callbackSignature"
 
 internal data class Configuration(
     val callbackSignature: Boolean

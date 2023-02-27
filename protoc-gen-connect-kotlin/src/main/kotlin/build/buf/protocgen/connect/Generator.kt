@@ -232,7 +232,7 @@ class Generator : CodeGenerator {
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class")
                 .unindent()
-                .addStatement(")")
+                .addStatement("),")
                 .build()
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingFunction = FunSpec.builder(method.name.lowerCamelCase())
