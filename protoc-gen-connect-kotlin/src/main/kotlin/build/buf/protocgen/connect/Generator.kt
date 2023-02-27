@@ -330,6 +330,7 @@ class Generator : CodeGenerator {
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addModifiers(KModifier.SUSPEND)
+                        .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
                         .addParameter("headers", HEADERS_CLASS_NAME)
                         .addParameter("onResult", callbackType)
