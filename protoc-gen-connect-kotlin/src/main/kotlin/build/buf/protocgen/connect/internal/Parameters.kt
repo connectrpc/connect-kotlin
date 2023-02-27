@@ -16,10 +16,21 @@ package build.buf.protocgen.connect.internal
 
 internal const val CALLBACK_SIGNATURE = "callbackSignature"
 
+/**
+ * The protoc plugin configuration class representation.
+ */
 internal data class Configuration(
     val callbackSignature: Boolean
 )
 
+/**
+ * Parse options passed as a string.
+ *
+ * Key values are parsed with `parseGeneratorParameter()`.
+ * The key values are expected to be in camel casing but
+ * will internally translate from snake casing to camel
+ * casing.
+ */
 internal fun parse(parameter: String): Configuration {
     val parameters = parseGeneratorParameter(parameter)
     return Configuration(
