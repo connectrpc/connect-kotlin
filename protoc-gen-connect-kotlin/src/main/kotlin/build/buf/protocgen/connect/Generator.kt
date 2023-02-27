@@ -37,7 +37,6 @@ import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
@@ -168,6 +167,7 @@ class Generator : CodeGenerator {
                     .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
                     .build()
                 functions.add(unarySuspendFunction)
+
                 if (configuration.callbackSignature) {
                     val callbackType = LambdaTypeName.get(
                         receiver = ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
@@ -225,14 +225,14 @@ class Generator : CodeGenerator {
         for (method in methods) {
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
-            val methodCallBlock = CodeBlock.builder()
+            val methodSpecCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
                 .addStatement("\"$packageName.$serviceName/${method.name}\",")
                 .indent()
                 .addStatement("$inputClassName::class,")
-                .addStatement("$outputClassName::class,")
+                .addStatement("$outputClassName::class")
                 .unindent()
-                .addStatement("),")
+                .addStatement(")")
                 .build()
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingFunction = FunSpec.builder(method.name.lowerCamelCase())
@@ -252,7 +252,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.stream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -273,7 +273,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.serverStream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -294,7 +294,7 @@ class Generator : CodeGenerator {
                             .addStatement("client.clientStream(")
                             .indent()
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
@@ -315,13 +315,41 @@ class Generator : CodeGenerator {
                             .indent()
                             .addStatement("request,")
                             .addStatement("headers,")
-                            .add(methodCallBlock)
+                            .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
                             .build()
                     )
                     .build()
                 functions.add(unarySuspendFunction)
+                if (configuration.callbackSignature) {
+
+                    val callbackType = LambdaTypeName.get(
+                        receiver = ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
+                        returnType = Unit::class.java.asTypeName()
+                    )
+                    val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .addParameter("onResult", callbackType)
+                        .returns(CANCELLABLE_CLASS_NAME)
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unary(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .addStatement("onResult")
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unaryCallbackFunction)
+                }
             }
         }
         return functions
