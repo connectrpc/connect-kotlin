@@ -8,3 +8,5 @@ plugins:
       - generateCoroutineMethods=true
   - name: java
     out: src/test/java/
+  - plugin: buf.build/grpc/java
+    out: src/test/java/

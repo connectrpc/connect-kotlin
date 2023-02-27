@@ -224,11 +224,16 @@ class Generator : CodeGenerator {
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for (method in methods) {
+            val path = if (packageName.isNotEmpty()) {
+                "$packageName.$serviceName/${method.name}"
+            } else {
+                "$serviceName/${method.name}"
+            }
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
             val methodSpecCallBlock = CodeBlock.builder()
                 .addStatement("MethodSpec(")
-                .addStatement("\"$packageName.$serviceName/${method.name}\",")
+                .addStatement("\"$path\",")
                 .indent()
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class")
