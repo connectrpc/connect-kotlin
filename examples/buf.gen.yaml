@@ -14,6 +14,8 @@ plugins:
   - name: connect-kotlin
     out: generated-google-javalite/src/main/kotlin
     path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+    opt:
+        - generateCallbackMethods=true
   - name: java
     out: generated-google-javalite/src/main/java
     opt: lite
