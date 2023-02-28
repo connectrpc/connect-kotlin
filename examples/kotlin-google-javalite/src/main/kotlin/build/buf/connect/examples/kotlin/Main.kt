@@ -17,6 +17,7 @@ package build.buf.connect.examples.kotlin
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.demo.eliza.v1.ConverseRequest
 import build.buf.connect.demo.eliza.v1.ElizaServiceClient
+import build.buf.connect.demo.eliza.v1.SayRequest
 import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
@@ -48,25 +49,26 @@ class Main {
                     )
                 )
                 val elizaServiceClient = ElizaServiceClient(client)
-                connectStreaming(elizaServiceClient)
+                talkToElizaSuspended(elizaServiceClient)
+                talkToEliza(elizaServiceClient)
             }
         }
 
-        private suspend fun connectStreaming(elizaServiceClient: ElizaServiceClient) {
-            val stream = elizaServiceClient.converse()
+        private suspend fun talkToElizaSuspended(elizaServiceClient: ElizaServiceClient) {
             withContext(Dispatchers.IO) {
-                // Add the message the user is sending to the views.
-                stream.send(ConverseRequest.newBuilder().setSentence("hello").build())
-                for (streamResult in stream.resultChannel()) {
-                    streamResult.maybeFold(
-                        onMessage = { result ->
-                            // Update the view with the response.
-                            val elizaResponse = result.message
-                            println(elizaResponse.sentence)
-                        }
-                    )
+                val response = elizaServiceClient.say(SayRequest.newBuilder().setSentence("hello").build())
+                response.success { result ->
+                    println(result.message)
                 }
             }
         }
-    }
+
+        private fun talkToEliza(elizaServiceClient: ElizaServiceClient) {
+            val cancelable = elizaServiceClient.say(SayRequest.newBuilder().setSentence("hello").build()) { response ->
+                response.success { result ->
+                    println(result.message)
+                }
+            }
+            cancelable()
+        }    }
 }

@@ -5,6 +5,8 @@ managed:
 plugins:
   - name: connect-kotlin
     out: generated-google-java/src/main/kotlin
+    opt:
+        - generateCallbackMethods=true
     path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
   - name: java
     out: generated-google-java/src/main/java
