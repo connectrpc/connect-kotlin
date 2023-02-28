@@ -69,6 +69,7 @@ class Main {
                     println(result.message)
                 }
             }
+            // cancelable() can be used to cancel the underlying request.
             cancelable()
         }
     }
