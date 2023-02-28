@@ -15,7 +15,6 @@
 package build.buf.connect.examples.kotlin
 
 import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.demo.eliza.v1.ConverseRequest
 import build.buf.connect.demo.eliza.v1.ElizaServiceClient
 import build.buf.connect.demo.eliza.v1.SayRequest
 import build.buf.connect.extensions.GoogleJavaProtobufStrategy
