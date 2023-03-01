@@ -64,7 +64,7 @@ class TestServiceClientSuite(
     override suspend fun emptyUnary() = register("empty_unary") {
         val response = testServiceConnectClient.emptyCall(empty {})
         response.failure {
-            fail<Unit>("expected error to be null", it.error)
+            fail<Unit>("expected error to be null")
         }
         response.success { success ->
             assertThat(success.message).isEqualTo(empty {})

@@ -2,6 +2,7 @@ rootProject.name = "connect-kotlin"
 
 enableFeaturePreview("VERSION_CATALOGS")
 
+include(":apache")
 include(":crosstests:common")
 include(":crosstests:google-java")
 include(":crosstests:google-javalite")
@@ -15,4 +16,3 @@ include(":extensions:google-javalite")
 include(":library")
 include(":okhttp")
 include(":protoc-gen-connect-kotlin")
-include("apache")
