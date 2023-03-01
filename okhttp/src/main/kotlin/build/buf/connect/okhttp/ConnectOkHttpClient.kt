@@ -32,6 +32,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okio.Buffer
 import java.io.IOException
+import java.util.Locale
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
@@ -126,7 +127,7 @@ class ConnectOkHttpClient(
 internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
     return toMultimap()
         .map { (key, value) ->
-            key.lowercase() to value
+            key.lowercase(Locale.US) to value
         }
         .toMap()
 }

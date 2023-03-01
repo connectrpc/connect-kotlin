@@ -15,6 +15,7 @@
 package build.buf.connect.crosstest
 
 import build.buf.connect.ProtocolClientConfig
+import build.buf.connect.apache.ConnectApacheHttpClient
 import build.buf.connect.compression.GzipCompressionPool
 import build.buf.connect.compression.RequestCompression
 import build.buf.connect.crosstest.ssl.sslContext
@@ -29,7 +30,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import org.apache.http.conn.ssl.NoopHostnameVerifier
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClients
+import org.apache.http.ssl.SSLContexts
+import org.apache.http.ssl.TrustStrategy
+import org.assertj.core.internal.bytebuddy.implementation.bytecode.Throw
+import java.security.cert.X509Certificate
 import java.time.Duration
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
 import kotlin.system.exitProcess
 
 class Main {
@@ -40,20 +51,17 @@ class Main {
                 val port = 8081
                 val host = "https://localhost:$port"
                 println("Starting on $host...")
-                val (sslSocketFactory, trustManager) = sslContext()
-                val client = OkHttpClient.Builder()
-                    .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                    .connectTimeout(Duration.ofMinutes(1))
-                    .readTimeout(Duration.ofMinutes(1))
-                    .writeTimeout(Duration.ofMinutes(1))
-                    .callTimeout(Duration.ofMinutes(1))
-                    .sslSocketFactory(sslSocketFactory, trustManager)
-                    .build()
                 val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
                 val job = scope.launch {
-                    runConnectTests("connect", host, client, NetworkProtocol.CONNECT)
-                    runConnectTests("grpc", host, client, NetworkProtocol.GRPC)
-                    runConnectTests("grpc-web", host, client, NetworkProtocol.GRPC_WEB)
+//                    runOkHttpConnectTests("(OkHttp) connect", host, NetworkProtocol.CONNECT)
+//                    runOkHttpConnectTests("(OkHttp) grpc", host, NetworkProtocol.GRPC)
+//                    runOkHttpConnectTests("(OkHttp) grpc-web", host, NetworkProtocol.GRPC_WEB)
+
+                    runApacheConnectTests("(Apache) connect", host, NetworkProtocol.CONNECT)
+//                    runApacheConnectTests("(Apache) grpc", host, NetworkProtocol.GRPC)
+//                    runApacheConnectTests("(Apache) grpc-web", host, NetworkProtocol.GRPC_WEB)
+
+
                 }
                 job.join()
                 println("...complete.")
@@ -61,12 +69,20 @@ class Main {
             }
         }
 
-        private suspend fun runConnectTests(
+        private suspend fun runOkHttpConnectTests(
             tag: String,
             host: String,
-            client: OkHttpClient,
             networkProtocol: NetworkProtocol
         ) {
+            val (sslSocketFactory, trustManager) = sslContext()
+            val client = OkHttpClient.Builder()
+                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .connectTimeout(Duration.ofMinutes(1))
+                .readTimeout(Duration.ofMinutes(1))
+                .writeTimeout(Duration.ofMinutes(1))
+                .callTimeout(Duration.ofMinutes(1))
+                .sslSocketFactory(sslSocketFactory, trustManager)
+                .build()
             val connectClient = ProtocolClient(
                 httpClient = ConnectOkHttpClient(client),
                 ProtocolClientConfig(
@@ -88,6 +104,41 @@ class Main {
                 )
             )
             coroutineTests(tag, connectClient, shortTimeoutClient)
+        }
+
+        private suspend fun runApacheConnectTests(
+            tag: String,
+            host: String,
+            networkProtocol: NetworkProtocol
+        ) {
+            val sslContext = SSLContexts.custom()
+                .loadTrustMaterial(null) { _, _ ->
+                    // Trust everything for now.
+                    return@loadTrustMaterial true
+                }
+                .build()
+            val socketFactory = SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
+            val httpclient: CloseableHttpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build()
+            val connectClient = ProtocolClient(
+                httpClient = ConnectApacheHttpClient(httpclient),
+                ProtocolClientConfig(
+                    host = host,
+                    serializationStrategy = GoogleJavaProtobufStrategy(),
+                    networkProtocol = networkProtocol,
+                    requestCompression = RequestCompression(10, GzipCompressionPool),
+                    compressionPools = listOf(GzipCompressionPool)
+                )
+            )
+            val shortTimeoutClient = ProtocolClient(
+                httpClient = ConnectApacheHttpClient(httpclient),
+                ProtocolClientConfig(
+                    host = host,
+                    serializationStrategy = GoogleJavaProtobufStrategy(),
+                    networkProtocol = networkProtocol,
+                    requestCompression = RequestCompression(10, GzipCompressionPool),
+                    compressionPools = listOf(GzipCompressionPool)
+                )
+            )
             callbackTests(tag, connectClient)
         }
 

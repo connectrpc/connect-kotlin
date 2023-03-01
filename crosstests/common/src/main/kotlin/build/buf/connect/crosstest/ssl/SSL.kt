@@ -52,7 +52,6 @@ fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
         .heldCertificate(clientHeldCertificate)
         .addTrustedCertificate(certificateAuthority)
         .build()
-
     return result.sslSocketFactory() to result.trustManager
 }
 
@@ -150,7 +149,7 @@ raq4CptHPEywZgBR95C0Jv3y
 -----END PRIVATE KEY-----"""
 
 // https://github.com/bufbuild/connect-crosstest/blob/main/cert/client.key
-const val rsaClientKey = """-----BEGIN RSA PRIVATE KEY-----
+private const val rsaClientKey = """-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEAqCSOgQ3rFjxEZu84yxgPT6dF0kd656XnF0yiAcGpq9+YK/yL
 eIwGTDAVAR4XbywdKQI9f4ZVi7w0ErkAb37K9iq6jr7VTj9HOSgs8B47y5soYb4z
 leYhHbb+ZlA8CC3EB/JryuF08lqiA77JVLNysVn7sKzx2RPqqbVQBPfNqW2IsUE0

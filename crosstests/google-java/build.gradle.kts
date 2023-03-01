@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":extensions:google-java"))
 
     implementation(project(":okhttp"))
+    implementation(project(":apache"))
 }
 
 configure<SpotlessExtension> {
