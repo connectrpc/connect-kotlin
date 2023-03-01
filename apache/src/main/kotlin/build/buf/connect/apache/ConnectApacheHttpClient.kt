@@ -1,3 +1,17 @@
+// Copyright 2022-2023 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package build.buf.connect.apache
 
 import build.buf.connect.Code
@@ -9,9 +23,7 @@ import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.Stream
 import build.buf.connect.http.TracingInfo
-import build.buf.connect.protocols.CONTENT_ENCODING
 import okio.Buffer
-import okio.ByteString.Companion.readByteString
 import org.apache.http.Header
 import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.ByteArrayEntity
@@ -24,7 +36,7 @@ private const val CONTENT_TYPE = "content-type"
 
 class ConnectApacheHttpClient(
     private val httpClient: CloseableHttpClient
-): HTTPClientInterface {
+) : HTTPClientInterface {
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val httpPost = HttpPost(request.url.toURI())
         for (entry in request.headers) {
@@ -88,7 +100,6 @@ class ConnectApacheHttpClient(
         }
         return cancelable
     }
-
 
     override fun stream(request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream {
         throw UnsupportedOperationException("Streaming not yet supported in Apache client.")

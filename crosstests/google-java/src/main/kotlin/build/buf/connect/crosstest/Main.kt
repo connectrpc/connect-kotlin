@@ -35,12 +35,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.ssl.SSLContexts
-import org.apache.http.ssl.TrustStrategy
-import org.assertj.core.internal.bytebuddy.implementation.bytecode.Throw
-import java.security.cert.X509Certificate
 import java.time.Duration
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
 import kotlin.system.exitProcess
 
 class Main {
@@ -60,8 +55,6 @@ class Main {
                     runApacheConnectTests("(Apache) connect", host, NetworkProtocol.CONNECT)
 //                    runApacheConnectTests("(Apache) grpc", host, NetworkProtocol.GRPC)
 //                    runApacheConnectTests("(Apache) grpc-web", host, NetworkProtocol.GRPC_WEB)
-
-
                 }
                 job.join()
                 println("...complete.")
