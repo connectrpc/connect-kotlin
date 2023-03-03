@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import org.apache.http
 import org.apache.http.conn.ssl.NoopHostnameVerifier
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory
 import org.apache.http.impl.client.CloseableHttpClient
@@ -48,13 +49,13 @@ class Main {
                 println("Starting on $host...")
                 val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
                 val job = scope.launch {
-//                    runOkHttpConnectTests("(OkHttp) connect", host, NetworkProtocol.CONNECT)
-//                    runOkHttpConnectTests("(OkHttp) grpc", host, NetworkProtocol.GRPC)
-//                    runOkHttpConnectTests("(OkHttp) grpc-web", host, NetworkProtocol.GRPC_WEB)
+                    runOkHttpConnectTests("(OkHttp) connect", host, NetworkProtocol.CONNECT)
+                    runOkHttpConnectTests("(OkHttp) grpc", host, NetworkProtocol.GRPC)
+                    runOkHttpConnectTests("(OkHttp) grpc-web", host, NetworkProtocol.GRPC_WEB)
 
                     runApacheConnectTests("(Apache) connect", host, NetworkProtocol.CONNECT)
-//                    runApacheConnectTests("(Apache) grpc", host, NetworkProtocol.GRPC)
-//                    runApacheConnectTests("(Apache) grpc-web", host, NetworkProtocol.GRPC_WEB)
+                    runApacheConnectTests("(Apache) grpc", host, NetworkProtocol.GRPC)
+                    runApacheConnectTests("(Apache) grpc-web", host, NetworkProtocol.GRPC_WEB)
                 }
                 job.join()
                 println("...complete.")
@@ -111,6 +112,7 @@ class Main {
                 }
                 .build()
             val socketFactory = SSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE)
+            HttpAsyncClients
             val httpclient: CloseableHttpClient = HttpClients.custom().setSSLSocketFactory(socketFactory).build()
             val connectClient = ProtocolClient(
                 httpClient = ConnectApacheHttpClient(httpclient),

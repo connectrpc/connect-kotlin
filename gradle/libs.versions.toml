@@ -1,5 +1,5 @@
 [versions]
-apache = "4.5.13"
+apache = "5.2.1"
 android = "4.1.1.4"
 assertj = "3.11.0"
 coroutines = "1.5.2"
