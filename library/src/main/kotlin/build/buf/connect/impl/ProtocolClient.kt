@@ -30,6 +30,7 @@ import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.net.URL
 import kotlin.coroutines.resume
 
@@ -52,8 +53,9 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
+            val httpURL = config.host.toHttpUrl().newBuilder().addPathSegment(methodSpec.path).build()
             val unaryRequest = HTTPRequest(
-                url = URL("${config.host}/${methodSpec.path}"),
+                url = httpURL.toUrl(),
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
                 message = requestCodec.serialize(request)
