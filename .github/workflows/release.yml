@@ -4,6 +4,8 @@ on:
     tags:
       - v*
   workflow_dispatch: {} # support manual runs
+permissions:
+  contents: read
 jobs:
   library:
     runs-on: ubuntu-latest
