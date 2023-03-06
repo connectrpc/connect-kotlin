@@ -34,7 +34,7 @@ class ProtocolClientConfigTest {
     }
 
     @Test(expected = MalformedURLException::class)
-    fun unsupportedSchemeErrorsWhenTranslatingtoURL() {
+    fun unsupportedSchemeErrorsWhenTranslatingToURL() {
         val config = ProtocolClientConfig(
             host = "xhtp://connect.build",
             serializationStrategy = mock { }
