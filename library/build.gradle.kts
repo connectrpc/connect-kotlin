@@ -13,7 +13,6 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
 
-    implementation(libs.okhttp.core)
     implementation(libs.moshiKotlin)
     implementation(libs.kotlin.coroutines.core)
 }
