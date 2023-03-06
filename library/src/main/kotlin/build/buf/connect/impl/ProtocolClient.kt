@@ -30,7 +30,6 @@ import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.net.URI
 import java.net.URL
 import kotlin.coroutines.resume
 
@@ -203,7 +202,7 @@ class ProtocolClient(
     }
 
     private fun <Input : Any, Output : Any> urlFromMethodSpec(methodSpec: MethodSpec<Input, Output>): URL {
-        val host = URI(config.host).resolve(methodSpec.path)
+        val host = config.baseUri.resolve(methodSpec.path)
         return host.toURL()
     }
 }
