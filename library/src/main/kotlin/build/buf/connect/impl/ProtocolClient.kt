@@ -53,10 +53,8 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
-            val host = URI(config.host)
-            val uri = URI(host.scheme, host.host, "/${methodSpec.path}", null)
             val unaryRequest = HTTPRequest(
-                url = uri.toURL(),
+                url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
                 message = requestCodec.serialize(request)
@@ -144,7 +142,7 @@ class ProtocolClient(
         val requestCodec = config.serializationStrategy.codec(methodSpec.requestClass)
         val responseCodec = config.serializationStrategy.codec(methodSpec.responseClass)
         val request = HTTPRequest(
-            url = URL("${config.host}/${methodSpec.path}"),
+            url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
             headers = headers
         )
@@ -202,5 +200,11 @@ class ProtocolClient(
                 channel
             )
         )
+    }
+
+    private fun <Input : Any, Output : Any> urlFromMethodSpec(methodSpec: MethodSpec<Input, Output>): URL {
+        val host = URI(config.host)
+        val uri = URI(host.scheme, host.host, "/${methodSpec.path}", null)
+        return uri.toURL()
     }
 }

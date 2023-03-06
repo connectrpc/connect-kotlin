@@ -18,6 +18,9 @@ import build.buf.connect.Codec
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.SerializationStrategy
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okio.Buffer
 import org.junit.Test
 import org.mockito.kotlin.any
@@ -29,7 +32,7 @@ class ProtocolClientTest {
     private val codec: Codec<String> = mock { }
 
     @Test
-    fun urlConfigurationHostWithTrailingSlash() {
+    fun urlConfigurationHostWithTrailingSlashUnary() {
         whenever(codec.encodingName()).thenReturn("testing")
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
@@ -53,15 +56,19 @@ class ProtocolClientTest {
     }
 
     @Test
-    fun urlConfigurationHostWithoutTrailingSlash() {
-        val client2 = ProtocolClient(
+    fun urlConfigurationHostWithoutTrailingSlashUnary() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+
+        val client = ProtocolClient(
             httpClient = mock { },
             config = ProtocolClientConfig(
                 host = "https://buf.build",
                 serializationStrategy = serializationStrategy
             )
         )
-        client2.unary(
+        client.unary(
             "input",
             emptyMap(),
             MethodSpec(
@@ -70,5 +77,55 @@ class ProtocolClientTest {
                 String::class
             )
         ) { _ -> }
+    }
+
+    @Test
+    fun urlConfigurationHostWithTrailingSlashStreaming() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+
+        val client = ProtocolClient(
+            httpClient = mock { },
+            config = ProtocolClientConfig(
+                host = "https://buf.build/",
+                serializationStrategy = serializationStrategy
+            )
+        )
+        CoroutineScope(Dispatchers.IO).launch {
+            client.stream(
+                emptyMap(),
+                MethodSpec(
+                    path = "build.buf.connect.SomeService/Service",
+                    String::class,
+                    String::class
+                )
+            )
+        }
+    }
+
+    @Test
+    fun urlConfigurationHostWithoutTrailingSlashStreaming() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+
+        val client = ProtocolClient(
+            httpClient = mock { },
+            config = ProtocolClientConfig(
+                host = "https://buf.build",
+                serializationStrategy = serializationStrategy
+            )
+        )
+        CoroutineScope(Dispatchers.IO).launch {
+            client.stream(
+                emptyMap(),
+                MethodSpec(
+                    path = "build.buf.connect.SomeService/Service",
+                    String::class,
+                    String::class
+                )
+            )
+        }
     }
 }
