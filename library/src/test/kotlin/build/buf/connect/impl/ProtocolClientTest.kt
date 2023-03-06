@@ -24,25 +24,33 @@ class ProtocolClientTest {
             httpClient = mock { },
             config = ProtocolClientConfig(
                 host = "https://buf.build/",
-                serializationStrategy = serializationStrategy,
+                serializationStrategy = serializationStrategy
             )
         )
-        client.unary("input", emptyMap(), MethodSpec(
-            path = "build.buf.connect.SomeService/Service",
-            String::class,
-            String::class
-        )) { _ -> }
+        client.unary(
+            "input",
+            emptyMap(),
+            MethodSpec(
+                path = "build.buf.connect.SomeService/Service",
+                String::class,
+                String::class
+            )
+        ) { _ -> }
         val client2 = ProtocolClient(
             httpClient = mock { },
             config = ProtocolClientConfig(
                 host = "https://buf.build",
-                serializationStrategy = serializationStrategy,
+                serializationStrategy = serializationStrategy
             )
         )
-        client2.unary("input", emptyMap(), MethodSpec(
-            path = "build.buf.connect.SomeService/Service",
-            String::class,
-            String::class
-        )) { _ -> }
+        client2.unary(
+            "input",
+            emptyMap(),
+            MethodSpec(
+                path = "build.buf.connect.SomeService/Service",
+                String::class,
+                String::class
+            )
+        ) { _ -> }
     }
 }
