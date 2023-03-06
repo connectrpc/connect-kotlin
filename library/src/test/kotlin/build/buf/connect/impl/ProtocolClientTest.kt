@@ -29,7 +29,7 @@ class ProtocolClientTest {
     private val codec: Codec<String> = mock { }
 
     @Test
-    fun urlConfiguration() {
+    fun urlConfigurationHostWithTrailingSlash() {
         whenever(codec.encodingName()).thenReturn("testing")
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
@@ -50,6 +50,10 @@ class ProtocolClientTest {
                 String::class
             )
         ) { _ -> }
+    }
+
+    @Test
+    fun urlConfigurationHostWithoutTrailingSlash() {
         val client2 = ProtocolClient(
             httpClient = mock { },
             config = ProtocolClientConfig(
