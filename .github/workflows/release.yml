@@ -51,6 +51,6 @@ jobs:
         with:
           generate_release_notes: true
           append_body: true
-          files:
-          - ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
-          - sha256.txt
+          files: |
+            ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
+            sha256.txt
