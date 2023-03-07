@@ -93,10 +93,3 @@ jobs:
           github_token: ${{ github.token }}
       - name: Run lint
         run: make lint
-  sha:
-    runs-on: ubuntu-latest
-    steps:
-      - name: sha
-        run: |
-          which shasum
-          which sha256sum
