@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.okhttp.core)
+    api(libs.okhttp.core)
     implementation(libs.kotlin.coroutines.core)
 
     api(project(":library"))
