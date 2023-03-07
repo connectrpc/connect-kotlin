@@ -21,6 +21,7 @@ import build.buf.connect.protocols.ConnectInterceptor
 import build.buf.connect.protocols.GRPCInterceptor
 import build.buf.connect.protocols.GRPCWebInterceptor
 import build.buf.connect.protocols.NetworkProtocol
+import java.net.URI
 
 /**
  *  Set of configuration used to set up clients.
@@ -44,6 +45,7 @@ class ProtocolClientConfig(
 ) {
     private val internalInterceptorFactoryList = mutableListOf<(ProtocolClientConfig) -> Interceptor>()
     private val compressionPools = mutableMapOf<String, CompressionPool>()
+    internal val baseUri: URI
 
     init {
         val protocolInterceptor: (ProtocolClientConfig) -> Interceptor = when (networkProtocol) {
@@ -66,6 +68,7 @@ class ProtocolClientConfig(
         for (compressionPool in compressionPools) {
             this.compressionPools.put(compressionPool.name(), compressionPool)
         }
+        baseUri = URI(host)
     }
 
     /**
