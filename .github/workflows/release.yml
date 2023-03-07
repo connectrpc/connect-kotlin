@@ -45,6 +45,18 @@ jobs:
           make buildplugin
       - name: sha256
         run: |
+          sha256() {
+            if ! type sha256sum >/dev/null 2>/dev/null; then
+            if ! type shasum >/dev/null 2>/dev/null; then
+              echo "sha256sum and shasum are not installed" >&2
+              return 1
+            else
+              shasum -a 256 "$@"
+            fi
+            else
+              sha256sum "$@"
+            fi
+          }
           sha256 ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
       - name: Upload release artifacts in GitHub
         uses: softprops/action-gh-release@v1
