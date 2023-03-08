@@ -23,7 +23,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import java.lang.Exception
 
 /**
- * Concrete implementation of `BidirectionalStreamInterface`.
+ * Concrete implementation of [BidirectionalStreamInterface].
  */
 internal class BidirectionalStream<Input, Output>(
     val stream: Stream,
@@ -32,13 +32,12 @@ internal class BidirectionalStream<Input, Output>(
 ) : BidirectionalStreamInterface<Input, Output> {
 
     override suspend fun send(input: Input): Result<Unit> {
-        return try {
-            val msg = requestCodec.serialize(input)
-            stream.send(msg)
-            Result.success(Unit)
+        val msg = try {
+            requestCodec.serialize(input)
         } catch (e: Exception) {
-            Result.failure(e)
+            return  Result.failure(e)
         }
+        return stream.send(msg)
     }
 
     override fun resultChannel(): ReceiveChannel<StreamResult<Output>> {
@@ -47,5 +46,9 @@ internal class BidirectionalStream<Input, Output>(
 
     override fun close() {
         stream.close()
+    }
+
+    override fun isClosed(): Boolean {
+        return stream.isClosed()
     }
 }

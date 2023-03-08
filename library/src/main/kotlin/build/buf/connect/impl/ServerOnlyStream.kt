@@ -20,7 +20,7 @@ import build.buf.connect.StreamResult
 import kotlinx.coroutines.channels.ReceiveChannel
 
 /**
- * Concrete implementation of `ServerOnlyStreamInterface`.
+ * Concrete implementation of [ServerOnlyStreamInterface].
  */
 internal class ServerOnlyStream<Input, Output>(
     private val messageStream: BidirectionalStreamInterface<Input, Output>
@@ -29,11 +29,15 @@ internal class ServerOnlyStream<Input, Output>(
         return messageStream.resultChannel()
     }
 
-    override suspend fun send(input: Input) {
-        messageStream.send(input)
+    override suspend fun send(input: Input): Result<Unit> {
+        return messageStream.send(input)
     }
 
     override fun close() {
         messageStream.close()
+    }
+
+    override fun isClosed(): Boolean {
+        return messageStream.isClosed()
     }
 }

@@ -18,7 +18,7 @@ import build.buf.connect.BidirectionalStreamInterface
 import build.buf.connect.ClientOnlyStreamInterface
 
 /**
- * Concrete implementation of `ClientOnlyStreamInterface`.
+ * Concrete implementation of [ClientOnlyStreamInterface].
  */
 internal class ClientOnlyStream<Input, Output>(
     private val messageStream: BidirectionalStreamInterface<Input, Output>
@@ -29,5 +29,9 @@ internal class ClientOnlyStream<Input, Output>(
 
     override fun close() {
         messageStream.close()
+    }
+
+    override fun isClosed(): Boolean {
+        return messageStream.isClosed()
     }
 }

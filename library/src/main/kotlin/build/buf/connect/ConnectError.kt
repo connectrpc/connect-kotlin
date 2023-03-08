@@ -18,7 +18,7 @@ import kotlin.reflect.KClass
 
 /**
  * Typed error provided by Connect RPCs that may optionally wrap additional typed custom errors
- * using `details`.
+ * using [details].
  */
 data class ConnectError constructor(
     // The resulting status code.
@@ -35,7 +35,7 @@ data class ConnectError constructor(
 ) : Throwable(message, exception) {
 
     /**
-     * Unpacks values from `self.details` and returns the first matching error, if any.
+     * Unpacks values from [details] and returns the first matching error, if any.
      *
      * @return The unpacked typed error details, if available.
      */
@@ -51,7 +51,7 @@ data class ConnectError constructor(
     }
 
     /**
-     * Creates a new ConnectError with the specified CompletionParser.
+     * Creates a new [ConnectError] with the specified [ErrorDetailParser].
      */
     fun setErrorParser(errorParser: ErrorDetailParser): ConnectError {
         return ConnectError(
