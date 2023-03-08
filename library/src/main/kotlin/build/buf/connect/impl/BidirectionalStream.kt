@@ -35,7 +35,7 @@ internal class BidirectionalStream<Input, Output>(
         val msg = try {
             requestCodec.serialize(input)
         } catch (e: Exception) {
-            return  Result.failure(e)
+            return Result.failure(e)
         }
         return stream.send(msg)
     }
