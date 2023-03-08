@@ -15,6 +15,7 @@
 package build.buf.connect
 
 import kotlinx.coroutines.channels.ReceiveChannel
+import java.lang.Exception
 
 /**
  * Represents a bidirectional stream that can send request messages and initiate closes.
@@ -32,7 +33,7 @@ interface BidirectionalStreamInterface<Input, Output> {
      *
      * @param input The request message to send.
      */
-    suspend fun send(input: Input)
+    suspend fun send(input: Input): Result<Unit>
 
     /**
      * Close the stream. No calls to `send()` are valid after calling `close()`.

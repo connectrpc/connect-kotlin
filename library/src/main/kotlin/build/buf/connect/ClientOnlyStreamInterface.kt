@@ -24,7 +24,7 @@ interface ClientOnlyStreamInterface<Input, Output> {
      *
      * @param input The request message to send.
      */
-    suspend fun send(input: Input)
+    suspend fun send(input: Input): Result<Unit>
 
     /**
      * Close the stream. No calls to `send()` are valid after calling `close()`.
