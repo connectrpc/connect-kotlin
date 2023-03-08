@@ -15,7 +15,6 @@
 package build.buf.connect
 
 import kotlinx.coroutines.channels.ReceiveChannel
-import java.lang.Exception
 
 /**
  * Represents a bidirectional stream that can send request messages and initiate closes.
