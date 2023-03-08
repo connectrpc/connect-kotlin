@@ -24,10 +24,18 @@ interface ClientOnlyStreamInterface<Input, Output> {
      *
      * @param input The request message to send.
      */
-    suspend fun send(input: Input)
+    suspend fun send(input: Input): Result<Unit>
 
     /**
-     * Close the stream. No calls to `send()` are valid after calling `close()`.
+     * Close the stream. No calls to [send] are valid after calling [close].
      */
     fun close()
+
+    /**
+     * Determine if the underlying stream is closed.
+     *
+     * @return true if the underlying stream is closed. If the stream is still open,
+     *         this will return false.
+     */
+    fun isClosed(): Boolean
 }

@@ -34,7 +34,7 @@ import java.net.URL
 import kotlin.coroutines.resume
 
 /**
- * Concrete implementation of the `ProtocolClientInterface`.
+ * Concrete implementation of the [ProtocolClientInterface].
  */
 class ProtocolClient(
     // The client to use for performing requests.

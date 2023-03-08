@@ -20,9 +20,10 @@ import build.buf.connect.StreamResult
 import build.buf.connect.http.Stream
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import java.lang.Exception
 
 /**
- * Concrete implementation of `BidirectionalStreamInterface`.
+ * Concrete implementation of [BidirectionalStreamInterface].
  */
 internal class BidirectionalStream<Input, Output>(
     val stream: Stream,
@@ -30,9 +31,13 @@ internal class BidirectionalStream<Input, Output>(
     private val receiveChannel: Channel<StreamResult<Output>>
 ) : BidirectionalStreamInterface<Input, Output> {
 
-    override suspend fun send(input: Input) {
-        val msg = requestCodec.serialize(input)
-        stream.send(msg)
+    override suspend fun send(input: Input): Result<Unit> {
+        val msg = try {
+            requestCodec.serialize(input)
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+        return stream.send(msg)
     }
 
     override fun resultChannel(): ReceiveChannel<StreamResult<Output>> {
@@ -41,5 +46,9 @@ internal class BidirectionalStream<Input, Output>(
 
     override fun close() {
         stream.close()
+    }
+
+    override fun isClosed(): Boolean {
+        return stream.isClosed()
     }
 }

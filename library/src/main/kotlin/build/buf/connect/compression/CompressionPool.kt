@@ -20,11 +20,11 @@ import okio.Buffer
  * Conforming types provide the functionality to compress/decompress data using a specific
  * algorithm.
  *
- * `ProtocolClientInterface` implementations are expected to use the first compression pool with
- * a matching `name()` for decompressing inbound responses.
+ * [build.buf.connect.ProtocolClientInterface] implementations are expected to use the first compression pool with
+ * a matching [name] for decompressing inbound responses.
  *
  * Outbound request compression can be specified using additional options that specify a
- * `compressionName` that matches a compression pool's `name()`.
+ * `compressionName` that matches a compression pool's [name].
  */
 interface CompressionPool {
     /**

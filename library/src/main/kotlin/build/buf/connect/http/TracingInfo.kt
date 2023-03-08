@@ -15,7 +15,7 @@
 package build.buf.connect.http
 
 /**
- * Tracing metadata for HTTPClientInterface and Interceptors.
+ * Tracing metadata for [HTTPClientInterface] and [build.buf.connect.Interceptor].
  */
 data class TracingInfo(
     // The underlying http status code

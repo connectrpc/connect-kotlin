@@ -16,6 +16,7 @@ package build.buf.connect.http
 
 import build.buf.connect.StreamResult
 import okio.Buffer
+import java.util.concurrent.atomic.AtomicReference
 
 typealias Cancelable = () -> Unit
 
@@ -49,11 +50,23 @@ class Stream(
     private val onSend: (Buffer) -> Unit,
     private val onClose: () -> Unit
 ) {
-    fun send(buffer: Buffer) {
+    private val isClosed = AtomicReference(false)
+
+    fun send(buffer: Buffer): Result<Unit> {
+        if (isClosed()) {
+            return Result.failure(IllegalStateException("cannot send. underlying stream is closed"))
+        }
         onSend(buffer)
+        return Result.success(Unit)
     }
 
     fun close() {
-        onClose()
+        if (!isClosed.getAndSet(true)) {
+            onClose()
+        }
+    }
+
+    fun isClosed(): Boolean {
+        return isClosed.get()
     }
 }

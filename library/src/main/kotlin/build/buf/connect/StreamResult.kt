@@ -17,7 +17,7 @@ package build.buf.connect
 /**
  * Enumeration of result states that can be received over streams.
  *
- * A typical stream receives `Headers > Message > Message > Message ... > Complete`
+ * A typical stream receives [Headers] > [Message] > [Message] > [Message] ... > [Complete]
  */
 sealed class StreamResult<Output> constructor(
     val error: Throwable? = null
@@ -34,7 +34,7 @@ sealed class StreamResult<Output> constructor(
     /**
      * Get the ConnectError from the result.
      *
-     * @return The ConnectError if present, null otherwise.
+     * @return The [ConnectError] if present, null otherwise.
      */
     fun connectError(): ConnectError? {
         if (error is ConnectError) {

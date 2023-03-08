@@ -19,7 +19,7 @@ import kotlin.reflect.KClass
 /**
  * The serialization strategy for completion events from gRPC or Connect.
  *
- * A base data type will need to implement a SerializationStrategy.
+ * A base data type will need to implement a [SerializationStrategy].
  */
 interface SerializationStrategy {
 
