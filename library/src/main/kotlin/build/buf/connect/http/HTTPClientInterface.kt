@@ -56,8 +56,12 @@ class Stream(
         if (isClosed()) {
             return Result.failure(IllegalStateException("cannot send. underlying stream is closed"))
         }
-        onSend(buffer)
-        return Result.success(Unit)
+        return try {
+            onSend(buffer)
+            Result.success(Unit)
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
     }
 
     fun close() {
