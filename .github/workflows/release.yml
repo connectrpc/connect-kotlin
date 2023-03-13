@@ -30,7 +30,8 @@ jobs:
           export ORG_GRADLE_PROJECT_mavenCentralUsername=$SONATYPE_USER
           export ORG_GRADLE_PROJECT_mavenCentralPassword=$SONATYPE_PASSWORD
           export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=$GPG_PASSPHRASE
-          export ORG_GRADLE_PROJECT_releaseVersion="0.1.0-test13032023"
+          release_version=$(git describe --tags --abbrev=0 --exact-match)
+          export ORG_GRADLE_PROJECT_releaseVersion="${release_version:1}"
           # https://github.com/keybase/keybase-issues/issues/2798
           export GPG_TTY=$(tty)
           # Import gpg keys and warm the passphrase to avoid the gpg
@@ -54,3 +55,5 @@ jobs:
           files: |
             ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
             sha256.txt
+      - name: Close repository and release
+        run: make releasecomplete
