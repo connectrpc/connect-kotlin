@@ -44,7 +44,7 @@ jobs:
           shred signing-key
           make releasestart
       - name: Close repository and release
-        run: make releasecomplete
+        run: make release
   plugin:
     runs-on: ubuntu-latest
     steps:
