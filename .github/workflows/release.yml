@@ -44,7 +44,9 @@ jobs:
           shred signing-key
           make releasestart
       - name: sha256
-        run: sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
+        run: |
+          make buildplugin
+          sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
       - name: Publish GitHub artifacts
         uses: softprops/action-gh-release@v1
         with:
