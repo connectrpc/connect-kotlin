@@ -103,17 +103,14 @@ lint: ## Run lint.
 lintfix: # Applies the lint changes.
 	./gradlew spotlessApply
 
-.PHONY: releasecomplete
-releasecomplete: ## Close release to publish artifacts to Sonatype Nexus.
+.PHONY: release
+release: ## Upload artifacts to Sonatype Nexus.
+	./gradlew --info publish --stacktrace --no-daemon --no-parallel
 	./gradlew --info closeAndReleaseRepository
 
 .PHONY: releaselocal
 releaselocal: ## Release artifacts to local maven repository.
 	./gradlew --info publishToMavenLocal
-
-.PHONY: releasestart
-releasestart: ## Upload artifacts to Sonatype Nexus.
-	./gradlew --info publish --stacktrace --no-daemon --no-parallel
 
 .PHONY: test
 test: ## Run tests for the library.

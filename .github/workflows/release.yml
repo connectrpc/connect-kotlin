@@ -42,18 +42,19 @@ jobs:
           gpg --passphrase $GPG_PASSPHRASE --batch --import signing-key
           export ORG_GRADLE_PROJECT_signingInMemoryKey=$(gpg --armor --passphrase $GPG_PASSPHRASE --pinentry-mode=loopback --export-secret-keys $GPG_KEY_NAME signing-key | grep -v '\-\-' | grep -v '^=.' | tr -d '\n')
           shred signing-key
-          make releasestart
-      - name: sha256
-        run: |
-          make buildplugin
-          sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
-      - name: Publish GitHub artifacts
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-          append_body: true
-          files: |
-            ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
-            sha256.txt
-      - name: Close repository and release
-        run: make releasecomplete
+          make release
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+    - name: sha256
+      run: |
+        make buildplugin
+        sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
+    - name: Publish GitHub artifacts
+      uses: softprops/action-gh-release@v1
+      with:
+        generate_release_notes: true
+        append_body: true
+        files: |
+          ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
+          sha256.txt
