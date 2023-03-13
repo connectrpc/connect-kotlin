@@ -7,7 +7,7 @@ on:
 permissions:
   contents: write
 jobs:
-  library:
+  artifacts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -43,6 +43,10 @@ jobs:
           export ORG_GRADLE_PROJECT_signingInMemoryKey=$(gpg --armor --passphrase $GPG_PASSPHRASE --pinentry-mode=loopback --export-secret-keys $GPG_KEY_NAME signing-key | grep -v '\-\-' | grep -v '^=.' | tr -d '\n')
           shred signing-key
           make releasestart
+  upload:
+    runs-on: ubuntu-latest
+    needs: artifacts
+    steps:
       - name: sha256
         run: |
           make buildplugin
