@@ -1,9 +1,8 @@
 name: release
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    tags:
+      - v*
   workflow_dispatch: {} # support manual runs
 permissions:
   contents: write
@@ -31,8 +30,8 @@ jobs:
           export ORG_GRADLE_PROJECT_mavenCentralUsername=$SONATYPE_USER
           export ORG_GRADLE_PROJECT_mavenCentralPassword=$SONATYPE_PASSWORD
           export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=$GPG_PASSPHRASE
-#          release_version=$(git describe --tags --abbrev=0 --exact-match)
-          export ORG_GRADLE_PROJECT_releaseVersion="0.1.0-13032023test"
+          release_version=$(git describe --tags --abbrev=0 --exact-match)
+          export ORG_GRADLE_PROJECT_releaseVersion="${release_version:1}"
           # https://github.com/keybase/keybase-issues/issues/2798
           export GPG_TTY=$(tty)
           # Import gpg keys and warm the passphrase to avoid the gpg
