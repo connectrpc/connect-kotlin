@@ -1,6 +1,6 @@
 name: release
 on:
-  push:
+  pull_request:
   workflow_dispatch: {} # support manual runs
 permissions:
   contents: write
