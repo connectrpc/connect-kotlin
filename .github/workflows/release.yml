@@ -1,9 +1,8 @@
 name: release
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    tags:
+      - v*
   workflow_dispatch: {} # support manual runs
 permissions:
   contents: write
