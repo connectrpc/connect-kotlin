@@ -1,8 +1,8 @@
 name: release
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - main
   pull_request:
   workflow_dispatch: {} # support manual runs
 permissions:
@@ -57,5 +57,5 @@ jobs:
           files: |
             ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar
             sha256.txt
-      - name: Close repository and release
-        run: make releasecomplete
+#      - name: Close repository and release
+#        run: make releasecomplete
