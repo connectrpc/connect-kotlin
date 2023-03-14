@@ -20,6 +20,7 @@ configure<MavenPublishBaseExtension> {
         KotlinJvm(javadocJar = Dokka("dokkaGfm"))
     )
 }
+
 // Workaround for overriding the published library name to "connect-kotlin-okhttp".
 // Otherwise, the plugin will take the library name.
 extensions.getByType<PublishingExtension>().apply {
