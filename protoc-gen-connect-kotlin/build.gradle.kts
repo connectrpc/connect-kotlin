@@ -45,7 +45,7 @@ configure<MavenPublishBaseExtension> {
     )
 }
 
-// Workaround for overriding the published library name to "connect-kotlin-okhttp".
+// Workaround for overriding the published library name.
 // Otherwise, the plugin will take the library name.
 extensions.getByType<PublishingExtension>().apply {
     publications
