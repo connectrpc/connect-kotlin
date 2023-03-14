@@ -48,8 +48,9 @@ jobs:
     steps:
     - name: sha256
       run: |
-        make buildplugin
-        sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin.jar >> sha256.txt
+        tag=$(git describe --tags --abbrev=0 --exact-match)
+        release_version="${tag:1}"
+        sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
     - name: Publish GitHub artifacts
       uses: softprops/action-gh-release@v1
       with:
