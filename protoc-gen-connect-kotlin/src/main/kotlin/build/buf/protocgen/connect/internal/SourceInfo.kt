@@ -34,32 +34,32 @@ import com.google.protobuf.DescriptorProtos
 internal class SourceInfo(
     private val helper: SourceCodeHelper,
     private val descriptorSource: Plugin.DescriptorSource,
-    path: List<Int> = emptyList(),
+    path: List<Int> = emptyList()
 ) {
-  constructor(
-      fileDescriptor: DescriptorProtos.FileDescriptorProto,
-      descriptorSource: Plugin.DescriptorSource,
-      path: List<Int> = emptyList()
-  ) : this(SourceCodeHelper(fileDescriptor), descriptorSource, path)
+    constructor(
+        fileDescriptor: DescriptorProtos.FileDescriptorProto,
+        descriptorSource: Plugin.DescriptorSource,
+        path: List<Int> = emptyList()
+    ) : this(SourceCodeHelper(fileDescriptor), descriptorSource, path)
 
-  private val path = listOf(*path.toTypedArray())
+    private val path = listOf(*path.toTypedArray())
 
-  fun push(value: Int): SourceInfo {
-    return SourceInfo(helper, descriptorSource, path.plus(value))
-  }
+    fun push(value: Int): SourceInfo {
+        return SourceInfo(helper, descriptorSource, path.plus(value))
+    }
 
-  fun comment(): String {
-    return helper.getComment(path)
-  }
+    fun comment(): String {
+        return helper.getComment(path)
+    }
 }
 
 /**
  * Creates an index for the source locations.
  */
 internal class SourceCodeHelper(
-  fileDescriptorProto: DescriptorProtos.FileDescriptorProto
+    fileDescriptorProto: DescriptorProtos.FileDescriptorProto
 ) {
-  private val locations: Map<List<Int>, List<DescriptorProtos.SourceCodeInfo.Location>> = makeLocationMap(fileDescriptorProto.sourceCodeInfo.locationList)
+    private val locations: Map<List<Int>, List<DescriptorProtos.SourceCodeInfo.Location>> = makeLocationMap(fileDescriptorProto.sourceCodeInfo.locationList)
 
     /**
      * The location of the first span associated with the given path.
@@ -74,17 +74,17 @@ internal class SourceCodeHelper(
     }
 
     private fun makeLocationMap(locationList: List<DescriptorProtos.SourceCodeInfo.Location>): Map<List<Int>, List<DescriptorProtos.SourceCodeInfo.Location>> {
-    val locationMap = mutableMapOf<List<Int>, MutableList<DescriptorProtos.SourceCodeInfo.Location>>()
-    for (location in locationList) {
-      val path = mutableListOf<Int>()
-      for (pathElement in location.pathList) {
-        path.add(pathElement)
-      }
-      val locList = locationMap.getOrPut(path) { mutableListOf() }
-      locList.add(location)
+        val locationMap = mutableMapOf<List<Int>, MutableList<DescriptorProtos.SourceCodeInfo.Location>>()
+        for (location in locationList) {
+            val path = mutableListOf<Int>()
+            for (pathElement in location.pathList) {
+                path.add(pathElement)
+            }
+            val locList = locationMap.getOrPut(path) { mutableListOf() }
+            locList.add(location)
+        }
+        return locationMap
     }
-    return locationMap
-  }
 }
 
 /**
@@ -95,11 +95,11 @@ internal class SourceCodeHelper(
  * @return zipped list of source information associated with each element in the list.
  */
 internal fun <T> List<T>.withSourceInfo(parentSourceInfo: SourceInfo, childTag: Int): List<Pair<SourceInfo, T>> {
-  val baseSource = parentSourceInfo.push(childTag)
-  val result = mutableListOf<Pair<SourceInfo, T>>()
-  for ((index, element) in withIndex()) {
-    val newSource = baseSource.push(index)
-    result.add(newSource to element)
-  }
-  return result
+    val baseSource = parentSourceInfo.push(childTag)
+    val result = mutableListOf<Pair<SourceInfo, T>>()
+    for ((index, element) in withIndex()) {
+        val newSource = baseSource.push(index)
+        result.add(newSource to element)
+    }
+    return result
 }

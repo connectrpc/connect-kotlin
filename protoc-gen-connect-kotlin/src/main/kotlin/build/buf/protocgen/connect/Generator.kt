@@ -122,7 +122,7 @@ class Generator : CodeGenerator {
     private fun serviceClientInterface(
         packageName: String,
         service: Descriptors.ServiceDescriptor,
-        sourceInfo: SourceInfo,
+        sourceInfo: SourceInfo
     ): TypeSpec {
         val interfaceBuilder = TypeSpec.interfaceBuilder(serviceClientInterfaceClassName(packageName, service))
         val functionSpecs = interfaceMethods(service.methods, sourceInfo)
@@ -133,7 +133,7 @@ class Generator : CodeGenerator {
 
     private fun interfaceMethods(
         methods: List<Descriptors.MethodDescriptor>,
-        baseSourceInfo: SourceInfo,
+        baseSourceInfo: SourceInfo
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         val headerParameterSpec = ParameterSpec.builder("headers", HEADERS_CLASS_NAME)
