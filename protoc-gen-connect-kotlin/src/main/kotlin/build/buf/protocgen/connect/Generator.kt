@@ -176,6 +176,9 @@ class Generator : CodeGenerator {
                     .build()
                 functions.add(clientStreamingFunction)
             } else {
+                if (method.options.idempotencyLevel == DescriptorProtos.MethodOptions.IdempotencyLevel.IDEMPOTENT) {
+
+                }
                 if (configuration.generateCoroutineMethods) {
                     val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addKdoc(sourceInfo.comment())
@@ -187,7 +190,6 @@ class Generator : CodeGenerator {
                         .build()
                     functions.add(unarySuspendFunction)
                 }
-
                 if (configuration.generateCallbackMethods) {
                     val callbackType = LambdaTypeName.get(
                         parameters = listOf(ParameterSpec("", ResponseMessage::class.asTypeName().parameterizedBy(outputClassName))),

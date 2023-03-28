@@ -35,6 +35,17 @@ interface HTTPClientInterface {
     fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
 
     /**
+     * Perform a GET HTTP request.
+     *
+     * @param method The method to use for the request.
+     * @param request The outbound request headers and data.
+     * @param onResult The completion closure that would be called upon completion of the request.
+     *
+     * @return A function to cancel the underlying network call.
+     */
+    fun unary(method: String, request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
+
+    /**
      * Initialize a new HTTP stream.
      *
      * @param request The request headers to use for starting the stream.
@@ -44,6 +55,18 @@ interface HTTPClientInterface {
      * @return The created stream.
      */
     fun stream(request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream
+
+    /**
+     * Initialize a new HTTP stream.
+     *
+     * @param method The method to use for starting the stream.
+     * @param request The request headers to use for starting the stream.
+     * @param onResult The callback that would be invoked by the HTTP client when response
+     *                 headers, data, and trailers are received.
+     *
+     * @return The created stream.
+     */
+    fun stream(method: String, request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream
 }
 
 class Stream(
