@@ -14,6 +14,7 @@
 
 package build.buf.connect
 
+import build.buf.connect.Idempotency
 import kotlin.reflect.KClass
 
 /**
@@ -23,9 +24,11 @@ import kotlin.reflect.KClass
  * @param path The path of the request.
  * @param requestClass The Kotlin Class for the request message.
  * @param responseClass The Kotlin Class for the response message.
+ * @param idempotency The declared idempotency of a method.
  */
 class MethodSpec<Input : Any, Output : Any>(
     val path: String,
     val requestClass: KClass<Input>,
-    val responseClass: KClass<Output>
+    val responseClass: KClass<Output>,
+    val idempotency: Idempotency = Idempotency.IDEMPOTENCY_UNKNOWN,
 )
