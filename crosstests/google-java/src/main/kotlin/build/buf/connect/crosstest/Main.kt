@@ -22,11 +22,6 @@ import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
-import com.com.droidcon.androidmakers.paris.Actor
-import com.com.droidcon.androidmakers.paris.RideUpdateResponse
-import com.com.droidcon.androidmakers.paris.RideUpdateServiceClient
-import com.com.droidcon.androidmakers.paris.rideUpdateRequest
-import com.com.droidcon.androidmakers.paris.rideUpdateResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -119,17 +114,6 @@ class Main {
             testServiceClientSuite.failServerStreaming()
 
             testServiceClientSuite.test(tag)
-
-    val client: RideUpdateServiceClient
-    val responseMessage = client.rideUpdate(request)
-    val rideUpdateResponse = responseMessage.success { success ->
-        val result = when(success.message.cancellationActor) {
-            Actor.PASSENGER -> { /* passenger logic */   }
-            Actor.DRIVER    -> { /* driver logic */      }
-            else            -> { /* unspecified logic */ }
-        }
-    }
-
         }
 
         private suspend fun callbackTests(

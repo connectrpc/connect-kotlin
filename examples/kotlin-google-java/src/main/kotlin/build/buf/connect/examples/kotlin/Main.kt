@@ -15,11 +15,8 @@
 package build.buf.connect.examples.kotlin
 
 import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.ResponseMessage
 import build.buf.connect.demo.eliza.v1.ConverseRequest
 import build.buf.connect.demo.eliza.v1.ElizaServiceClient
-import build.buf.connect.demo.eliza.v1.SayRequest
-import build.buf.connect.demo.eliza.v1.SayResponse
 import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
@@ -31,12 +28,20 @@ import java.time.Duration
 
 class Main {
     companion object {
+
         @JvmStatic
         fun main(args: Array<String>) {
             runBlocking {
-                val host = "https://demo.connect.build/"
+                val host = "https://demo.connect.build"
                 val client = ProtocolClient(
-                    httpClient = ConnectOkHttpClient(OkHttpClient()),
+                    httpClient = ConnectOkHttpClient(
+                        OkHttpClient()
+                            .newBuilder()
+                            .readTimeout(Duration.ofMinutes(10))
+                            .writeTimeout(Duration.ofMinutes(10))
+                            .callTimeout(Duration.ofMinutes(10))
+                            .build()
+                    ),
                     ProtocolClientConfig(
                         host = host,
                         serializationStrategy = GoogleJavaProtobufStrategy()
@@ -48,13 +53,18 @@ class Main {
         }
 
         private suspend fun connectStreaming(elizaServiceClient: ElizaServiceClient) {
-            val responseMessage = elizaServiceClient.say(SayRequest.newBuilder().setSentence("hello").build())
-            when(responseMessage) {
-                is ResponseMessage.Success<SayResponse> -> {
-                    println(responseMessage.message.sentence)
-                }
-                is ResponseMessage.Failure<SayResponse> -> {
-                    println(responseMessage.error)
+            val stream = elizaServiceClient.converse()
+            withContext(Dispatchers.IO) {
+                // Add the message the user is sending to the views.
+                stream.send(ConverseRequest.newBuilder().setSentence("hello").build())
+                for (streamResult in stream.resultChannel()) {
+                    streamResult.maybeFold(
+                        onMessage = { result ->
+                            // Update the view with the response.
+                            val elizaResponse = result.message
+                            println(elizaResponse.sentence)
+                        }
+                    )
                 }
             }
         }
