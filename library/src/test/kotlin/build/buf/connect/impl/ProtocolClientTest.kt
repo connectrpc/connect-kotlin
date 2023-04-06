@@ -144,8 +144,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://buf.build",
-                serializationStrategy = serializationStrategy,
-            ),
+                serializationStrategy = serializationStrategy
+            )
         )
         client.unary(
             "",
