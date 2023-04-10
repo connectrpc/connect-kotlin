@@ -162,4 +162,32 @@ class ProtocolClientTest {
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
+
+    @Test
+    fun finalUrlIsValidWithHostEndingInSlash() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+        val client = ProtocolClient(
+            httpClient = httpClient,
+            config = ProtocolClientConfig(
+                host = "https://buf.build/",
+                serializationStrategy = serializationStrategy
+            )
+        )
+        client.unary(
+            "",
+            emptyMap(),
+            MethodSpec(
+                path = "build.buf.connect.SomeService/Service",
+                String::class,
+                String::class
+            )
+        ) {}
+
+        // Use HTTP client to determine and verify the final URL.
+        val captor = argumentCaptor<HTTPRequest>()
+        verify(httpClient).unary(captor.capture(), any())
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
+    }
 }
