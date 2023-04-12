@@ -193,8 +193,9 @@ internal class PipeDuplexRequestBody(
                 bufferedSink.writeAll(buffer)
                 bufferedSink.flush()
             }
-        } finally {
+        } catch (e: Throwable) {
             close()
+            throw e
         }
     }
 
