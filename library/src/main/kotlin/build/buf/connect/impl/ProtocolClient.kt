@@ -202,7 +202,7 @@ class ProtocolClient(
     }
 
     private fun <Input : Any, Output : Any> urlFromMethodSpec(methodSpec: MethodSpec<Input, Output>): URL {
-        val host = config.baseUri.resolve(methodSpec.path)
+        val host = config.baseUri.resolve("/${methodSpec.path}")
         return host.toURL()
     }
 }
