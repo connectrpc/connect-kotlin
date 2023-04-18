@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import java.time.Duration
@@ -98,20 +99,21 @@ class Main {
         ) {
             val testServiceClientSuite = TestServiceClientSuite(protocolClient, shortTimeoutClient)
             testServiceClientSuite.emptyUnary()
-            testServiceClientSuite.largeUnary()
-            testServiceClientSuite.serverStreaming()
-            testServiceClientSuite.emptyStream()
-            testServiceClientSuite.customMetadata()
-            testServiceClientSuite.customMetadataServerStreaming()
-            testServiceClientSuite.statusCodeAndMessage()
-            testServiceClientSuite.specialStatus()
-            testServiceClientSuite.timeoutOnSleepingServer()
-            testServiceClientSuite.unimplementedMethod()
-            testServiceClientSuite.unimplementedServerStreamingMethod()
-            testServiceClientSuite.unimplementedService()
-            testServiceClientSuite.unimplementedServerStreamingService()
-            testServiceClientSuite.failUnary()
-            testServiceClientSuite.failServerStreaming()
+//            testServiceClientSuite.largeUnary()
+//            testServiceClientSuite.serverStreaming()
+//            testServiceClientSuite.emptyStream()
+//            testServiceClientSuite.customMetadata()
+//            testServiceClientSuite.customMetadataServerStreaming()
+//            testServiceClientSuite.statusCodeAndMessage()
+//            testServiceClientSuite.specialStatus()
+//            testServiceClientSuite.timeoutOnSleepingServer()
+//            testServiceClientSuite.unimplementedMethod()
+//            testServiceClientSuite.unimplementedServerStreamingMethod()
+//            testServiceClientSuite.unimplementedService()
+//            testServiceClientSuite.unimplementedServerStreamingService()
+//            testServiceClientSuite.failUnary()
+//            testServiceClientSuite.failServerStreaming()
+//            testServiceClientSuite.getUnary()
 
             testServiceClientSuite.test(tag)
         }

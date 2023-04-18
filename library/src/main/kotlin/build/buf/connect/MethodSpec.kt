@@ -14,7 +14,6 @@
 
 package build.buf.connect
 
-import build.buf.connect.Idempotency
 import kotlin.reflect.KClass
 
 /**

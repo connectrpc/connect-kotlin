@@ -426,6 +426,27 @@ class TestServiceClientSuite(
             stream.close()
         }
     }
+
+    override suspend fun getUnary() = register("get_unary") {
+        val size = 314159
+        val message = simpleRequest {
+            responseSize = size
+            payload = payload {
+                body = ByteString.copyFrom(ByteArray(size))
+            }
+        }
+        val response = testServiceConnectClient.getUnaryCall(message)
+        response.failure {
+            fail<Unit>("expected error to be null")
+        }
+        response.success { success ->
+            assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
+        }
+    }
+
+    override suspend fun getServerStreaming() = register("get_server_streaming") {
+        TODO("Not yet implemented")
+    }
 }
 
 internal fun ByteArray.b64Encode(): String {

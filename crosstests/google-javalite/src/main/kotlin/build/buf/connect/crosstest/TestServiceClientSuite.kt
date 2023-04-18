@@ -426,6 +426,14 @@ class TestServiceClientSuite(
             stream.close()
         }
     }
+
+    override suspend fun getUnary() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getServerStreaming() {
+        TODO("Not yet implemented")
+    }
 }
 
 internal fun ByteArray.b64Encode(): String {
