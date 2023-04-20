@@ -98,8 +98,8 @@ class Main {
             shortTimeoutClient: ProtocolClient
         ) {
             val testServiceClientSuite = TestServiceClientSuite(protocolClient, shortTimeoutClient)
-            testServiceClientSuite.emptyUnary()
-//            testServiceClientSuite.largeUnary()
+//            testServiceClientSuite.emptyUnary()
+            testServiceClientSuite.largeUnary()
 //            testServiceClientSuite.serverStreaming()
 //            testServiceClientSuite.emptyStream()
 //            testServiceClientSuite.customMetadata()
@@ -113,7 +113,7 @@ class Main {
 //            testServiceClientSuite.unimplementedServerStreamingService()
 //            testServiceClientSuite.failUnary()
 //            testServiceClientSuite.failServerStreaming()
-//            testServiceClientSuite.getUnary()
+            testServiceClientSuite.getUnary()
 
             testServiceClientSuite.test(tag)
         }
@@ -123,14 +123,14 @@ class Main {
             protocolClient: ProtocolClient
         ) {
             val testServiceClientSuite = TestServiceClientCallbackSuite(protocolClient)
-            testServiceClientSuite.emptyUnary()
-            testServiceClientSuite.largeUnary()
-            testServiceClientSuite.customMetadata()
-            testServiceClientSuite.statusCodeAndMessage()
-            testServiceClientSuite.specialStatus()
-            testServiceClientSuite.unimplementedMethod()
-            testServiceClientSuite.unimplementedService()
-            testServiceClientSuite.failUnary()
+//            testServiceClientSuite.emptyUnary()
+//            testServiceClientSuite.largeUnary()
+//            testServiceClientSuite.customMetadata()
+//            testServiceClientSuite.statusCodeAndMessage()
+//            testServiceClientSuite.specialStatus()
+//            testServiceClientSuite.unimplementedMethod()
+//            testServiceClientSuite.unimplementedService()
+//            testServiceClientSuite.failUnary()
 
             testServiceClientSuite.test(tag)
         }

@@ -81,7 +81,7 @@ class TestServiceClientSuite(
         }
         val response = testServiceConnectClient.unaryCall(message)
         response.failure {
-            fail<Unit>("expected error to be null")
+            fail<Unit>("expected error to be null", it.error)
         }
         response.success { success ->
             assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
@@ -435,9 +435,9 @@ class TestServiceClientSuite(
                 body = ByteString.copyFrom(ByteArray(size))
             }
         }
-        val response = testServiceConnectClient.getUnaryCall(message)
+        val response = testServiceConnectClient.cacheableUnaryCall(message)
         response.failure {
-            fail<Unit>("expected error to be null")
+            fail<Unit>("expected error to be null", it.error)
         }
         response.success { success ->
             assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
