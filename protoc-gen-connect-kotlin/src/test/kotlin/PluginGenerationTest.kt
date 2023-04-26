@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import buf.evilcomments.v1.EvilCommentsServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyOuterClass
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledInnerMessageServiceClient
@@ -106,5 +107,10 @@ class PluginGenerationTest {
                 assertThat(success.message).isOfAnyClassIn(EnabledEmptyRPCResponse::class.java)
             }
         }
+    }
+
+    @Test
+    fun evilCommentsCompiles() {
+        val client = EvilCommentsServiceClient(mock { })
     }
 }
