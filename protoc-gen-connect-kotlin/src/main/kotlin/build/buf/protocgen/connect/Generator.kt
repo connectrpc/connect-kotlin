@@ -377,17 +377,6 @@ class Generator : CodeGenerator {
         return functions
     }
 
-    internal fun String.sanitizeKdoc(): String {
-        return this
-            // Remove trailing whitespace on each line.
-            .replace("[^\\S\n]+\n".toRegex(), "\n")
-            .replace("\\s+$".toRegex(), "")
-            .replace("\\*/".toRegex(), "&#42;/")
-            .replace("/\\*".toRegex(), "/&#42;")
-            .replace("""[""", """\[""")
-            .replace("""]""", """\]""")
-    }
-
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
         // Get the package of the descriptor's file.
         // e.g. "build.buf.connect".
@@ -406,6 +395,17 @@ class Generator : CodeGenerator {
             return ClassName(packageName, names.first(), *names.subList(1, names.size).toTypedArray())
         }
         return ClassName(packageName, names.first())
+    }
+
+    internal fun String.sanitizeKdoc(): String {
+        return this
+            // Remove trailing whitespace on each line.
+            .replace("[^\\S\n]+\n".toRegex(), "\n")
+            .replace("\\s+$".toRegex(), "")
+            .replace("\\*/".toRegex(), "&#42;/")
+            .replace("/\\*".toRegex(), "/&#42;")
+            .replace("""[""", """\[""")
+            .replace("""]""", """\]""")
     }
 }
 
