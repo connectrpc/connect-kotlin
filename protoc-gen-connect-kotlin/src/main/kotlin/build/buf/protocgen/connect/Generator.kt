@@ -126,7 +126,7 @@ class Generator : CodeGenerator {
         val interfaceBuilder = TypeSpec.interfaceBuilder(serviceClientInterfaceClassName(packageName, service))
         val functionSpecs = interfaceMethods(service.methods, sourceInfo)
         return interfaceBuilder
-            .addKdoc(sourceInfo.comment())
+            .addKdoc(sourceInfo.comment().sanitizeKdoc())
             .addFunctions(functionSpecs)
             .build()
     }
@@ -144,7 +144,7 @@ class Generator : CodeGenerator {
             val outputClassName = classNameFromType(method.outputType)
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingBuilder = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.ABSTRACT)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
@@ -155,7 +155,7 @@ class Generator : CodeGenerator {
                 functions.add(streamingBuilder.build())
             } else if (method.isServerStreaming) {
                 val serverStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.ABSTRACT)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
@@ -166,7 +166,7 @@ class Generator : CodeGenerator {
                 functions.add(serverStreamingFunction)
             } else if (method.isClientStreaming) {
                 val clientStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.ABSTRACT)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
@@ -178,7 +178,7 @@ class Generator : CodeGenerator {
             } else {
                 if (configuration.generateCoroutineMethods) {
                     val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                        .addKdoc(sourceInfo.comment())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.ABSTRACT)
                         .addModifiers(KModifier.SUSPEND)
                         .addParameter("request", inputClassName)
@@ -194,7 +194,7 @@ class Generator : CodeGenerator {
                         returnType = Unit::class.java.asTypeName()
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
-                        .addKdoc(sourceInfo.comment())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.ABSTRACT)
                         .addParameter("request", inputClassName)
                         .addParameter(headerParameterSpec)
@@ -228,7 +228,7 @@ class Generator : CodeGenerator {
             )
         val functionSpecs = implementationMethods(service.methods, sourceInfo)
         return classBuilder
-            .addKdoc(sourceInfo.comment())
+            .addKdoc(sourceInfo.comment().sanitizeKdoc())
             .addFunctions(functionSpecs)
             .build()
     }
@@ -252,7 +252,7 @@ class Generator : CodeGenerator {
                 .build()
             if (method.isClientStreaming && method.isServerStreaming) {
                 val streamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
@@ -278,7 +278,7 @@ class Generator : CodeGenerator {
                 functions.add(streamingFunction)
             } else if (method.isServerStreaming) {
                 val serverStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
@@ -300,7 +300,7 @@ class Generator : CodeGenerator {
                 functions.add(serverStreamingFunction)
             } else if (method.isClientStreaming) {
                 val clientStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment())
+                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
@@ -323,7 +323,7 @@ class Generator : CodeGenerator {
             } else {
                 if (configuration.generateCoroutineMethods) {
                     val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
-                        .addKdoc(sourceInfo.comment())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.SUSPEND)
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
@@ -350,7 +350,7 @@ class Generator : CodeGenerator {
                         returnType = Unit::class.java.asTypeName()
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
-                        .addKdoc(sourceInfo.comment())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
                         .addParameter("headers", HEADERS_CLASS_NAME)
@@ -375,6 +375,15 @@ class Generator : CodeGenerator {
             }
         }
         return functions
+    }
+
+    internal fun String.sanitizeKdoc(): String {
+        return this
+            // Remove trailing whitespace on each line.
+            .replace("[^\\S\n]+\n".toRegex(), "\n")
+            .replace("\\s+$".toRegex(), "")
+            .replace("\\*/".toRegex(), "&#42;/")
+            .replace("/\\*".toRegex(), "/&#42;")
     }
 
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
