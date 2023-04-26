@@ -406,6 +406,7 @@ class Generator : CodeGenerator {
             .replace("/\\*".toRegex(), "/&#42;")
             .replace("""[""", """\[""")
             .replace("""]""", """\]""")
+            .replace("@", "&#64;")
     }
 }
 
