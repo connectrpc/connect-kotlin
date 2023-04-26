@@ -404,8 +404,8 @@ class Generator : CodeGenerator {
             .replace("\\s+$".toRegex(), "")
             .replace("\\*/".toRegex(), "&#42;/")
             .replace("/\\*".toRegex(), "/&#42;")
-            .replace("""[""", """\[""")
-            .replace("""]""", """\]""")
+            .replace("""[""", "&#91;")
+            .replace("""]""", "&#93;")
             .replace("@", "&#64;")
     }
 }
