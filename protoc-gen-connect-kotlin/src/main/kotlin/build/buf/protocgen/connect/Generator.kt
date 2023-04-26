@@ -384,6 +384,8 @@ class Generator : CodeGenerator {
             .replace("\\s+$".toRegex(), "")
             .replace("\\*/".toRegex(), "&#42;/")
             .replace("/\\*".toRegex(), "/&#42;")
+            .replace("""[""", """\[""")
+            .replace("""]""", """\]""")
     }
 
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
