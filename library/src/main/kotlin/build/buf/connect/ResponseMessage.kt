@@ -61,3 +61,76 @@ sealed class ResponseMessage<Output>(
         return null
     }
 }
+
+/**
+ * Returns the encapsulated [Throwable] exception if this instance represents [failure][ResponseMessage.Failure] or `null`
+ * if it is [success][ResponseMessage.Success].
+ */
+fun ResponseMessage<*>.exceptionOrNull(): Throwable? {
+    return when (this) {
+        is ResponseMessage.Success -> null
+        is ResponseMessage.Failure -> this.error
+    }
+}
+
+/**
+ * Returns the result of [onSuccess] for the encapsulated value if this instance represents [success][ResponseMessage.Success]
+ * or the result of [onFailure] function for the encapsulated [Throwable] exception if it is [failure][ResponseMessage.Failure].
+ *
+ * Note, that this function rethrows any [Throwable] exception thrown by [onSuccess] or by [onFailure] function.
+ */
+inline fun <R, T> ResponseMessage<T>.fold(
+    onSuccess: (value: T) -> R,
+    onFailure: (exception: Throwable) -> R
+): R {
+    return when (this) {
+        is ResponseMessage.Success -> onSuccess(this.message)
+        is ResponseMessage.Failure -> onFailure(this.error)
+    }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [success][ResponseMessage.Success] or the
+ * [defaultValue] if it is [failure][ResponseMessage.Failure].
+ */
+fun <T> ResponseMessage<T>.getOrDefault(defaultValue: T): T {
+    return when (this) {
+        is ResponseMessage.Success -> this.message
+        is ResponseMessage.Failure -> defaultValue
+    }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [success][ResponseMessage.Success] or the
+ * result of [onFailure] function for the encapsulated [Throwable] exception if it is [failure][ResponseMessage.Failure].
+ *
+ * Note, that this function rethrows any [Throwable] exception thrown by [onFailure] function.
+ */
+inline fun <R, T : R> ResponseMessage<T>.getOrElse(onFailure: (exception: Throwable) -> R): R {
+    return when (this) {
+        is ResponseMessage.Success -> this.message
+        is ResponseMessage.Failure -> onFailure(this.error)
+    }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [success][ResponseMessage.Success] or `null`
+ * if it is [failure][ResponseMessage.Failure].
+ */
+fun <T> ResponseMessage<T>.getOrNull(): T? {
+    return when (this) {
+        is ResponseMessage.Success -> this.message
+        is ResponseMessage.Failure -> null
+    }
+}
+
+/**
+ * Returns the encapsulated value if this instance represents [success][ResponseMessage.Success] or throws the encapsulated [Throwable] exception
+ * if it is [failure][ResponseMessage.Failure].
+ */
+fun <T> ResponseMessage<T>.getOrThrow(): T {
+    return when (this) {
+        is ResponseMessage.Success -> this.message
+        is ResponseMessage.Failure -> throw this.error
+    }
+}
