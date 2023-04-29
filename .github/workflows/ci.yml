@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
       - uses: bufbuild/buf-setup-action@v1.17.0
@@ -54,7 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: docker-practice/actions-setup-docker@master
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v4
       - uses: bufbuild/buf-setup-action@v1.17.0
         with:
           github_token: ${{ github.token }}
