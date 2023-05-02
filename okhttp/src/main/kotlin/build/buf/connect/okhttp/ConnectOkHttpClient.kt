@@ -36,7 +36,7 @@ import java.io.IOException
 /**
  * The OkHttp implementation of HTTPClientInterface.
  */
-class ConnectOkHttpClient(
+class ConnectOkHttpClient @JvmOverloads constructor(
     val client: OkHttpClient = OkHttpClient()
 ) : HTTPClientInterface {
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
