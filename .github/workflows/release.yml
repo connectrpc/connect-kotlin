@@ -56,12 +56,13 @@ jobs:
           echo "release_version=${release_version}" >> "$GITHUB_ENV"
           export ORG_GRADLE_PROJECT_releaseVersion="${release_version}"
           make buildplugin
-          sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
+          mv ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar .
+          sha256sum protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
       - name: Publish GitHub artifacts
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
           append_body: true
           files: |
-            ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${{ env.release_version }}.jar
+            protoc-gen-connect-kotlin-${{ env.release_version }}.jar
             sha256.txt
