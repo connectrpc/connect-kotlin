@@ -26,7 +26,7 @@ import java.net.URI
 /**
  *  Set of configuration used to set up clients.
  */
-class ProtocolClientConfig(
+class ProtocolClientConfig @JvmOverloads constructor(
     // The host (e.g., https://buf.build).
     val host: String,
     // The client to use for performing requests.
