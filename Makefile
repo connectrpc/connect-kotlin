@@ -8,7 +8,7 @@ MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
-CROSSTEST_VERSION := f55262b18945f060734adcb695b69640be55e8ac
+CROSSTEST_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_VERSION := v1.12.0
 
 $(BIN)/license-headers: Makefile

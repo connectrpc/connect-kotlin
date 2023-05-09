@@ -31,12 +31,20 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.net.URI
 
 class ProtocolClientTest {
     private val serializationStrategy: SerializationStrategy = mock { }
     private val codec: Codec<String> = mock { }
     private val httpClient: HTTPClientInterface = mock { }
 
+    @Test
+    fun testing() {
+        val uri = URI("https://buf.build/").resolve("/somepath")
+        val query = uri.resolve("?query=1&q=2")
+
+        assertThat(uri).isEqualTo(query)
+    }
     @Test
     fun urlConfigurationHostWithTrailingSlashUnary() {
         whenever(codec.encodingName()).thenReturn("testing")

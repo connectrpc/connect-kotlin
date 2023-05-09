@@ -29,4 +29,8 @@ class HTTPRequest(
     val headers: Headers,
     // Body data to send with the request.
     val message: ByteArray? = null
-)
+) {
+    override fun toString(): String {
+        return "HTTPRequest(url=$url, contentType='$contentType', headers=$headers, message=${message?.contentToString()})"
+    }
+}

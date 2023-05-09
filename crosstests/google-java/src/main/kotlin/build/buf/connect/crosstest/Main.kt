@@ -30,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Request
 import java.time.Duration
 import kotlin.system.exitProcess
 
@@ -44,6 +45,8 @@ class Main {
                 val (sslSocketFactory, trustManager) = sslContext()
                 val client = OkHttpClient.Builder()
                     .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+//                    .protocols(listOf(Protocol.HTTP_1_1))
+//                    .connectionSpecs(listOf(ConnectionSpec.CLEARTEXT))
                     .connectTimeout(Duration.ofMinutes(1))
                     .readTimeout(Duration.ofMinutes(1))
                     .writeTimeout(Duration.ofMinutes(1))
@@ -88,6 +91,12 @@ class Main {
                     compressionPools = listOf(GzipCompressionPool)
                 )
             )
+//            val request = Request.Builder()
+//                .get()
+//                .url("http://localhost:9000/hello")
+//                .build()
+//            val call = client.newCall(request)
+//            call.execute()
             coroutineTests(tag, connectClient, shortTimeoutClient)
             callbackTests(tag, connectClient)
         }
@@ -99,7 +108,7 @@ class Main {
         ) {
             val testServiceClientSuite = TestServiceClientSuite(protocolClient, shortTimeoutClient)
 //            testServiceClientSuite.emptyUnary()
-            testServiceClientSuite.largeUnary()
+//            testServiceClientSuite.largeUnary()
 //            testServiceClientSuite.serverStreaming()
 //            testServiceClientSuite.emptyStream()
 //            testServiceClientSuite.customMetadata()

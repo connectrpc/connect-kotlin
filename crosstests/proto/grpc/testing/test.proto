@@ -71,12 +71,6 @@ service TestService {
 
   // One request followed by a sequence of responses (streamed download).
   // The server returns the payload with client desired type and sizes.
-  rpc CacheableStreamingOutputCall(StreamingOutputCallRequest) returns (stream StreamingOutputCallResponse) {
-    option idempotency_level = NO_SIDE_EFFECTS;
-  }
-
-  // One request followed by a sequence of responses (streamed download).
-  // The server returns the payload with client desired type and sizes.
   rpc StreamingOutputCall(StreamingOutputCallRequest) returns (stream StreamingOutputCallResponse);
 
   // One request followed by a sequence of responses (streamed download).

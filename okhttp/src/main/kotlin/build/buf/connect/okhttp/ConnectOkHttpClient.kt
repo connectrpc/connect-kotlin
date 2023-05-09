@@ -90,19 +90,22 @@ class ConnectOkHttpClient(
                     }
 
                     override fun onResponse(call: Call, response: Response) {
+                        // Unary requests will need to read the entire body to access trailers.
                         val responseBuffer = response.body?.source()?.use { bufferedSource ->
                             val buffer = Buffer()
                             buffer.writeAll(bufferedSource)
                             buffer
                         }
+                        val httpResponse = HTTPResponse(
+                            code = Code.fromHTTPStatus(response.code),
+                            headers = response.headers.toLowerCaseKeysMultiMap(),
+                            message = responseBuffer ?: Buffer(),
+                            trailers = response.trailers().toLowerCaseKeysMultiMap(),
+                            tracingInfo = TracingInfo(response.code)
+                        )
+                        println(httpResponse)
                         onResult(
-                            HTTPResponse(
-                                code = Code.fromHTTPStatus(response.code),
-                                headers = response.headers.toLowerCaseKeysMultiMap(),
-                                message = responseBuffer ?: Buffer(),
-                                trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                                tracingInfo = TracingInfo(response.code)
-                            )
+                            httpResponse
                         )
                     }
                 }

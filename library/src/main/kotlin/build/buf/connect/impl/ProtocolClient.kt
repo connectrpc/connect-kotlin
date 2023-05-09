@@ -17,19 +17,29 @@ package build.buf.connect.impl
 import build.buf.connect.BidirectionalStreamInterface
 import build.buf.connect.ClientOnlyStreamInterface
 import build.buf.connect.Code
+import build.buf.connect.Codec
 import build.buf.connect.Headers
+import build.buf.connect.Idempotency
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.connect.StreamResult
+import build.buf.connect.compression.RequestCompression
 import build.buf.connect.http.Cancelable
 import build.buf.connect.http.HTTPClientInterface
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
+import build.buf.connect.protocols.GetSupport.BASE64_QUERY_PARAM_KEY
+import build.buf.connect.protocols.GetSupport.COMPRESSION_QUERY_PARAM_KEY
+import build.buf.connect.protocols.GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY
+import build.buf.connect.protocols.GetSupport.CONNECT_VERSION_QUERY_PARAM_VALUE
+import build.buf.connect.protocols.GetSupport.ENCODING_QUERY_PARAM_KEY
+import build.buf.connect.protocols.GetSupport.MESSAGE_QUERY_PARAM_KEY
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okio.Buffer
 import java.net.URL
 import kotlin.coroutines.resume
 
@@ -52,16 +62,29 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
-            val unaryRequest = HTTPRequest(
-                url = urlFromMethodSpec(methodSpec),
-                contentType = "application/${requestCodec.encodingName()}",
-                headers = headers,
-                message = requestCodec.serialize(request)
-                    .readByteArray()
-            )
+            val useGet =
+                //                config.enableGet &&
+            methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
+            val unaryRequest = if (useGet) {
+                HTTPRequest(
+                    url = getUrlFromMethodSpec(methodSpec, requestCodec, requestCodec.serialize(request), config.requestCompression),
+                    contentType = "application/${requestCodec.encodingName()}",
+                    headers = headers,
+                )
+            } else {
+                HTTPRequest(
+                    url = urlFromMethodSpec(methodSpec),
+                    contentType = "application/${requestCodec.encodingName()}",
+                    headers = headers,
+                    message = requestCodec.serialize(request)
+                        .readByteArray()
+                )
+            }
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            val cancelable = httpClient.unary(finalRequest) { httpResponse ->
+            println(finalRequest)
+            val method = if (useGet) "GET" else "POST"
+            val cancelable = httpClient.unary(method, finalRequest) { httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
                 val connectError = finalResponse.error?.setErrorParser(serializationStrategy.errorDetailParser())
@@ -203,6 +226,28 @@ class ProtocolClient(
 
     private fun <Input : Any, Output : Any> urlFromMethodSpec(methodSpec: MethodSpec<Input, Output>): URL {
         val host = config.baseUri.resolve("/${methodSpec.path}")
+        return host.toURL()
+    }
+
+    private fun <Input: Any, Output: Any> getUrlFromMethodSpec(
+        methodSpec: MethodSpec<Input, Output>,
+        codec: Codec<Input>,
+        serialize: Buffer,
+        requestCompression: RequestCompression?,
+        ): URL {
+        val params = mutableListOf<String>()
+        val request = if (requestCompression != null) {
+            params.add("$COMPRESSION_QUERY_PARAM_KEY=${requestCompression.compressionPool.name()}")
+            requestCompression.compressionPool.compress(serialize)
+        } else {
+            serialize
+        }
+        params.add("$MESSAGE_QUERY_PARAM_KEY=${request.readByteString().base64Url()}")
+        params.add("$BASE64_QUERY_PARAM_KEY=1")
+        params.add("$ENCODING_QUERY_PARAM_KEY=${codec.encodingName()}")
+        params.add("$CONNECT_VERSION_QUERY_PARAM_KEY=$CONNECT_VERSION_QUERY_PARAM_VALUE")
+        val queryParams = params.joinToString("&")
+        val host = config.baseUri.resolve("/${methodSpec.path}?$queryParams")
         return host.toURL()
     }
 }
