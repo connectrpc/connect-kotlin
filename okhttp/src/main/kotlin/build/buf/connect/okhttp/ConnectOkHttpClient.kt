@@ -90,16 +90,14 @@ class ConnectOkHttpClient(
                             buffer.writeAll(bufferedSource)
                             buffer
                         }
-                        val httpResponse = HTTPResponse(
-                            code = Code.fromHTTPStatus(response.code),
-                            headers = response.headers.toLowerCaseKeysMultiMap(),
-                            message = responseBuffer ?: Buffer(),
-                            trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                            tracingInfo = TracingInfo(response.code)
-                        )
-                        println(httpResponse)
                         onResult(
-                            httpResponse
+                            HTTPResponse(
+                                code = Code.fromHTTPStatus(response.code),
+                                headers = response.headers.toLowerCaseKeysMultiMap(),
+                                message = responseBuffer ?: Buffer(),
+                                trailers = response.trailers().toLowerCaseKeysMultiMap(),
+                                tracingInfo = TracingInfo(response.code)
+                            )
                         )
                     }
                 }

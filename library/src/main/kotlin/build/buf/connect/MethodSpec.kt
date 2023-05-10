@@ -29,6 +29,7 @@ internal object Method {
  * @param requestClass The Kotlin Class for the request message.
  * @param responseClass The Kotlin Class for the response message.
  * @param idempotency The declared idempotency of a method.
+ * @param method The http method of a request.
  */
 class MethodSpec<Input : Any, Output : Any>(
     val path: String,

@@ -26,7 +26,7 @@ typealias Cancelable = () -> Unit
 interface HTTPClientInterface {
 
     /**
-     * Perform a GET HTTP request.
+     * Perform a unary HTTP request.
      *
      * @param method The method to use for the request.
      * @param request The outbound request headers and data.
