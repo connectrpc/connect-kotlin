@@ -39,13 +39,6 @@ class ProtocolClientTest {
     private val httpClient: HTTPClientInterface = mock { }
 
     @Test
-    fun testing() {
-        val uri = URI("https://buf.build/").resolve("/somepath")
-        val query = uri.resolve("?query=1&q=2")
-
-        assertThat(uri).isEqualTo(query)
-    }
-    @Test
     fun urlConfigurationHostWithTrailingSlashUnary() {
         whenever(codec.encodingName()).thenReturn("testing")
         whenever(codec.serialize(any())).thenReturn(Buffer())
@@ -167,7 +160,7 @@ class ProtocolClientTest {
 
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
-        verify(httpClient).unary(captor.capture(), any())
+        verify(httpClient).unary(any(), captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 
@@ -195,7 +188,7 @@ class ProtocolClientTest {
 
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
-        verify(httpClient).unary(captor.capture(), any())
+        verify(httpClient).unary(any(), captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 }

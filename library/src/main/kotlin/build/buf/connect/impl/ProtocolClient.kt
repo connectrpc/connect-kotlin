@@ -20,6 +20,7 @@ import build.buf.connect.Code
 import build.buf.connect.Codec
 import build.buf.connect.Headers
 import build.buf.connect.Idempotency
+import build.buf.connect.Method
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
@@ -72,7 +73,7 @@ class ProtocolClient(
                 )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            val cancelable = httpClient.unary(finalRequest.method, finalRequest) { httpResponse ->
+            val cancelable = httpClient.unary(finalRequest.methodSpec.method, finalRequest) { httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
                 val connectError = finalResponse.error?.setErrorParser(serializationStrategy.errorDetailParser())
@@ -160,7 +161,7 @@ class ProtocolClient(
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
         var isComplete = false
-        val httpStream = httpClient.stream(finalRequest) { initialResult ->
+        val httpStream = httpClient.stream(finalRequest.methodSpec.method, finalRequest) { initialResult ->
             if (isComplete) {
                 // No-op on remaining handlers after a completion.
                 return@stream

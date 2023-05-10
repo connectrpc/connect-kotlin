@@ -35,4 +35,5 @@ class MethodSpec<Input : Any, Output : Any>(
     val requestClass: KClass<Input>,
     val responseClass: KClass<Output>,
     val idempotency: Idempotency = Idempotency.IDEMPOTENCY_UNKNOWN,
+    val method: String = Method.POST_METHOD,
 )

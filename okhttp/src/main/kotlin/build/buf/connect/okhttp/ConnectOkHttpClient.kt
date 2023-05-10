@@ -30,11 +30,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.http.HttpMethod
 import okio.Buffer
 import java.io.IOException
-
-private const val POST_METHOD = "POST"
-private const val GET_METHOD = "GET"
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
@@ -42,10 +40,6 @@ private const val GET_METHOD = "GET"
 class ConnectOkHttpClient(
     val client: OkHttpClient = OkHttpClient()
 ) : HTTPClientInterface {
-
-    override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
-        return unary(POST_METHOD, request, onResult)
-    }
 
     override fun unary(method: String, request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
@@ -55,7 +49,7 @@ class ConnectOkHttpClient(
             }
         }
         val content = request.message ?: ByteArray(0)
-        val requestBody = if (method == GET_METHOD) null else content.toRequestBody(request.contentType.toMediaType())
+        val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
         val callRequest = builder
             .url(request.url)
             .method(method, requestBody)
@@ -127,10 +121,6 @@ class ConnectOkHttpClient(
             )
         }
         return cancelable
-    }
-
-    override fun stream(request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream {
-        return stream(POST_METHOD, request, onResult)
     }
 
     override fun stream(

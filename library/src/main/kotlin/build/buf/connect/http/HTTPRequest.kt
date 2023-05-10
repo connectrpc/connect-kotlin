@@ -15,15 +15,14 @@
 package build.buf.connect.http
 
 import build.buf.connect.Headers
-import build.buf.connect.Method
 import build.buf.connect.MethodSpec
 import java.net.URL
 
 /**
  * HTTP request used for sending primitive data to the server.
  */
-class HTTPRequest(
-    // TheURL for the request.
+class HTTPRequest internal constructor(
+    // The URL for the request.
     val url: URL,
     // Value to assign to the `content-type` header.
     val contentType: String,
@@ -31,6 +30,33 @@ class HTTPRequest(
     val headers: Headers,
     // Body data to send with the request.
     val message: ByteArray? = null,
-    val methodSpec: MethodSpec<*, *>? = null,
-    internal val method: String = Method.POST_METHOD,
-)
+    // The method spec associated with the request.
+    val methodSpec: MethodSpec<*, *>
+) {
+    /**
+     * Clones the [HTTPRequest] with override values.
+     *
+     * Intended to make mutations for [HTTPRequest] safe for
+     * [build.buf.connect.Interceptor] implementation.
+     */
+    fun clone(
+        // The URL for the request.
+        url: URL = this.url,
+        // Value to assign to the `content-type` header.
+        contentType: String = this.contentType,
+        // Additional outbound headers for the request.
+        headers: Headers = this.headers,
+        // Body data to send with the request.
+        message: ByteArray? = this.message,
+        // The method spec associated with the request.
+        methodSpec: MethodSpec<*, *> = this.methodSpec
+    ): HTTPRequest {
+        return HTTPRequest(
+            url,
+            contentType,
+            headers,
+            message,
+            methodSpec
+        )
+    }
+}

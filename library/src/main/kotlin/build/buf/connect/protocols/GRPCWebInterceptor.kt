@@ -67,7 +67,7 @@ internal class GRPCWebInterceptor(
                     requestCompressionPool?.minBytes
                 )
 
-                HTTPRequest(
+                request.clone(
                     url = request.url,
                     // The underlying content type is overridden here.
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
@@ -168,7 +168,7 @@ internal class GRPCWebInterceptor(
     override fun streamFunction(): StreamFunction {
         return StreamFunction(
             requestFunction = { request ->
-                HTTPRequest(
+                request.clone(
                     url = request.url,
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
                     headers = request.headers.withGRPCRequestHeaders(),

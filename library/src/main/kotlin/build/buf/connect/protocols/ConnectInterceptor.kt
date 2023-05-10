@@ -89,15 +89,14 @@ internal class ConnectInterceptor(
                         finalRequestBody,
                         requestCompression
                     )
-                    HTTPRequest(
+                    request.clone(
                         url = url,
                         contentType = "application/${requestCodec.encodingName()}",
                         headers = request.headers,
                         methodSpec = request.methodSpec,
-                        method = Method.GET_METHOD
                     )
                 } else {
-                    HTTPRequest(
+                    request.clone(
                         url = request.url,
                         contentType = request.contentType,
                         headers = requestHeaders,
@@ -149,7 +148,7 @@ internal class ConnectInterceptor(
                     CONNECT_STREAMING_ACCEPT_ENCODING,
                     clientConfig.compressionPools().map { entry -> entry.name() }
                 )
-                HTTPRequest(
+                request.clone(
                     url = request.url,
                     contentType = request.contentType,
                     headers = requestHeaders,
