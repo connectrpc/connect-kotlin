@@ -50,7 +50,7 @@ crosstestserverstop: ## Stop the server for cross tests.
 	-docker container stop serverconnect servergrpc
 
 .PHONY: crosstestsrun
-crosstestsrun: crosstestsrunjava  ## Run the cross tests.
+crosstestsrun: crosstestsrunjava crosstestsrunjavalite ## Run the cross tests.
 
 .PHONY: crosstestsrunjava
 crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
