@@ -15,6 +15,8 @@
 package build.buf.connect.http
 
 import build.buf.connect.Headers
+import build.buf.connect.Method
+import build.buf.connect.MethodSpec
 import java.net.URL
 
 /**
@@ -28,9 +30,7 @@ class HTTPRequest(
     // Additional outbound headers for the request.
     val headers: Headers,
     // Body data to send with the request.
-    val message: ByteArray? = null
-) {
-    override fun toString(): String {
-        return "HTTPRequest(url=$url, contentType='$contentType', headers=$headers, message=${message?.contentToString()})"
-    }
-}
+    val message: ByteArray? = null,
+    val methodSpec: MethodSpec<*, *>? = null,
+    internal val method: String = Method.POST_METHOD,
+)

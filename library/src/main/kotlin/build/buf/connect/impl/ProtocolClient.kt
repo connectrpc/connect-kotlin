@@ -62,29 +62,17 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
-            val useGet =
-                //                config.enableGet &&
-            methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
-            val unaryRequest = if (useGet) {
-                HTTPRequest(
-                    url = getUrlFromMethodSpec(methodSpec, requestCodec, requestCodec.serialize(request), config.requestCompression),
-                    contentType = "application/${requestCodec.encodingName()}",
-                    headers = headers,
-                )
-            } else {
-                HTTPRequest(
+            val unaryRequest = HTTPRequest(
                     url = urlFromMethodSpec(methodSpec),
                     contentType = "application/${requestCodec.encodingName()}",
                     headers = headers,
                     message = requestCodec.serialize(request)
-                        .readByteArray()
+                        .readByteArray(),
+                    methodSpec = methodSpec
                 )
-            }
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            println(finalRequest)
-            val method = if (useGet) "GET" else "POST"
-            val cancelable = httpClient.unary(method, finalRequest) { httpResponse ->
+            val cancelable = httpClient.unary(finalRequest.method, finalRequest) { httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
                 val connectError = finalResponse.error?.setErrorParser(serializationStrategy.errorDetailParser())
@@ -166,7 +154,8 @@ class ProtocolClient(
         val request = HTTPRequest(
             url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
-            headers = headers
+            headers = headers,
+            methodSpec = methodSpec
         )
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)

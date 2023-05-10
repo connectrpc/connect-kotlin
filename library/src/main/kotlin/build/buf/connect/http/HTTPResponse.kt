@@ -39,8 +39,4 @@ class HTTPResponse(
     val tracingInfo: TracingInfo?,
     // The accompanying error, if the request failed.
     val error: ConnectError? = null
-) {
-    override fun toString(): String {
-        return "HTTPResponse(tracingInfo=$tracingInfo, code=$code, headers=$headers, message=${message.readUtf8()}, trailers=$trailers, error=$error)"
-    }
-}
+)

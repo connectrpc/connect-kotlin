@@ -16,6 +16,11 @@ package build.buf.connect
 
 import kotlin.reflect.KClass
 
+internal object Method {
+    internal const val GET_METHOD = "GET"
+    internal const val POST_METHOD = "POST"
+}
+
 /**
  * Represents the minimum set of information to execute an RPC method.
  * Primarily used in generated code.
