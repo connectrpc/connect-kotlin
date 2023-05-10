@@ -39,7 +39,7 @@ class ProtocolClientConfig(
     val requestCompression: RequestCompression? = null,
     val enableGet: Boolean = false,
     val getMaxUrlBytes: Int = 50_000,
-    val getFallback: Boolean = false,
+    val getFallback: Boolean = true,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
     // Compression pools that provide support for the provided `compressionName`, as well as any

@@ -78,9 +78,7 @@ internal class ConnectInterceptor(
                 }
                 val serializationStrategy = clientConfig.serializationStrategy
                 val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
-                val isCacheableGetMethod = clientConfig.enableGet &&
-                    request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
-                if (isCacheableGetMethod) {
+                if (shouldUseGetMethod(request, finalRequestBody)) {
                     val url = getUrlFromMethodSpec(
                         request,
                         requestCodec,
@@ -127,6 +125,17 @@ internal class ConnectInterceptor(
                 )
             }
         )
+    }
+
+    private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
+        if (request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
+            clientConfig.enableGet) {
+            if (clientConfig.getFallback) {
+                return clientConfig.getMaxUrlBytes < finalRequestBody.size
+            }
+            return true
+        }
+        return false
     }
 
     override fun streamFunction(): StreamFunction {

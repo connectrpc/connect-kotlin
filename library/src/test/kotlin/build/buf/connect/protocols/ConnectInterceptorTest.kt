@@ -544,4 +544,30 @@ class ConnectInterceptorTest {
         val completion = result as StreamResult.Complete
         assertThat(completion.code).isEqualTo(Code.UNKNOWN)
     }
+
+    @Test
+    fun getRequestTest() {
+        /**
+         * The matrix is the following:
+         * get enabled: true
+         * get fallback: true
+         * max bytes over limit: true
+         * E: URL is correctly constructed for a GET
+         *
+         * get enabled: true
+         * get fallback: true
+         * max bytes over limit: false
+         * E: POST request is made
+         *
+         * get enabled: true
+         * get fallback: false
+         * max bytes over limit: n/a since we always shove it in the url
+         * E: URL is correctly constructed with the max bytes = 0
+         *
+         * get enabled: false
+         * get fallback: n/a since we always use the POST path
+         * max bytes over limit: n/a since this is not read
+         * E: POST request is made
+         */
+    }
 }
