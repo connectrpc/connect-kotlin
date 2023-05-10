@@ -27,10 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.Request
 import java.time.Duration
 import kotlin.system.exitProcess
 

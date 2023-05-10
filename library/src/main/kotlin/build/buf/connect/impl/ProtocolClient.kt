@@ -19,8 +19,6 @@ import build.buf.connect.ClientOnlyStreamInterface
 import build.buf.connect.Code
 import build.buf.connect.Codec
 import build.buf.connect.Headers
-import build.buf.connect.Idempotency
-import build.buf.connect.Method
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
@@ -64,13 +62,13 @@ class ProtocolClient(
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
             val unaryRequest = HTTPRequest(
-                    url = urlFromMethodSpec(methodSpec),
-                    contentType = "application/${requestCodec.encodingName()}",
-                    headers = headers,
-                    message = requestCodec.serialize(request)
-                        .readByteArray(),
-                    methodSpec = methodSpec
-                )
+                url = urlFromMethodSpec(methodSpec),
+                contentType = "application/${requestCodec.encodingName()}",
+                headers = headers,
+                message = requestCodec.serialize(request)
+                    .readByteArray(),
+                methodSpec = methodSpec
+            )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
             val cancelable = httpClient.unary(finalRequest.methodSpec.method, finalRequest) { httpResponse ->
@@ -219,12 +217,12 @@ class ProtocolClient(
         return host.toURL()
     }
 
-    private fun <Input: Any, Output: Any> getUrlFromMethodSpec(
+    private fun <Input : Any, Output : Any> getUrlFromMethodSpec(
         methodSpec: MethodSpec<Input, Output>,
         codec: Codec<Input>,
         serialize: Buffer,
-        requestCompression: RequestCompression?,
-        ): URL {
+        requestCompression: RequestCompression?
+    ): URL {
         val params = mutableListOf<String>()
         val request = if (requestCompression != null) {
             params.add("$COMPRESSION_QUERY_PARAM_KEY=${requestCompression.compressionPool.name()}")

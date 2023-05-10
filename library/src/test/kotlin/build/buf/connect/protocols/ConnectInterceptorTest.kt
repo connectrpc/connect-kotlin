@@ -74,7 +74,7 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )
@@ -103,7 +103,7 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )
@@ -130,7 +130,7 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )
@@ -285,7 +285,7 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )
@@ -314,7 +314,7 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )

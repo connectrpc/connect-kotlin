@@ -31,7 +31,6 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import java.net.URI
 
 class ProtocolClientTest {
     private val serializationStrategy: SerializationStrategy = mock { }

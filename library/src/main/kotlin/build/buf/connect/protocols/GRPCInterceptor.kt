@@ -24,7 +24,6 @@ import build.buf.connect.StreamResult
 import build.buf.connect.Trailers
 import build.buf.connect.UnaryFunction
 import build.buf.connect.compression.CompressionPool
-import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import okio.Buffer
 

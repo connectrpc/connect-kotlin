@@ -29,7 +29,7 @@ import java.net.URL
 private val methodSpec = MethodSpec(
     path = "",
     requestClass = Any::class,
-    responseClass = Any::class,
+    responseClass = Any::class
 )
 
 class InterceptorChainTest {

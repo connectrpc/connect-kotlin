@@ -21,7 +21,6 @@ import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.Headers
 import build.buf.connect.Idempotency
 import build.buf.connect.Interceptor
-import build.buf.connect.Method
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.StreamFunction
 import build.buf.connect.StreamResult
@@ -72,11 +71,11 @@ internal class ConnectInterceptor(
                     buffer
                 }
                 val finalRequestBody = if (requestCompression?.shouldCompress(requestMessage) == true) {
-                        requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression!!.compressionPool.name()))
-                        requestCompression.compressionPool.compress(requestMessage)
-                    } else {
-                        requestMessage
-                    }
+                    requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression!!.compressionPool.name()))
+                    requestCompression.compressionPool.compress(requestMessage)
+                } else {
+                    requestMessage
+                }
 
                 val serializationStrategy = clientConfig.serializationStrategy
                 val requestCodec = serializationStrategy.codec(request.methodSpec!!.requestClass)
@@ -93,7 +92,7 @@ internal class ConnectInterceptor(
                         url = url,
                         contentType = "application/${requestCodec.encodingName()}",
                         headers = request.headers,
-                        methodSpec = request.methodSpec,
+                        methodSpec = request.methodSpec
                     )
                 } else {
                     request.clone(
@@ -287,7 +286,7 @@ private fun getUrlFromMethodSpec(
     httpRequest: HTTPRequest,
     codec: Codec<*>,
     serialize: Buffer,
-    requestCompression: RequestCompression?,
+    requestCompression: RequestCompression?
 ): URL {
     val baseURL = httpRequest.url
     val methodSpec = httpRequest.methodSpec!!
@@ -304,4 +303,3 @@ private fun getUrlFromMethodSpec(
         .resolve("/${methodSpec.path}?$queryParams")
     return host.toURL()
 }
-

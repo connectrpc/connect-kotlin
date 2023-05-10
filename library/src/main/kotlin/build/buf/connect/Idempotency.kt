@@ -21,6 +21,7 @@ enum class Idempotency {
      * any kind of procedure.
      */
     IDEMPOTENCY_UNKNOWN,
+
     /**
      * IdempotencyNoSideEffects is the idempotency level that specifies that a
      * given call has no side-effects. This is equivalent to [RFC 9110 § 9.2.1]
@@ -33,6 +34,7 @@ enum class Idempotency {
      * [RFC 9110 § 9.2.1]: https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.1
      */
     NO_SIDE_EFFECTS,
+
     /**
      * IdempotencyIdempotent is the idempotency level that specifies that a
      * given call is "idempotent", such that multiple instances of the same
