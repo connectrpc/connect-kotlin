@@ -111,6 +111,7 @@ class Main {
             testServiceClientSuite.unimplementedServerStreamingService()
             testServiceClientSuite.failUnary()
             testServiceClientSuite.failServerStreaming()
+            testServiceClientSuite.getUnary()
 
             testServiceClientSuite.test(tag)
         }

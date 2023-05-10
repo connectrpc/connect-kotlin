@@ -443,10 +443,6 @@ class TestServiceClientSuite(
             assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
         }
     }
-
-    override suspend fun getServerStreaming() = register("get_server_streaming") {
-        TODO("Not yet implemented")
-    }
 }
 
 internal fun ByteArray.b64Encode(): String {

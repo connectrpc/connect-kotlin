@@ -38,7 +38,6 @@ interface TestSuite {
     suspend fun failUnary()
     suspend fun failServerStreaming()
     suspend fun getUnary()
-    suspend fun getServerStreaming()
 }
 
 interface UnaryCallbackTestSuite {
