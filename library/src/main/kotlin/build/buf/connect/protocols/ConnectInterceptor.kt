@@ -71,17 +71,16 @@ internal class ConnectInterceptor(
                     buffer
                 }
                 val finalRequestBody = if (requestCompression?.shouldCompress(requestMessage) == true) {
-                    requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression!!.compressionPool.name()))
+                    requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
                     requestCompression.compressionPool.compress(requestMessage)
                 } else {
                     requestMessage
                 }
-
                 val serializationStrategy = clientConfig.serializationStrategy
-                val requestCodec = serializationStrategy.codec(request.methodSpec!!.requestClass)
-                val useGet = clientConfig.enableGet &&
+                val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
+                val isCacheableGetMethod = clientConfig.enableGet &&
                     request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
-                if (useGet) {
+                if (isCacheableGetMethod) {
                     val url = getUrlFromMethodSpec(
                         request,
                         requestCodec,
