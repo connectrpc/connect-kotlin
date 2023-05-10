@@ -21,6 +21,8 @@ import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.Headers
 import build.buf.connect.Idempotency
 import build.buf.connect.Interceptor
+import build.buf.connect.Method.GET_METHOD
+import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.StreamFunction
 import build.buf.connect.StreamResult
@@ -64,11 +66,9 @@ internal class ConnectInterceptor(
                     )
                 }
                 val requestCompression = clientConfig.requestCompression
-                val requestMessage = Buffer().use { buffer ->
-                    if (request.message != null) {
-                        buffer.write(request.message)
-                    }
-                    buffer
+                val requestMessage = Buffer()
+                if (request.message != null) {
+                    requestMessage.write(request.message)
                 }
                 val finalRequestBody = if (requestCompression?.shouldCompress(requestMessage) == true) {
                     requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
@@ -89,7 +89,13 @@ internal class ConnectInterceptor(
                         url = url,
                         contentType = "application/${requestCodec.encodingName()}",
                         headers = request.headers,
-                        methodSpec = request.methodSpec
+                        methodSpec = MethodSpec(
+                            path = request.methodSpec.path,
+                            requestClass = request.methodSpec.requestClass,
+                            responseClass = request.methodSpec.responseClass,
+                            idempotency = request.methodSpec.idempotency,
+                            method = GET_METHOD
+                        )
                     )
                 } else {
                     request.clone(
@@ -129,7 +135,8 @@ internal class ConnectInterceptor(
 
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         if (request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-            clientConfig.enableGet) {
+            clientConfig.enableGet
+        ) {
             if (clientConfig.getFallback) {
                 return clientConfig.getMaxUrlBytes < finalRequestBody.size
             }
@@ -293,19 +300,20 @@ private fun Headers.toTrailers(): Trailers {
 private fun getUrlFromMethodSpec(
     httpRequest: HTTPRequest,
     codec: Codec<*>,
-    serialize: Buffer,
+    payload: Buffer,
     requestCompression: RequestCompression?
 ): URL {
     val baseURL = httpRequest.url
-    val methodSpec = httpRequest.methodSpec!!
+    val methodSpec = httpRequest.methodSpec
     val params = mutableListOf<String>()
-    if (requestCompression?.shouldCompress(serialize) == true) {
+    if (requestCompression?.shouldCompress(payload) == true) {
         params.add("${GetSupport.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
     }
-    params.add("${GetSupport.MESSAGE_QUERY_PARAM_KEY}=${serialize.readByteString().base64Url()}")
+    params.add("${GetSupport.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
     params.add("${GetSupport.BASE64_QUERY_PARAM_KEY}=1")
     params.add("${GetSupport.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
     params.add("${GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY}=${GetSupport.CONNECT_VERSION_QUERY_PARAM_VALUE}")
+    params.sort()
     val queryParams = params.joinToString("&")
     val host = baseURL.toURI()
         .resolve("/${methodSpec.path}?$queryParams")
