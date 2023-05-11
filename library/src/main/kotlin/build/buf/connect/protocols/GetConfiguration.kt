@@ -18,7 +18,7 @@ import build.buf.connect.Idempotency
 import build.buf.connect.MethodSpec
 import okio.Buffer
 
-object GetSupport {
+object GetSupportConstants {
     const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
     const val ENCODING_QUERY_PARAM_KEY = "encoding"
     const val BASE64_QUERY_PARAM_KEY = "base64"

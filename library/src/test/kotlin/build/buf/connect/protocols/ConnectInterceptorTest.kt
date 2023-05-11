@@ -582,10 +582,10 @@ class ConnectInterceptorTest {
         )
 
         val queryMap = parseQuery(request)
-        assertThat(queryMap.get(GetSupport.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
-        assertThat(queryMap.get(GetSupport.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
-        assertThat(queryMap.get(GetSupport.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
-        assertThat(queryMap.get(GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
+        assertThat(queryMap.get(GetSupportConstants.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
+        assertThat(queryMap.get(GetSupportConstants.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
+        assertThat(queryMap.get(GetSupportConstants.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
+        assertThat(queryMap.get(GetSupportConstants.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
         assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
     }
 
@@ -649,10 +649,10 @@ class ConnectInterceptorTest {
             )
         )
         val queryMap = parseQuery(request)
-        assertThat(queryMap.get(GetSupport.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
-        assertThat(queryMap.get(GetSupport.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
-        assertThat(queryMap.get(GetSupport.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
-        assertThat(queryMap.get(GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
+        assertThat(queryMap.get(GetSupportConstants.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
+        assertThat(queryMap.get(GetSupportConstants.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
+        assertThat(queryMap.get(GetSupportConstants.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
+        assertThat(queryMap.get(GetSupportConstants.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
         assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
     }
 
