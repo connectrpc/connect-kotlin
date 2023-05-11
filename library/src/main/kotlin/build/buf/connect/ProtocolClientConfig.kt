@@ -37,9 +37,6 @@ class ProtocolClientConfig(
     // The compression type that should be used (e.g., "gzip").
     // Defaults to no compression.
     val requestCompression: RequestCompression? = null,
-    val enableGet: Boolean = false,
-    val getMaxUrlBytes: Int = 50_000,
-    val getFallback: Boolean = true,
     val getConfiguration: GetConfiguration? = null,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),

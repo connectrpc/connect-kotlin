@@ -52,12 +52,17 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
+            val requestMessage = if (config.getConfiguration?.isGetEnabled(methodSpec) == true) {
+                // Use deterministic serialization when GET request configuration is set.
+                requestCodec.deterministicSerialize(request)
+            } else {
+                requestCodec.serialize(request)
+            }
             val unaryRequest = HTTPRequest(
                 url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
-                message = requestCodec.serialize(request)
-                    .readByteArray(),
+                message = requestMessage.readByteArray(),
                 methodSpec = methodSpec
             )
             val unaryFunc = config.createInterceptorChain()

@@ -14,6 +14,10 @@
 
 package build.buf.connect.protocols
 
+import build.buf.connect.Idempotency
+import build.buf.connect.MethodSpec
+import okio.Buffer
+
 object GetSupport {
     const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
     const val ENCODING_QUERY_PARAM_KEY = "encoding"
@@ -26,4 +30,12 @@ object GetSupport {
 data class GetConfiguration(
     val fallbackEnabled: Boolean = true,
     val maxUrlBytes: Int = 50_000
-)
+) {
+    fun isGetEnabled(methodSpec: MethodSpec<*, *>): Boolean {
+        return methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
+    }
+
+    fun useFallback(buffer: Buffer): Boolean {
+        return fallbackEnabled && maxUrlBytes > buffer.size
+    }
+}

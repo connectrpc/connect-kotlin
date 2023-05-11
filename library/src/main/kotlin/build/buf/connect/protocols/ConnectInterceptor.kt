@@ -135,15 +135,8 @@ internal class ConnectInterceptor(
 
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         val getConfiguration = clientConfig.getConfiguration
-        if (request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-            getConfiguration != null
-        ) {
-            if (getConfiguration.fallbackEnabled) {
-                return getConfiguration.maxUrlBytes > finalRequestBody.size
-            }
-            return true
-        }
-        return false
+        return getConfiguration?.isGetEnabled(request.methodSpec) == true &&
+                getConfiguration.useFallback(finalRequestBody)
     }
 
     override fun streamFunction(): StreamFunction {

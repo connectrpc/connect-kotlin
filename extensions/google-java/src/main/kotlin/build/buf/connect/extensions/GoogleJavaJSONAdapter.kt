@@ -56,7 +56,14 @@ internal class GoogleJavaJSONAdapter<E : GeneratedMessageV3>(
     }
 
     override fun serialize(message: E): Buffer {
-        val jsonString = JsonFormat.printer().print(message)
+        val jsonString = JsonFormat.printer().print(message as E)
+        return Buffer().write(jsonString.encodeUtf8())
+    }
+
+    override fun deterministicSerialize(message: E): Buffer {
+        val jsonString = JsonFormat.printer()
+            .sortingMapKeys()
+            .print(message)
         return Buffer().write(jsonString.encodeUtf8())
     }
 }

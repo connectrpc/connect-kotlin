@@ -16,11 +16,13 @@ package build.buf.connect.extensions
 
 import build.buf.connect.Codec
 import build.buf.connect.codecNameProto
+import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.GeneratedMessageLite
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
 import okio.Buffer
 import okio.BufferedSource
+import java.io.IOException
 import kotlin.reflect.KClass
 
 /**
@@ -48,5 +50,17 @@ internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
 
     override fun serialize(message: E): Buffer {
         return Buffer().write(message.toByteArray())
+    }
+
+    override fun deterministicSerialize(message: E): Buffer {
+        return try {
+            val result = Buffer()
+            val output = CodedOutputStream.newInstance(result.outputStream())
+            message.writeTo(output)
+            output.checkNoSpaceLeft()
+            result
+        } catch (e: IOException) {
+            throw RuntimeException("deterministic serialization failed", e)
+        }
     }
 }
