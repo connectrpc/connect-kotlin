@@ -135,7 +135,7 @@ internal class ConnectInterceptor(
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         val getConfiguration = clientConfig.getConfiguration
         return getConfiguration?.isGetEnabled(request.methodSpec) == true &&
-            getConfiguration.useFallback(finalRequestBody)
+            !getConfiguration.useFallback(finalRequestBody)
     }
 
     override fun streamFunction(): StreamFunction {
