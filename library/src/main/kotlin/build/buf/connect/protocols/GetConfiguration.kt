@@ -27,8 +27,15 @@ object GetSupportConstants {
     const val CONNECT_VERSION_QUERY_PARAM_VALUE = "v1"
 }
 
+/**
+ * Configuration for enabling Get requests for the Connect protocol.
+ */
 data class GetConfiguration(
+    // To enable falling back on the vanilla unary POST when
+    // the payload is too large.
     val fallbackEnabled: Boolean = true,
+    // The max number of bytes the payload can be before falling
+    // back onto the vanilla unary POST.
     val maxUrlBytes: Int = 50_000
 ) {
     fun isGetEnabled(methodSpec: MethodSpec<*, *>): Boolean {

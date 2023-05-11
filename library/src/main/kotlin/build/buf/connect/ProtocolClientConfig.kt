@@ -37,6 +37,8 @@ class ProtocolClientConfig(
     // The compression type that should be used (e.g., "gzip").
     // Defaults to no compression.
     val requestCompression: RequestCompression? = null,
+    // The GET configuration for the Connect protocol.
+    // By default, this is disabled.
     val getConfiguration: GetConfiguration? = null,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
