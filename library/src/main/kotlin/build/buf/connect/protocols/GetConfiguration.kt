@@ -38,11 +38,25 @@ data class GetConfiguration(
     // back onto the vanilla unary POST.
     val maxUrlBytes: Int = 50_000
 ) {
+    /**
+     * Determines if the method is compatible for a GET request.
+     *
+     * @param methodSpec The method specification of the request.
+     *
+     * @return true, when the method is compatible for a GET request.
+     */
     fun isGetEnabled(methodSpec: MethodSpec<*, *>): Boolean {
         return methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
     }
 
+    /**
+     * Determines if the input buffer is eligible for a POST fallback.
+     *
+     * @param buffer The request payload.
+     *
+     * @return true, if the request is larger than the set threshold.
+     */
     fun useFallback(buffer: Buffer): Boolean {
-        return fallbackEnabled && maxUrlBytes > buffer.size
+        return fallbackEnabled && maxUrlBytes < buffer.size
     }
 }
