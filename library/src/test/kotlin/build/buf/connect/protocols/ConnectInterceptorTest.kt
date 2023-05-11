@@ -15,14 +15,18 @@
 package build.buf.connect.protocols
 
 import build.buf.connect.Code
+import build.buf.connect.Codec
 import build.buf.connect.ConnectError
 import build.buf.connect.ErrorDetailParser
+import build.buf.connect.Idempotency
+import build.buf.connect.Method.GET_METHOD
+import build.buf.connect.Method.POST_METHOD
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.SerializationStrategy
 import build.buf.connect.StreamResult
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.compression.RequestCompression
+import build.buf.connect.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
@@ -49,6 +53,9 @@ class ConnectInterceptorTest {
 
     @Before
     fun setup() {
+        val codec: Codec<Any> = mock { }
+        whenever(codec.encodingName()).thenReturn("encoding_name")
+        whenever(serializationStrategy.codec(Any::class)).thenReturn(codec)
         whenever(serializationStrategy.errorDetailParser()).thenReturn(errorDetailParser)
         whenever(serializationStrategy.serializationName()).thenReturn("encoding_type")
     }
@@ -546,28 +553,146 @@ class ConnectInterceptorTest {
     }
 
     @Test
-    fun getRequestTest() {
-        /**
-         * The matrix is the following:
-         * get enabled: true
-         * get fallback: true
-         * max bytes over limit: true
-         * E: URL is correctly constructed for a GET
-         *
-         * get enabled: true
-         * get fallback: true
-         * max bytes over limit: false
-         * E: POST request is made
-         *
-         * get enabled: true
-         * get fallback: false
-         * max bytes over limit: n/a since we always shove it in the url
-         * E: URL is correctly constructed with the max bytes = 0
-         *
-         * get enabled: false
-         * get fallback: n/a since we always use the POST path
-         * max bytes over limit: n/a since this is not read
-         * E: POST request is made
-         */
+    fun getRequestCreatedForPayloadUnderLimit() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList(),
+            getConfiguration = GetConfiguration(
+                fallbackEnabled = true,
+                maxUrlBytes = 10_000,
+            )
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("key" to listOf("value")),
+                message = ByteArray(5_000),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS
+                )
+            )
+        )
+
+        val queryMap = parseQuery(request)
+        assertThat(queryMap.get(GetSupport.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
+        assertThat(queryMap.get(GetSupport.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
+        assertThat(queryMap.get(GetSupport.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
+        assertThat(queryMap.get(GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
+        assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
     }
+
+    @Test
+    fun fallbackRequestCreatedForPayloadOverLimit() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList(),
+            getConfiguration = GetConfiguration(
+                fallbackEnabled = true,
+                maxUrlBytes = 1,
+            )
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("key" to listOf("value")),
+                message = ByteArray(5_000),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS
+                )
+            )
+        )
+        assertThat(request.url.query).isNull()
+        assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)
+    }
+
+    @Test
+    fun getRequestCreatedForNoFallbackEnabled() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList(),
+            getConfiguration = GetConfiguration(
+                fallbackEnabled = false,
+                maxUrlBytes = 10_000,
+            )
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("key" to listOf("value")),
+                message = ByteArray(5_000),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS
+                )
+            )
+        )
+        val queryMap = parseQuery(request)
+        assertThat(queryMap.get(GetSupport.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
+        assertThat(queryMap.get(GetSupport.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
+        assertThat(queryMap.get(GetSupport.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
+        assertThat(queryMap.get(GetSupport.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
+        assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
+    }
+
+    @Test
+    fun unaryPostRequestCreatedWithGetDisabled() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList(),
+            getConfiguration = null,
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("key" to listOf("value")),
+                message = ByteArray(5_000),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS
+                )
+            )
+        )
+        assertThat(request.url.query).isNull()
+        assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)
+    }
+
+    private fun parseQuery(request: HTTPRequest) = request.url.query
+        .split("&")
+        .map { str ->
+            val split = str.split("=")
+            split[0] to split[1]
+        }
+        .foldRight(mutableMapOf<String, String>()) { pair, acc ->
+            acc.put(pair.first, pair.second)
+            acc
+        }
 }

@@ -16,10 +16,10 @@ package build.buf.connect
 
 import build.buf.connect.compression.CompressionPool
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.compression.RequestCompression
 import build.buf.connect.protocols.ConnectInterceptor
 import build.buf.connect.protocols.GRPCInterceptor
 import build.buf.connect.protocols.GRPCWebInterceptor
+import build.buf.connect.protocols.GetConfiguration
 import build.buf.connect.protocols.NetworkProtocol
 import java.net.URI
 
@@ -40,6 +40,7 @@ class ProtocolClientConfig(
     val enableGet: Boolean = false,
     val getMaxUrlBytes: Int = 50_000,
     val getFallback: Boolean = true,
+    val getConfiguration: GetConfiguration? = null,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
     // Compression pools that provide support for the provided `compressionName`, as well as any

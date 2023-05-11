@@ -14,6 +14,8 @@
 
 package build.buf.connect.protocols
 
+import build.buf.connect.Codec
+
 object GetSupport {
     const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
     const val ENCODING_QUERY_PARAM_KEY = "encoding"
@@ -22,3 +24,9 @@ object GetSupport {
     const val COMPRESSION_QUERY_PARAM_KEY = "compression"
     const val CONNECT_VERSION_QUERY_PARAM_VALUE = "v1"
 }
+
+data class GetConfiguration(
+    val fallbackEnabled: Boolean = true,
+    val maxUrlBytes: Int = 50_000,
+    val codec: Codec<*>? = null
+)

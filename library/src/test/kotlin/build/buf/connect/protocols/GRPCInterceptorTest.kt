@@ -23,7 +23,7 @@ import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.SerializationStrategy
 import build.buf.connect.StreamResult
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.compression.RequestCompression
+import build.buf.connect.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo

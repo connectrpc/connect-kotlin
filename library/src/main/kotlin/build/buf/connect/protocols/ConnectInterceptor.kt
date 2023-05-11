@@ -29,7 +29,7 @@ import build.buf.connect.StreamResult
 import build.buf.connect.Trailers
 import build.buf.connect.UnaryFunction
 import build.buf.connect.compression.CompressionPool
-import build.buf.connect.compression.RequestCompression
+import build.buf.connect.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import com.squareup.moshi.Moshi
@@ -134,11 +134,12 @@ internal class ConnectInterceptor(
     }
 
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
+        val getConfiguration = clientConfig.getConfiguration
         if (request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-            clientConfig.enableGet
+            getConfiguration != null
         ) {
-            if (clientConfig.getFallback) {
-                return clientConfig.getMaxUrlBytes < finalRequestBody.size
+            if (getConfiguration.fallbackEnabled) {
+                return getConfiguration.maxUrlBytes > finalRequestBody.size
             }
             return true
         }
