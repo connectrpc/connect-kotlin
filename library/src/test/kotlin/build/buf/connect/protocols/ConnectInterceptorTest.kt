@@ -23,10 +23,10 @@ import build.buf.connect.Method.GET_METHOD
 import build.buf.connect.Method.POST_METHOD
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
+import build.buf.connect.RequestCompression
 import build.buf.connect.SerializationStrategy
 import build.buf.connect.StreamResult
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
@@ -560,7 +560,7 @@ class ConnectInterceptorTest {
             compressionPools = emptyList(),
             getConfiguration = GetConfiguration(
                 fallbackEnabled = true,
-                maxUrlBytes = 10_000,
+                maxUrlBytes = 10_000
             )
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -597,7 +597,7 @@ class ConnectInterceptorTest {
             compressionPools = emptyList(),
             getConfiguration = GetConfiguration(
                 fallbackEnabled = true,
-                maxUrlBytes = 1,
+                maxUrlBytes = 1
             )
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -629,7 +629,7 @@ class ConnectInterceptorTest {
             compressionPools = emptyList(),
             getConfiguration = GetConfiguration(
                 fallbackEnabled = false,
-                maxUrlBytes = 10_000,
+                maxUrlBytes = 10_000
             )
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -662,7 +662,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = null,
+            getConfiguration = null
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()

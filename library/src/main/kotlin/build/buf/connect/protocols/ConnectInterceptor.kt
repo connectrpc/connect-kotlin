@@ -24,12 +24,12 @@ import build.buf.connect.Interceptor
 import build.buf.connect.Method.GET_METHOD
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
+import build.buf.connect.RequestCompression
 import build.buf.connect.StreamFunction
 import build.buf.connect.StreamResult
 import build.buf.connect.Trailers
 import build.buf.connect.UnaryFunction
 import build.buf.connect.compression.CompressionPool
-import build.buf.connect.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import com.squareup.moshi.Moshi

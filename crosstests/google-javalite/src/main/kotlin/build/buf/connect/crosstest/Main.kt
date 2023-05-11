@@ -15,8 +15,8 @@
 package build.buf.connect.crosstest
 
 import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.compression.GzipCompressionPool
 import build.buf.connect.RequestCompression
+import build.buf.connect.compression.GzipCompressionPool
 import build.buf.connect.crosstest.ssl.sslContext
 import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
