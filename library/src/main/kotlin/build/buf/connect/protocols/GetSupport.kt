@@ -28,5 +28,4 @@ object GetSupport {
 data class GetConfiguration(
     val fallbackEnabled: Boolean = true,
     val maxUrlBytes: Int = 50_000,
-    val codec: Codec<*>? = null
 )
