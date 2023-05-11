@@ -19,7 +19,6 @@ import build.buf.connect.Codec
 import build.buf.connect.ConnectError
 import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.Headers
-import build.buf.connect.Idempotency
 import build.buf.connect.Interceptor
 import build.buf.connect.Method.GET_METHOD
 import build.buf.connect.MethodSpec
@@ -136,7 +135,7 @@ internal class ConnectInterceptor(
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         val getConfiguration = clientConfig.getConfiguration
         return getConfiguration?.isGetEnabled(request.methodSpec) == true &&
-                getConfiguration.useFallback(finalRequestBody)
+            getConfiguration.useFallback(finalRequestBody)
     }
 
     override fun streamFunction(): StreamFunction {
