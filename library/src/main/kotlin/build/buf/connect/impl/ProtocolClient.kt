@@ -28,6 +28,7 @@ import build.buf.connect.http.Cancelable
 import build.buf.connect.http.HTTPClientInterface
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
+import build.buf.connect.protocols.GETConfiguration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
@@ -52,7 +53,7 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
-            val requestMessage = if (config.getConfiguration?.isGetEnabled(methodSpec) == true) {
+            val requestMessage = if (config.getConfiguration != GETConfiguration.GETDisabled) {
                 // Use deterministic serialization when GET request configuration is set.
                 requestCodec.deterministicSerialize(request)
             } else {

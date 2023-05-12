@@ -30,33 +30,24 @@ object GetSupportConstants {
 /**
  * Configuration for enabling Get requests for the Connect protocol.
  */
-data class GetConfiguration(
-    // To enable falling back on the vanilla unary POST when
-    // the payload is too large.
-    val fallbackEnabled: Boolean = true,
-    // The max number of bytes the payload can be before falling
-    // back onto the vanilla unary POST.
-    val maxUrlBytes: Int = 50_000
-) {
-    /**
-     * Determines if the method is compatible for a GET request.
-     *
-     * @param methodSpec The method specification of the request.
-     *
-     * @return true, when the method is compatible for a GET request.
-     */
-    fun isGetEnabled(methodSpec: MethodSpec<*, *>): Boolean {
-        return methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS
+sealed class GETConfiguration {
+    object GETDisabled : GETConfiguration() {
+        override fun useGET(buffer: Buffer): Boolean {
+            return false
+        }
     }
 
-    /**
-     * Determines if the input buffer is eligible for a POST fallback.
-     *
-     * @param buffer The request payload.
-     *
-     * @return true, if the request is larger than the set threshold.
-     */
-    fun useFallback(buffer: Buffer): Boolean {
-        return fallbackEnabled && maxUrlBytes < buffer.size
+    class GETWithMaxUrlBytes(val maxUrlBytes: Int = 50_000): GETConfiguration() {
+        override fun useGET(buffer: Buffer): Boolean {
+            return maxUrlBytes > buffer.size
+        }
     }
+
+    object GETAlways : GETConfiguration() {
+        override fun useGET(buffer: Buffer): Boolean {
+            return true
+        }
+    }
+
+    abstract fun useGET(buffer: Buffer): Boolean
 }
