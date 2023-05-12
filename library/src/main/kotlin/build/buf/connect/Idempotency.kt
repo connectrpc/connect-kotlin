@@ -20,7 +20,7 @@ enum class Idempotency {
      * this idempotency level may not be idempotent. This is appropriate for
      * any kind of procedure.
      */
-    IDEMPOTENCY_UNKNOWN,
+    UNKNOWN,
 
     /**
      * IdempotencyNoSideEffects is the idempotency level that specifies that a
