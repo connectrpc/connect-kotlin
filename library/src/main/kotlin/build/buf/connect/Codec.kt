@@ -40,7 +40,7 @@ interface Codec<E> {
     fun serialize(message: E): Buffer
 
     /**
-     * Deterministic Serialization of the input message.
+     * Deterministic serialization of the input message.
      *
      * @param message Typed input message.
      *
