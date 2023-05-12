@@ -301,12 +301,12 @@ private fun getUrlFromMethodSpec(
     val methodSpec = httpRequest.methodSpec
     val params = mutableListOf<String>()
     if (requestCompression?.shouldCompress(payload) == true) {
-        params.add("${GetSupportConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
+        params.add("${GETConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
     }
-    params.add("${GetSupportConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
-    params.add("${GetSupportConstants.BASE64_QUERY_PARAM_KEY}=1")
-    params.add("${GetSupportConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
-    params.add("${GetSupportConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GetSupportConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
+    params.add("${GETConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
+    params.add("${GETConstants.BASE64_QUERY_PARAM_KEY}=1")
+    params.add("${GETConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
+    params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
     params.sort()
     val queryParams = params.joinToString("&")
     val host = baseURL.toURI()
