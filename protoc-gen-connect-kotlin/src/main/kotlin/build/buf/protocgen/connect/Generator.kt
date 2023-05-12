@@ -117,7 +117,12 @@ class Generator : CodeGenerator {
                 .addFileComment("Source: ${file.name}\n")
                 // Set the file package for the generated methods.
                 .addType(serviceClientImplementation(packageName, service, sourceInfo))
-                .addImport(Idempotency::class.java, "IDEMPOTENCY_UNKNOWN", "NO_SIDE_EFFECTS", "IDEMPOTENT")
+            for (method in service.methods) {
+                if (method.options.hasIdempotencyLevel()) {
+                    implementationFileSpecBuilder.addImport(Idempotency::class.java, "IDEMPOTENCY_UNKNOWN", "NO_SIDE_EFFECTS", "IDEMPOTENT")
+                    break
+                }
+            }
             val implementationFileSpec = implementationFileSpecBuilder.build()
             fileSpecs.put(serviceClientImplementationClassName(packageName, service), implementationFileSpec)
         }
