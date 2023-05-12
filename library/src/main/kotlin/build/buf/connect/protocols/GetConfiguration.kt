@@ -14,8 +14,6 @@
 
 package build.buf.connect.protocols
 
-import build.buf.connect.Idempotency
-import build.buf.connect.MethodSpec
 import okio.Buffer
 
 object GetSupportConstants {
@@ -37,7 +35,7 @@ sealed class GETConfiguration {
         }
     }
 
-    class GETWithMaxUrlBytes(val maxUrlBytes: Int = 50_000): GETConfiguration() {
+    class GETWithMaxUrlBytes(val maxUrlBytes: Int = 50_000) : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
             return maxUrlBytes > buffer.size
         }

@@ -136,7 +136,7 @@ internal class ConnectInterceptor(
     private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         val getConfiguration = clientConfig.getConfiguration
         return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-                getConfiguration.useGET(finalRequestBody)
+            getConfiguration.useGET(finalRequestBody)
     }
 
     override fun streamFunction(): StreamFunction {
