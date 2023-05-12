@@ -62,6 +62,7 @@ internal class GoogleJavaProtoAdapter<E : GeneratedMessageV3>(
         return try {
             val result = Buffer()
             val output = CodedOutputStream.newInstance(result.outputStream())
+            output.useDeterministicSerialization()
             message.writeTo(output)
             output.checkNoSpaceLeft()
             result
