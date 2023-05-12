@@ -54,8 +54,7 @@ internal class GoogleJavaProtoAdapter<E : GeneratedMessageV3>(
     }
 
     override fun serialize(message: E): Buffer {
-        val casted = message
-        return Buffer().write(casted.toByteArray())
+        return Buffer().write(message.toByteArray())
     }
 
     override fun deterministicSerialize(message: E): Buffer {
