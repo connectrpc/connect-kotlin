@@ -558,7 +558,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = GETConfiguration.GETWithMaxUrlBytes(
+            getConfiguration = GETConfiguration.GETWithFallback(
                 maxUrlBytes = 10_000
             )
         )
@@ -594,7 +594,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = GETConfiguration.GETWithMaxUrlBytes(
+            getConfiguration = GETConfiguration.GETWithFallback(
                 maxUrlBytes = 1
             )
         )
@@ -625,7 +625,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = GETConfiguration.GETNoFallback
+            getConfiguration = GETConfiguration.GETWithoutFallback
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
