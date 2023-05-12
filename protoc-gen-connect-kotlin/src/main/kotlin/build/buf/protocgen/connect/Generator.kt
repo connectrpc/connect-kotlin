@@ -268,9 +268,7 @@ class Generator : CodeGenerator {
                 .indent()
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class,")
-            if (method.isServerStreaming ||
-                !(method.isClientStreaming && method.isServerStreaming)
-            ) {
+            if (!method.isClientStreaming && !method.isServerStreaming) {
                 if (method.options.idempotencyLevel == DescriptorProtos.MethodOptions.IdempotencyLevel.NO_SIDE_EFFECTS) {
                     methodSpecBuilder.addStatement("NO_SIDE_EFFECTS")
                 }
