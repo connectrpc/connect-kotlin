@@ -41,7 +41,7 @@ sealed class GETConfiguration {
         }
     }
 
-    object GETAlways : GETConfiguration() {
+    object GETNoFallback : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
             return true
         }
