@@ -119,7 +119,7 @@ class Generator : CodeGenerator {
                 .addType(serviceClientImplementation(packageName, service, sourceInfo))
             for (method in service.methods) {
                 if (method.options.hasIdempotencyLevel()) {
-                    implementationFileSpecBuilder.addImport(Idempotency::class.java, "IDEMPOTENCY_UNKNOWN", "NO_SIDE_EFFECTS", "IDEMPOTENT")
+                    implementationFileSpecBuilder.addImport(Idempotency::class.java, "NO_SIDE_EFFECTS")
                     break
                 }
             }
