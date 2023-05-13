@@ -26,6 +26,12 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import java.net.URL
 
+private val methodSpec = MethodSpec(
+    path = "",
+    requestClass = Any::class,
+    responseClass = Any::class
+)
+
 class InterceptorChainTest {
     private lateinit var streamingChain: StreamFunction
     private lateinit var unaryChain: UnaryFunction
@@ -58,7 +64,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap()))
+        val response = unaryChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap(), null, methodSpec))
         assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -70,7 +76,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap()))
+        val request = streamingChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap(), null, methodSpec))
         assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -105,7 +111,8 @@ class InterceptorChainTest {
                         it.url,
                         it.contentType,
                         headers,
-                        it.message
+                        it.message,
+                        methodSpec
                     )
                 },
                 responseFunction = {
@@ -136,7 +143,8 @@ class InterceptorChainTest {
                         it.url,
                         it.contentType,
                         headers,
-                        it.message
+                        it.message,
+                        methodSpec
                     )
                 },
                 requestBodyFunction = {

@@ -81,7 +81,7 @@ class TestServiceClientSuite(
         }
         val response = testServiceConnectClient.unaryCall(message)
         response.failure {
-            fail<Unit>("expected error to be null")
+            fail<Unit>("expected error to be null", it.error)
         }
         response.success { success ->
             assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
@@ -424,6 +424,23 @@ class TestServiceClientSuite(
             job.cancel()
             assertThat(countDownLatch.count).isZero()
             stream.close()
+        }
+    }
+
+    override suspend fun getUnary() = register("get_unary") {
+        val size = 314159
+        val message = simpleRequest {
+            responseSize = size
+            payload = payload {
+                body = ByteString.copyFrom(ByteArray(size))
+            }
+        }
+        val response = testServiceConnectClient.cacheableUnaryCall(message)
+        response.failure {
+            fail<Unit>("expected error to be null", it.error)
+        }
+        response.success { success ->
+            assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
         }
     }
 }

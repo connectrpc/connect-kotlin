@@ -30,6 +30,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import okhttp3.internal.http.HttpMethod
 import okio.Buffer
 import java.io.IOException
 
@@ -39,7 +40,8 @@ import java.io.IOException
 class ConnectOkHttpClient @JvmOverloads constructor(
     val client: OkHttpClient = OkHttpClient()
 ) : HTTPClientInterface {
-    override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
+
+    override fun unary(method: String, request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
         for (entry in request.headers) {
             for (values in entry.value) {
@@ -47,10 +49,10 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             }
         }
         val content = request.message ?: ByteArray(0)
-        val requestBody = content.toRequestBody(request.contentType.toMediaType())
+        val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
         val callRequest = builder
             .url(request.url)
-            .post(requestBody)
+            .method(method, requestBody)
             .build()
         val newCall = client.newCall(callRequest)
         val cancelable = {
@@ -82,6 +84,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     }
 
                     override fun onResponse(call: Call, response: Response) {
+                        // Unary requests will need to read the entire body to access trailers.
                         val responseBuffer = response.body?.source()?.use { bufferedSource ->
                             val buffer = Buffer()
                             buffer.writeAll(bufferedSource)
@@ -118,8 +121,12 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         return cancelable
     }
 
-    override fun stream(request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream {
-        return client.initializeStream(request, onResult)
+    override fun stream(
+        method: String,
+        request: HTTPRequest,
+        onResult: suspend (StreamResult<Buffer>) -> Unit
+    ): Stream {
+        return client.initializeStream(method, request, onResult)
     }
 }
 

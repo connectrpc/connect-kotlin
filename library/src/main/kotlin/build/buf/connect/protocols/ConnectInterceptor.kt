@@ -15,11 +15,16 @@
 package build.buf.connect.protocols
 
 import build.buf.connect.Code
+import build.buf.connect.Codec
 import build.buf.connect.ConnectError
 import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.Headers
+import build.buf.connect.Idempotency
 import build.buf.connect.Interceptor
+import build.buf.connect.Method.GET_METHOD
+import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
+import build.buf.connect.RequestCompression
 import build.buf.connect.StreamFunction
 import build.buf.connect.StreamResult
 import build.buf.connect.Trailers
@@ -32,6 +37,7 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
+import java.net.URL
 
 /**
  * The Connect protocol.
@@ -60,25 +66,27 @@ internal class ConnectInterceptor(
                     )
                 }
                 val requestCompression = clientConfig.requestCompression
-                val requestMessage = Buffer().use { buffer ->
-                    if (request.message != null) {
-                        buffer.write(request.message)
-                    }
-                    buffer
+                val requestMessage = Buffer()
+                if (request.message != null) {
+                    requestMessage.write(request.message)
                 }
-                val finalRequestBody =
-                    if (requestCompression != null && requestCompression.shouldCompress(requestMessage)) {
-                        requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
-                        requestCompression.compressionPool.compress(requestMessage)
-                    } else {
-                        requestMessage
-                    }
-                HTTPRequest(
-                    url = request.url,
-                    contentType = request.contentType,
-                    headers = requestHeaders,
-                    message = finalRequestBody.readByteArray()
-                )
+                val finalRequestBody = if (requestCompression?.shouldCompress(requestMessage) == true) {
+                    requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
+                    requestCompression.compressionPool.compress(requestMessage)
+                } else {
+                    requestMessage
+                }
+                if (shouldUseGETRequest(request, finalRequestBody)) {
+                    constructGETRequest(request, finalRequestBody, requestCompression)
+                } else {
+                    request.clone(
+                        url = request.url,
+                        contentType = request.contentType,
+                        headers = requestHeaders,
+                        message = finalRequestBody.readByteArray(),
+                        methodSpec = request.methodSpec
+                    )
+                }
             },
             responseFunction = { response ->
                 val trailers = mutableMapOf<String, List<String>>()
@@ -123,11 +131,12 @@ internal class ConnectInterceptor(
                     CONNECT_STREAMING_ACCEPT_ENCODING,
                     clientConfig.compressionPools().map { entry -> entry.name() }
                 )
-                HTTPRequest(
+                request.clone(
                     url = request.url,
                     contentType = request.contentType,
                     headers = requestHeaders,
-                    message = request.message
+                    message = request.message,
+                    methodSpec = request.methodSpec
                 )
             },
             requestBodyFunction = { buffer ->
@@ -163,6 +172,38 @@ internal class ConnectInterceptor(
                 )
                 streamResult
             }
+        )
+    }
+
+    private fun shouldUseGETRequest(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
+        return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
+            clientConfig.getConfiguration.useGET(finalRequestBody)
+    }
+
+    private fun constructGETRequest(
+        request: HTTPRequest,
+        finalRequestBody: Buffer,
+        requestCompression: RequestCompression?
+    ): HTTPRequest {
+        val serializationStrategy = clientConfig.serializationStrategy
+        val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
+        val url = getUrlFromMethodSpec(
+            request,
+            requestCodec,
+            finalRequestBody,
+            requestCompression
+        )
+        return request.clone(
+            url = url,
+            contentType = "application/${requestCodec.encodingName()}",
+            headers = request.headers,
+            methodSpec = MethodSpec(
+                path = request.methodSpec.path,
+                requestClass = request.methodSpec.requestClass,
+                responseClass = request.methodSpec.responseClass,
+                idempotency = request.methodSpec.idempotency,
+                method = GET_METHOD
+            )
         )
     }
 
@@ -255,4 +296,27 @@ private fun Headers.toTrailers(): Trailers {
         }
     }
     return trailers
+}
+
+private fun getUrlFromMethodSpec(
+    httpRequest: HTTPRequest,
+    codec: Codec<*>,
+    payload: Buffer,
+    requestCompression: RequestCompression?
+): URL {
+    val baseURL = httpRequest.url
+    val methodSpec = httpRequest.methodSpec
+    val params = mutableListOf<String>()
+    if (requestCompression?.shouldCompress(payload) == true) {
+        params.add("${GETConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
+    }
+    params.add("${GETConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
+    params.add("${GETConstants.BASE64_QUERY_PARAM_KEY}=1")
+    params.add("${GETConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
+    params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
+    params.sort()
+    val queryParams = params.joinToString("&")
+    val baseURI = baseURL.toURI()
+        .resolve("/${methodSpec.path}?$queryParams")
+    return baseURI.toURL()
 }

@@ -16,6 +16,11 @@ package build.buf.connect
 
 import kotlin.reflect.KClass
 
+internal object Method {
+    internal const val GET_METHOD = "GET"
+    internal const val POST_METHOD = "POST"
+}
+
 /**
  * Represents the minimum set of information to execute an RPC method.
  * Primarily used in generated code.
@@ -23,9 +28,13 @@ import kotlin.reflect.KClass
  * @param path The path of the request.
  * @param requestClass The Kotlin Class for the request message.
  * @param responseClass The Kotlin Class for the response message.
+ * @param idempotency The declared idempotency of a method.
+ * @param method The HTTP method of a request.
  */
 class MethodSpec<Input : Any, Output : Any>(
     val path: String,
     val requestClass: KClass<Input>,
-    val responseClass: KClass<Output>
+    val responseClass: KClass<Output>,
+    val idempotency: Idempotency = Idempotency.UNKNOWN,
+    val method: String = Method.POST_METHOD
 )

@@ -40,6 +40,15 @@ interface Codec<E> {
     fun serialize(message: E): Buffer
 
     /**
+     * Deterministic serialization of the input message.
+     *
+     * @param message Typed input message.
+     *
+     * @return Deterministic serialization of the data.
+     */
+    fun deterministicSerialize(message: E): Buffer
+
+    /**
      * Deserializes data in the codec's format into a typed message.
      *
      * @param source The source data to deserialize.

@@ -18,11 +18,12 @@ import build.buf.connect.Code
 import build.buf.connect.ConnectError
 import build.buf.connect.ConnectErrorDetail
 import build.buf.connect.ErrorDetailParser
+import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
+import build.buf.connect.RequestCompression
 import build.buf.connect.SerializationStrategy
 import build.buf.connect.StreamResult
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.compression.RequestCompression
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import build.buf.connect.http.TracingInfo
@@ -69,7 +70,12 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value"))
+                headers = mapOf("key" to listOf("value")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
             )
         )
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
@@ -92,7 +98,12 @@ class GRPCInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray()
+                message = "message".commonAsUtf8ToByteArray(),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
             )
         )
         val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
@@ -115,7 +126,12 @@ class GRPCInterceptorTest {
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray()
+                message = "message".commonAsUtf8ToByteArray(),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
             )
         )
         val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
@@ -269,6 +285,11 @@ class GRPCInterceptorTest {
                 headers = mapOf(
                     // Doesn't get passed as headers.
                     GRPC_ENCODING to listOf("gzip")
+                ),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
                 )
             )
         )
@@ -291,7 +312,12 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
-                headers = mapOf("key" to listOf("value"))
+                headers = mapOf("key" to listOf("value")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")

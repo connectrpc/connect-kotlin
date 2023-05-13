@@ -28,6 +28,7 @@ import build.buf.connect.http.Cancelable
 import build.buf.connect.http.HTTPClientInterface
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
+import build.buf.connect.protocols.GETConfiguration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
@@ -52,16 +53,22 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
+            val requestMessage = if (config.getConfiguration != GETConfiguration.Disabled) {
+                // Use deterministic serialization when GET request configuration is set.
+                requestCodec.deterministicSerialize(request)
+            } else {
+                requestCodec.serialize(request)
+            }
             val unaryRequest = HTTPRequest(
                 url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
-                message = requestCodec.serialize(request)
-                    .readByteArray()
+                message = requestMessage.readByteArray(),
+                methodSpec = methodSpec
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            val cancelable = httpClient.unary(finalRequest) { httpResponse ->
+            val cancelable = httpClient.unary(finalRequest.methodSpec.method, finalRequest) { httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
                 val connectError = finalResponse.error?.setErrorParser(serializationStrategy.errorDetailParser())
@@ -143,12 +150,13 @@ class ProtocolClient(
         val request = HTTPRequest(
             url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
-            headers = headers
+            headers = headers,
+            methodSpec = methodSpec
         )
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
         var isComplete = false
-        val httpStream = httpClient.stream(finalRequest) { initialResult ->
+        val httpStream = httpClient.stream(finalRequest.methodSpec.method, finalRequest) { initialResult ->
             if (isComplete) {
                 // No-op on remaining handlers after a completion.
                 return@stream

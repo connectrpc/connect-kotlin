@@ -16,10 +16,12 @@ package build.buf.connect.extensions
 
 import build.buf.connect.Codec
 import build.buf.connect.codecNameProto
+import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.GeneratedMessageV3
 import com.google.protobuf.Internal
 import okio.Buffer
 import okio.BufferedSource
+import java.io.IOException
 import kotlin.reflect.KClass
 
 /**
@@ -53,5 +55,18 @@ internal class GoogleJavaProtoAdapter<E : GeneratedMessageV3>(
 
     override fun serialize(message: E): Buffer {
         return Buffer().write(message.toByteArray())
+    }
+
+    override fun deterministicSerialize(message: E): Buffer {
+        return try {
+            val result = Buffer()
+            val output = CodedOutputStream.newInstance(result.outputStream())
+            output.useDeterministicSerialization()
+            message.writeTo(output)
+            output.checkNoSpaceLeft()
+            result
+        } catch (e: IOException) {
+            throw RuntimeException("deterministic serialization failed", e)
+        }
     }
 }
