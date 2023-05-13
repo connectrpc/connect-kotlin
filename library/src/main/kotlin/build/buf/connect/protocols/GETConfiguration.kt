@@ -16,7 +16,7 @@ package build.buf.connect.protocols
 
 import okio.Buffer
 
-object GETConstants {
+internal object GETConstants {
     const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
     const val ENCODING_QUERY_PARAM_KEY = "encoding"
     const val BASE64_QUERY_PARAM_KEY = "base64"
@@ -29,19 +29,19 @@ object GETConstants {
  * Configuration for enabling Get requests for the Connect protocol.
  */
 sealed class GETConfiguration {
-    object GETDisabled : GETConfiguration() {
+    object Disabled : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
             return false
         }
     }
 
-    class GETWithFallback(val maxUrlBytes: Int = 50_000) : GETConfiguration() {
+    class EnabledWithFallback(val maxUrlBytes: Int = 50_000) : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
             return maxUrlBytes > buffer.size
         }
     }
 
-    object GETWithoutFallback : GETConfiguration() {
+    object Enabled : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
             return true
         }

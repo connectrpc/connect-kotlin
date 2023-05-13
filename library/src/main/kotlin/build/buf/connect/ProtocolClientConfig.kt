@@ -39,7 +39,7 @@ class ProtocolClientConfig(
     val requestCompression: RequestCompression? = null,
     // The GET configuration for the Connect protocol.
     // By default, this is disabled.
-    val getConfiguration: GETConfiguration = GETConfiguration.GETDisabled,
+    val getConfiguration: GETConfiguration = GETConfiguration.Disabled,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
     // Compression pools that provide support for the provided `compressionName`, as well as any

@@ -309,7 +309,7 @@ private fun getUrlFromMethodSpec(
     params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
     params.sort()
     val queryParams = params.joinToString("&")
-    val host = baseURL.toURI()
+    val baseURI = baseURL.toURI()
         .resolve("/${methodSpec.path}?$queryParams")
-    return host.toURL()
+    return baseURI.toURL()
 }

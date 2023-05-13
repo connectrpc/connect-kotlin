@@ -53,7 +53,7 @@ class ProtocolClient(
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
         try {
-            val requestMessage = if (config.getConfiguration != GETConfiguration.GETDisabled) {
+            val requestMessage = if (config.getConfiguration != GETConfiguration.Disabled) {
                 // Use deterministic serialization when GET request configuration is set.
                 requestCodec.deterministicSerialize(request)
             } else {
