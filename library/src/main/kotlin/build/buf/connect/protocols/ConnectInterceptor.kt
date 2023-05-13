@@ -177,7 +177,7 @@ internal class ConnectInterceptor(
 
     private fun shouldUseGETRequest(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
         return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-                clientConfig.getConfiguration.useGET(finalRequestBody)
+            clientConfig.getConfiguration.useGET(finalRequestBody)
     }
 
     private fun constructGETRequest(
