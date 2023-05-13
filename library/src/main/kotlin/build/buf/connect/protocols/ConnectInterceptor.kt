@@ -76,27 +76,8 @@ internal class ConnectInterceptor(
                 } else {
                     requestMessage
                 }
-                val serializationStrategy = clientConfig.serializationStrategy
-                val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
-                if (shouldUseGetMethod(request, finalRequestBody)) {
-                    val url = getUrlFromMethodSpec(
-                        request,
-                        requestCodec,
-                        finalRequestBody,
-                        requestCompression
-                    )
-                    request.clone(
-                        url = url,
-                        contentType = "application/${requestCodec.encodingName()}",
-                        headers = request.headers,
-                        methodSpec = MethodSpec(
-                            path = request.methodSpec.path,
-                            requestClass = request.methodSpec.requestClass,
-                            responseClass = request.methodSpec.responseClass,
-                            idempotency = request.methodSpec.idempotency,
-                            method = GET_METHOD
-                        )
-                    )
+                if (shouldUseGETRequest(request, finalRequestBody)) {
+                    constructGETRequest(request, finalRequestBody, requestCompression)
                 } else {
                     request.clone(
                         url = request.url,
@@ -131,12 +112,6 @@ internal class ConnectInterceptor(
                 )
             }
         )
-    }
-
-    private fun shouldUseGetMethod(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
-        val getConfiguration = clientConfig.getConfiguration
-        return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
-            getConfiguration.useGET(finalRequestBody)
     }
 
     override fun streamFunction(): StreamFunction {
@@ -197,6 +172,39 @@ internal class ConnectInterceptor(
                 )
                 streamResult
             }
+        )
+    }
+
+    private fun shouldUseGETRequest(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
+        val getConfiguration = clientConfig.getConfiguration
+        return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
+                getConfiguration.useGET(finalRequestBody)
+    }
+
+    private fun constructGETRequest(
+        request: HTTPRequest,
+        finalRequestBody: Buffer,
+        requestCompression: RequestCompression?
+    ): HTTPRequest {
+        val serializationStrategy = clientConfig.serializationStrategy
+        val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
+        val url = getUrlFromMethodSpec(
+            request,
+            requestCodec,
+            finalRequestBody,
+            requestCompression
+        )
+        return request.clone(
+            url = url,
+            contentType = "application/${requestCodec.encodingName()}",
+            headers = request.headers,
+            methodSpec = MethodSpec(
+                path = request.methodSpec.path,
+                requestClass = request.methodSpec.requestClass,
+                responseClass = request.methodSpec.responseClass,
+                idempotency = request.methodSpec.idempotency,
+                method = GET_METHOD
+            )
         )
     }
 
