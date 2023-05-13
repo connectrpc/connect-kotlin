@@ -28,7 +28,7 @@ interface HTTPClientInterface {
     /**
      * Perform a unary HTTP request.
      *
-     * @param method The method to use for the request.
+     * @param method The string representation of the method to use for the request (e.g "GET").
      * @param request The outbound request headers and data.
      * @param onResult The completion closure that would be called upon completion of the request.
      *
