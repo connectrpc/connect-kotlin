@@ -41,7 +41,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
     val client: OkHttpClient = OkHttpClient()
 ) : HTTPClientInterface {
 
-    override fun unary(method: String, request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
+    override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
         for (entry in request.headers) {
             for (values in entry.value) {
@@ -49,6 +49,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             }
         }
         val content = request.message ?: ByteArray(0)
+        val method = request.methodSpec.method
         val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
         val callRequest = builder
             .url(request.url)
@@ -122,11 +123,10 @@ class ConnectOkHttpClient @JvmOverloads constructor(
     }
 
     override fun stream(
-        method: String,
         request: HTTPRequest,
         onResult: suspend (StreamResult<Buffer>) -> Unit
     ): Stream {
-        return client.initializeStream(method, request, onResult)
+        return client.initializeStream(request.methodSpec.method, request, onResult)
     }
 }
 
