@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This is responsible for creating a bidirectional stream with OkHttp.
  */
 internal fun OkHttpClient.initializeStream(
+    method: String,
     request: HTTPRequest,
     onResult: suspend (StreamResult<Buffer>) -> Unit
 ): Stream {
@@ -51,7 +52,7 @@ internal fun OkHttpClient.initializeStream(
     val duplexRequestBody = PipeDuplexRequestBody(request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
-        .method("POST", duplexRequestBody)
+        .method(method, duplexRequestBody)
     for (entry in request.headers) {
         for (values in entry.value) {
             builder.addHeader(entry.key, values)

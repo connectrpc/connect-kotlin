@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: bufbuild/buf-setup-action@v1.17.0
+      - uses: bufbuild/buf-setup-action@v1.18.0
         with:
           github_token: ${{ github.token }}
       - uses: arduino/setup-protoc@v1
@@ -51,15 +51,18 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
       - name: sha256
         run: |
-          make buildplugin
           tag=$(git describe --tags --abbrev=0 --exact-match)
           release_version="${tag:1}"
-          sha256sum ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
+          echo "release_version=${release_version}" >> "$GITHUB_ENV"
+          export ORG_GRADLE_PROJECT_releaseVersion="${release_version}"
+          make buildplugin
+          mv ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar .
+          sha256sum protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
       - name: Publish GitHub artifacts
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
           append_body: true
           files: |
-            ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar
+            protoc-gen-connect-kotlin-${{ env.release_version }}.jar
             sha256.txt

@@ -11,6 +11,7 @@
 /crosstests/google-javalite/src/main/java/generated/
 /protoc-gen-connect-kotlin/src/test/java/
 /.gradle
+/.idea
 /.tmp
 # Cache of project
 /.gradletasknamecache

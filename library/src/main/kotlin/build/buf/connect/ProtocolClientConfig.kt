@@ -16,8 +16,8 @@ package build.buf.connect
 
 import build.buf.connect.compression.CompressionPool
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.compression.RequestCompression
 import build.buf.connect.protocols.ConnectInterceptor
+import build.buf.connect.protocols.GETConfiguration
 import build.buf.connect.protocols.GRPCInterceptor
 import build.buf.connect.protocols.GRPCWebInterceptor
 import build.buf.connect.protocols.NetworkProtocol
@@ -26,7 +26,7 @@ import java.net.URI
 /**
  *  Set of configuration used to set up clients.
  */
-class ProtocolClientConfig(
+class ProtocolClientConfig @JvmOverloads constructor(
     // The host (e.g., https://buf.build).
     val host: String,
     // The client to use for performing requests.
@@ -37,6 +37,9 @@ class ProtocolClientConfig(
     // The compression type that should be used (e.g., "gzip").
     // Defaults to no compression.
     val requestCompression: RequestCompression? = null,
+    // The GET configuration for the Connect protocol.
+    // By default, this is disabled.
+    val getConfiguration: GETConfiguration = GETConfiguration.Disabled,
     // Set of interceptors that should be invoked with requests/responses.
     interceptors: List<(ProtocolClientConfig) -> Interceptor> = emptyList(),
     // Compression pools that provide support for the provided `compressionName`, as well as any

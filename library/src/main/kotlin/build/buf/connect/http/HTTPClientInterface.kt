@@ -24,6 +24,7 @@ typealias Cancelable = () -> Unit
  * Interface for a client that performs underlying HTTP requests and streams with primitive types.
  */
 interface HTTPClientInterface {
+
     /**
      * Perform a unary HTTP request.
      *
