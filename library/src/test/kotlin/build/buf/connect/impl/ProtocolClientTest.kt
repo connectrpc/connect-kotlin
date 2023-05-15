@@ -159,7 +159,7 @@ class ProtocolClientTest {
 
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
-        verify(httpClient).unary(any(), captor.capture(), any())
+        verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 
@@ -187,7 +187,7 @@ class ProtocolClientTest {
 
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
-        verify(httpClient).unary(any(), captor.capture(), any())
+        verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 }
