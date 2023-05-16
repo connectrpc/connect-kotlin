@@ -559,7 +559,7 @@ class ConnectInterceptorTest {
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
-                maxUrlBytes = 10_000
+                maxMessageBytes = 10_000
             )
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -595,7 +595,7 @@ class ConnectInterceptorTest {
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
-                maxUrlBytes = 1
+                maxMessageBytes = 1
             )
         )
         val connectInterceptor = ConnectInterceptor(config)

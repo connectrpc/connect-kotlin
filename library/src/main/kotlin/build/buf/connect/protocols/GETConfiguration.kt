@@ -35,9 +35,9 @@ sealed class GETConfiguration {
         }
     }
 
-    class EnabledWithFallback(val maxUrlBytes: Int = 50_000) : GETConfiguration() {
+    class EnabledWithFallback(val maxMessageBytes: Int = 50_000) : GETConfiguration() {
         override fun useGET(buffer: Buffer): Boolean {
-            return maxUrlBytes > buffer.size
+            return maxMessageBytes > buffer.size
         }
     }
 
