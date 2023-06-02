@@ -32,6 +32,8 @@ import build.buf.connect.protocols.GETConfiguration
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 
 /**
@@ -115,6 +117,20 @@ class ProtocolClient(
                 cancelable()
             }
         }
+    }
+
+    override fun <Input : Any, Output : Any> unarySync(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>
+    ): ResponseMessage<Output> {
+        val countDownLatch = CountDownLatch(1)
+        val reference = AtomicReference<ResponseMessage<Output>>()
+        unary(request, headers, methodSpec) {
+            reference.set(it)
+            countDownLatch.countDown()
+        }
+        return reference.get()
     }
 
     override suspend fun <Input : Any, Output : Any> stream(

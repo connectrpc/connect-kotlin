@@ -221,6 +221,16 @@ class Generator : CodeGenerator {
                         .build()
                     functions.add(unaryCallbackFunction)
                 }
+                if (configuration.generateSynchronousMethods) {
+                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Sync")
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
             }
         }
         return functions
@@ -403,6 +413,28 @@ class Generator : CodeGenerator {
                         )
                         .build()
                     functions.add(unaryCallbackFunction)
+                }
+                if (configuration.generateSynchronousMethods) {
+                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Sync")
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.OVERRIDE)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unarySync(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unarySuspendFunction)
                 }
             }
         }

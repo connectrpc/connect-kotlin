@@ -9,6 +9,7 @@ plugins:
     opt:
       - generateCallbackMethods=true
       - generateCoroutineMethods=true
+      - generateSynchronousMethods=true
   - name: java
     out: google-java/src/main/java/generated
   - name: kotlin
