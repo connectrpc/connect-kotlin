@@ -18,5 +18,5 @@ import build.buf.connect.http.Cancelable
 
 class Response<Output>(
     val responseMessage: ResponseMessage<Output>,
-    val cancelable: Cancelable
+    val cancel: Cancelable
 )
