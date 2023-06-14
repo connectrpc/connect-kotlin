@@ -69,7 +69,7 @@ interface ProtocolClientInterface {
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>
-    ): ResponseMessage<Output>
+    ): Call<Output>
 
     /**
      * Start a new bidirectional stream.

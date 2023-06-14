@@ -21,6 +21,7 @@ import build.buf.connect.Headers
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
+import build.buf.connect.Call
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.connect.StreamResult
@@ -123,14 +124,22 @@ class ProtocolClient(
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>
-    ): ResponseMessage<Output> {
+    ): Call<Output> {
         val countDownLatch = CountDownLatch(1)
         val reference = AtomicReference<ResponseMessage<Output>>()
-        unary(request, headers, methodSpec) {
-            reference.set(it)
-            countDownLatch.countDown()
+        // Create a new Call object.
+        val call = Call<Output>()
+        // Set the unary synchronous executable.
+        call.setExecute { callback: (ResponseMessage<Output>) -> Unit ->
+            val cancellationFn = unary(request, headers, methodSpec) { responseMessage ->
+                callback(responseMessage)
+                reference.set(responseMessage)
+                countDownLatch.countDown()
+            }
+            // Set the cancellation lambda.
+            call.setCancel(cancellationFn)
         }
-        return reference.get()
+        return call
     }
 
     override suspend fun <Input : Any, Output : Any> stream(
