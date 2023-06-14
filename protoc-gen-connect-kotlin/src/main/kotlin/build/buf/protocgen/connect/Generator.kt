@@ -19,7 +19,6 @@ import build.buf.connect.ClientOnlyStreamInterface
 import build.buf.connect.Idempotency
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientInterface
-import build.buf.connect.Response
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.protocgen.connect.internal.CodeGenerator
@@ -228,7 +227,7 @@ class Generator : CodeGenerator {
                         .addModifiers(KModifier.ABSTRACT)
                         .addParameter("request", inputClassName)
                         .addParameter(headerParameterSpec)
-                        .returns(Response::class.asClassName().parameterizedBy(outputClassName))
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
                         .build()
                     functions.add(unarySuspendFunction)
                 }
@@ -421,7 +420,7 @@ class Generator : CodeGenerator {
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
                         .addParameter("headers", HEADERS_CLASS_NAME)
-                        .returns(Response::class.asClassName().parameterizedBy(outputClassName))
+                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
                         .addStatement(
                             "return %L",
                             CodeBlock.builder()
