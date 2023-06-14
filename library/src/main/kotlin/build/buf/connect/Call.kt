@@ -4,7 +4,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * A [Call] contains the way to make a blocking RPC and cancelling the RPC.
+ * A [Call] contains the way to make a blocking RPC call and cancelling the RPC.
  */
 class Call<Output> {
     private var executable: ((ResponseMessage<Output>) -> Unit) -> Unit = { }
