@@ -160,7 +160,7 @@ from early adopters. Join us on [Slack][slack]!
 Offered under the [Apache 2 license][license].
 
 [blog]: https://buf.build/blog/connect-a-better-grpc
-[buf-studio]: https://studio.buf.build/
+[buf-studio]: https://buf.build/studio
 [connect-crosstest]: https://github.com/bufbuild/connect-crosstest
 [connect-go]: https://github.com/bufbuild/connect-go
 [connect-protocol]: https://connect.build/docs/protocol
