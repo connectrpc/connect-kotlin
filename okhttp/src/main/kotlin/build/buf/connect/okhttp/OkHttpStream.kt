@@ -48,7 +48,8 @@ internal fun OkHttpClient.initializeStream(
     request: HTTPRequest,
     onResult: suspend (StreamResult<Buffer>) -> Unit
 ): Stream {
-    val isClosed = AtomicBoolean(false)
+    val isSendClosed = AtomicBoolean(false)
+    val isReceiveClosed = AtomicBoolean(false)
     val duplexRequestBody = PipeDuplexRequestBody(request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
@@ -60,23 +61,21 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(onResult, isClosed))
+    call.enqueue(ResponseCallback(onResult, isSendClosed))
     return Stream(
         onSend = { buffer ->
-            if (!isClosed.get()) {
+            if (!isSendClosed.get()) {
                 duplexRequestBody.forConsume(buffer)
             }
         },
-        onClose = {
-            try {
-                isClosed.set(true)
-                call.cancel()
-                duplexRequestBody.close()
-            } catch (_: Throwable) {
-                // No-op
-            }
+        onSendClose = {
+            isSendClosed.set(true)
+            duplexRequestBody.close()
         }
-    )
+    ) {
+        isReceiveClosed.set(true)
+        call.cancel()
+    }
 }
 
 private class ResponseCallback(

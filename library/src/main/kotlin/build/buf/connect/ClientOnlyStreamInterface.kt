@@ -20,6 +20,10 @@ package build.buf.connect
  */
 interface ClientOnlyStreamInterface<Input, Output> {
     /**
+     *
+     */
+    suspend fun receiveAndClose(): StreamResult<Output>
+    /**
      * Send a request to the server over the stream.
      *
      * @param input The request message to send.

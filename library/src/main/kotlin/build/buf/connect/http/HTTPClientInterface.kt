@@ -49,9 +49,11 @@ interface HTTPClientInterface {
 
 class Stream(
     private val onSend: (Buffer) -> Unit,
-    private val onClose: () -> Unit
+    private val onSendClose: () -> Unit = {},
+    private val onReceiveClose: () -> Unit = {}
 ) {
-    private val isClosed = AtomicReference(false)
+    private val isSendClosed = AtomicReference(false)
+    private val isReceiveClosed = AtomicReference(false)
 
     fun send(buffer: Buffer): Result<Unit> {
         if (isClosed()) {
@@ -65,13 +67,19 @@ class Stream(
         }
     }
 
-    fun close() {
-        if (!isClosed.getAndSet(true)) {
-            onClose()
+    fun sendClose() {
+        if (!isSendClosed.getAndSet(true)) {
+            onSendClose()
+        }
+    }
+
+    fun receiveClose() {
+        if (!isReceiveClosed.getAndSet(true)) {
+            onReceiveClose()
         }
     }
 
     fun isClosed(): Boolean {
-        return isClosed.get()
+        return isSendClosed.get()
     }
 }
