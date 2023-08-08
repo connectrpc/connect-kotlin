@@ -64,7 +64,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap(), null, methodSpec))
+        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, methodSpec))
         assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -76,7 +76,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://buf.build"), "", emptyMap(), null, methodSpec))
+        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, methodSpec))
         assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
