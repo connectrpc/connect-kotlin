@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.extensions
+package com.connectrpc.extensions
 
-import build.buf.connect.Codec
-import build.buf.connect.codecNameProto
+import com.connectrpc.Codec
+import com.connectrpc.codecNameProto
 import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.GeneratedMessageV3
 import com.google.protobuf.Internal

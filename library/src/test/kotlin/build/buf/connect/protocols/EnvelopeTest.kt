@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.protocols
+package com.connectrpc.protocols
 
-import build.buf.connect.compression.GzipCompressionPool
+import com.connectrpc.compression.GzipCompressionPool
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import okio.internal.commonAsUtf8ToByteArray

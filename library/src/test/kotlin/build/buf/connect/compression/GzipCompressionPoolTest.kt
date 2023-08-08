@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.compression
+package com.connectrpc.compression
 
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8

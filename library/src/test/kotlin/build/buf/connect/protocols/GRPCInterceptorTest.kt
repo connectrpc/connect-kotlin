@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.protocols
+package com.connectrpc.protocols
 
-import build.buf.connect.Code
-import build.buf.connect.ConnectError
-import build.buf.connect.ConnectErrorDetail
-import build.buf.connect.ErrorDetailParser
-import build.buf.connect.MethodSpec
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.RequestCompression
-import build.buf.connect.SerializationStrategy
-import build.buf.connect.StreamResult
-import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.http.HTTPRequest
-import build.buf.connect.http.HTTPResponse
-import build.buf.connect.http.TracingInfo
+import com.connectrpc.Code
+import com.connectrpcError
+import com.connectrpcErrorDetail
+import com.connectrpc.ErrorDetailParser
+import com.connectrpc.MethodSpec
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.RequestCompression
+import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamResult
+import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.TracingInfo
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okio.Buffer

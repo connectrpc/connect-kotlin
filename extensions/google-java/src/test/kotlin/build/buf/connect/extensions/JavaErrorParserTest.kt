@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.extensions
+package com.connectrpc.extensions
 
-import build.buf.connect.AnyError
-import build.buf.connect.ConnectErrorDetail
-import build.buf.google.rpc.Status
+import com.connectrpc.AnyError
+import com.connectrpc.ConnectErrorDetail
+import com.connectrpc.google.rpc.Status
 import com.google.protobuf.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString

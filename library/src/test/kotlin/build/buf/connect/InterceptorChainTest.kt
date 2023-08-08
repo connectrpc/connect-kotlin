@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect
+package com.connectrpc
 
-import build.buf.connect.http.HTTPRequest
-import build.buf.connect.http.HTTPResponse
-import build.buf.connect.http.TracingInfo
-import build.buf.connect.protocols.Envelope
-import build.buf.connect.protocols.NetworkProtocol
+import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.TracingInfo
+import com.connectrpc.protocols.Envelope
+import com.connectrpc.protocols.NetworkProtocol
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before

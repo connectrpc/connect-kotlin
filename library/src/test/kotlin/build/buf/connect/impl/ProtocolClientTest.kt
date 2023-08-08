@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.impl
+package com.connectrpc.impl
 
-import build.buf.connect.Codec
-import build.buf.connect.MethodSpec
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.SerializationStrategy
-import build.buf.connect.http.HTTPClientInterface
-import build.buf.connect.http.HTTPRequest
+import com.connectrpc.Codec
+import com.connectrpc.MethodSpec
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.SerializationStrategy
+import com.connectrpc.http.HTTPClientInterface
+import com.connectrpc.http.HTTPRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,7 +54,7 @@ class ProtocolClientTest {
             "input",
             emptyMap(),
             MethodSpec(
-                path = "build.buf.connect.SomeService/Service",
+                path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class
             )
@@ -78,7 +78,7 @@ class ProtocolClientTest {
             "input",
             emptyMap(),
             MethodSpec(
-                path = "build.buf.connect.SomeService/Service",
+                path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class
             )
@@ -102,7 +102,7 @@ class ProtocolClientTest {
             client.stream(
                 emptyMap(),
                 MethodSpec(
-                    path = "build.buf.connect.SomeService/Service",
+                    path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class
                 )
@@ -127,7 +127,7 @@ class ProtocolClientTest {
             client.stream(
                 emptyMap(),
                 MethodSpec(
-                    path = "build.buf.connect.SomeService/Service",
+                    path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class
                 )
@@ -151,7 +151,7 @@ class ProtocolClientTest {
             "",
             emptyMap(),
             MethodSpec(
-                path = "build.buf.connect.SomeService/Service",
+                path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class
             )
@@ -160,7 +160,7 @@ class ProtocolClientTest {
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
-        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/build.buf.connect.SomeService/Service")
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
 
     @Test
@@ -179,7 +179,7 @@ class ProtocolClientTest {
             "",
             emptyMap(),
             MethodSpec(
-                path = "build.buf.connect.SomeService/Service",
+                path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class
             )
@@ -188,6 +188,6 @@ class ProtocolClientTest {
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
-        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/build.buf.connect.SomeService/Service")
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
 }

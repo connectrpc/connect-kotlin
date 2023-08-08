@@ -7,7 +7,7 @@ android {
     compileSdkVersion(32)
 
     defaultConfig {
-        applicationId = "build.buf.connect.examples.android"
+        applicationId = "com.connectrpc.examples.android"
         minSdkVersion(28)
         targetSdkVersion(32)
         versionCode = 1

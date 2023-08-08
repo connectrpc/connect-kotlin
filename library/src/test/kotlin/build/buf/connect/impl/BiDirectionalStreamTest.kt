@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.impl
+package com.connectrpc.impl
 
-import build.buf.connect.Codec
-import build.buf.connect.MethodSpec
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.SerializationStrategy
+import com.connectrpc.Codec
+import com.connectrpc.MethodSpec
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.SerializationStrategy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -51,7 +51,7 @@ class BiDirectionalStreamTest {
             val stream = client.stream(
                 emptyMap(),
                 MethodSpec(
-                    path = "build.buf.connect.SomeService/Service",
+                    path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class
                 )
@@ -81,7 +81,7 @@ class BiDirectionalStreamTest {
             val stream = client.stream(
                 emptyMap(),
                 MethodSpec(
-                    path = "build.buf.connect.SomeService/Service",
+                    path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class
                 )

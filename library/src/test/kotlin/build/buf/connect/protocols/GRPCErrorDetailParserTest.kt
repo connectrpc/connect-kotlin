@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.protocols
+package com.connectrpc.protocols
 
-import build.buf.connect.Code
-import build.buf.connect.ErrorDetailParser
+import com.connectrpc.Code
+import com.connectrpc.ErrorDetailParser
 import okio.ByteString.Companion.encodeUtf8
 import okio.internal.commonAsUtf8ToByteArray
 import org.assertj.core.api.Assertions.assertThat

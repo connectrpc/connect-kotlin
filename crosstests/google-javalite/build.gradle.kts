@@ -14,7 +14,7 @@ tasks {
     }
     jar {
         manifest {
-            attributes(mapOf("Main-Class" to "build.buf.connect.crosstest.Main"))
+            attributes(mapOf("Main-Class" to "com.connectrpc.crosstest.Main"))
         }
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
         // This line of code recursively collects and copies all of a project's files

@@ -14,7 +14,7 @@ plugins {
 tasks {
     jar {
         manifest {
-            attributes(mapOf("Main-Class" to "build.buf.protocgen.connect.Main"))
+            attributes(mapOf("Main-Class" to "com.connectrpc.protocgen.connect.Main"))
         }
         duplicatesStrategy = DuplicatesStrategy.WARN
         // This line of code recursively collects and copies all of a project's files

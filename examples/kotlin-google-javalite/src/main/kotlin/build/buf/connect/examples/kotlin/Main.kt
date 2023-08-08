@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.examples.kotlin
+package com.connectrpc.examples.kotlin
 
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.demo.eliza.v1.ConverseRequest
-import build.buf.connect.demo.eliza.v1.ElizaServiceClient
-import build.buf.connect.extensions.GoogleJavaLiteProtobufStrategy
-import build.buf.connect.impl.ProtocolClient
-import build.buf.connect.okhttp.ConnectOkHttpClient
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.demo.eliza.v1.ConverseRequest
+import com.connectrpc.demo.eliza.v1.ElizaServiceClient
+import com.connectrpc.extensions.GoogleJavaLiteProtobufStrategy
+import com.connectrpc.impl.ProtocolClient
+import com.connectrpc.okhttp.ConnectOkHttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
