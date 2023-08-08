@@ -42,7 +42,7 @@ class BiDirectionalStreamTest {
         val client = ProtocolClient(
             httpClient = mock { },
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
+                host = "https://buf.build/",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -72,7 +72,7 @@ class BiDirectionalStreamTest {
         val client = ProtocolClient(
             httpClient = mock { },
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
+                host = "https://buf.build/",
                 serializationStrategy = serializationStrategy
             )
         )

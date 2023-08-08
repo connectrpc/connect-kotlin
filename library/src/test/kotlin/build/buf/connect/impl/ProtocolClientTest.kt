@@ -46,7 +46,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
+                host = "https://buf.build/",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -70,7 +70,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
+                host = "https://buf.build",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -94,7 +94,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
+                host = "https://buf.build/",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -119,7 +119,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
+                host = "https://buf.build",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -143,7 +143,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
+                host = "https://buf.build",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -160,7 +160,7 @@ class ProtocolClientTest {
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
-        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/build.buf.connect.SomeService/Service")
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 
     @Test
@@ -171,7 +171,7 @@ class ProtocolClientTest {
         val client = ProtocolClient(
             httpClient = httpClient,
             config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
+                host = "https://buf.build/",
                 serializationStrategy = serializationStrategy
             )
         )
@@ -188,6 +188,6 @@ class ProtocolClientTest {
         // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
-        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/build.buf.connect.SomeService/Service")
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://buf.build/build.buf.connect.SomeService/Service")
     }
 }
