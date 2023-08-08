@@ -72,13 +72,20 @@ internal class GRPCInterceptor(
                 )
             },
             responseFunction = { response ->
-                if (response.code != Code.OK) {
-                    return@UnaryFunction response
-                }
                 val trailers = response.trailers
                 val completion = completionParser.parse(trailers)
                 val code = completion?.code ?: Code.UNKNOWN
                 val responseHeaders = response.headers.toMutableMap()
+                if (response.code != Code.OK) {
+                    return@UnaryFunction HTTPResponse(
+                        code = response.code,
+                        headers = response.headers.toMutableMap(),
+                        message = Buffer(),
+                        trailers = trailers,
+                        error = response.error,
+                        tracingInfo = response.tracingInfo
+                    )
+                }
                 val compressionPool =
                     clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
                 if (code == Code.OK) {

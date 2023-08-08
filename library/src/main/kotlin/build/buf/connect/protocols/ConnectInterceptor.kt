@@ -248,7 +248,7 @@ internal class ConnectInterceptor(
                     errorJSON
                 )
             } catch (e: Throwable) {
-                return ConnectError(Code.UNKNOWN, serializationStrategy.errorDetailParser(), errorJSON)
+                return ConnectError(code, serializationStrategy.errorDetailParser(), errorJSON)
             }
             val errorDetails = parseErrorDetails(errorPayloadJSON)
             ConnectError(

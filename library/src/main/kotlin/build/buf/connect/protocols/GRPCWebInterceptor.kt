@@ -76,7 +76,14 @@ internal class GRPCWebInterceptor(
             },
             responseFunction = { response ->
                 if (response.code != Code.OK) {
-                    return@UnaryFunction response
+                    return@UnaryFunction HTTPResponse(
+                        code = response.code,
+                        headers = response.headers.toMutableMap(),
+                        message = Buffer(),
+                        trailers = emptyMap(),
+                        error = response.error,
+                        tracingInfo = response.tracingInfo
+                    )
                 }
                 val responseHeaders = response.headers.toMutableMap()
                 val compressionPool =
