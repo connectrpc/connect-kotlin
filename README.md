@@ -102,9 +102,9 @@ It only takes ~10 minutes to complete a working chat app that uses Connect-Kotli
 
 Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
-is available on the [connectrpc.com website][getting-started].
+is available on the [connect.build website][getting-started].
 
-## Generation Options
+## Generation Options 
 
 | **Option**                 | **Type** | **Default** | **Repeatable** | **Details**                                     |
 |----------------------------|:--------:|:-----------:|:--------------:|-------------------------------------------------|
@@ -113,10 +113,10 @@ is available on the [connectrpc.com website][getting-started].
 
 ## Example Apps
 
-Example apps are available in [`/examples`](./examples). First, run `make generate` to generate
+Example apps are available in [`/examples`](./examples). First, run `make generate` to generate 
 code for the Protobuf plugins.
 
-For the [Android example](./examples/android), you can run `make installandroid` to build and install
+For the [Android example](./examples/android), you can run `make installandroid` to build and install 
 a fully functional Android application using Connect-Kotlin.
 
 Additionally, there are pure Kotlin examples that demonstrate a simple main executable using Connect-Kotlin:
@@ -163,17 +163,17 @@ Offered under the [Apache 2 license][license].
 [buf-studio]: https://buf.build/studio
 [connect-crosstest]: https://github.com/bufbuild/connect-crosstest
 [connect-go]: https://github.com/bufbuild/connect-go
-[connect-protocol]: https://connectrpc.com/docs/protocol
+[connect-protocol]: https://connect.build/docs/protocol
 [connect-swift]: https://github.com/bufbuild/connect-swift
 [connect-web]: https://www.npmjs.com/package/@bufbuild/connect-web
-[error-handling]: https://connectrpc.com/docs/kotlin/errors
-[getting-started]: https://connectrpc.com/docs/kotlin/getting-started
+[error-handling]: https://connect.build/docs/kotlin/errors
+[getting-started]: https://connect.build/docs/kotlin/getting-started
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 [grpc-web-protocol]: https://github.com/grpc/grpc-web
-[interceptors]: https://connectrpc.com/docs/kotlin/interceptors
+[interceptors]: https://connect.build/docs/kotlin/interceptors
 [license]: https://github.com/bufbuild/connect-go/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
-[protocol]: https://connectrpc.com/docs/protocol
+[protocol]: https://connect.build/docs/protocol
 [server reflection]: https://github.com/bufbuild/connect-grpcreflect-go
 [slack]: https://buf.build/links/slack
-[streaming]: https://connectrpc.com/docs/kotlin/using-clients#using-generated-clients
+[streaming]: https://connect.build/docs/kotlin/using-clients#using-generated-clients

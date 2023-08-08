@@ -26,17 +26,17 @@ class ProtocolClientConfigTest {
     @Test
     fun hostUri() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://connect.build",
             serializationStrategy = mock { }
         )
-        assertThat(config.baseUri.host).isEqualTo("connectrpc.com")
+        assertThat(config.baseUri.host).isEqualTo("connect.build")
         assertThat(config.baseUri.toURL()).isNotNull()
     }
 
     @Test(expected = MalformedURLException::class)
     fun unsupportedSchemeErrorsWhenTranslatingToURL() {
         val config = ProtocolClientConfig(
-            host = "xhtp://connectrpc.com",
+            host = "xhtp://connect.build",
             serializationStrategy = mock { }
         )
         config.baseUri.toURL()

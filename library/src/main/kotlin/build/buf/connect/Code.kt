@@ -39,7 +39,7 @@ enum class Code(val codeName: String, val value: Int) {
     UNAUTHENTICATED("unauthenticated", 16);
 
     companion object {
-        // https://connectrpc.com/docs/protocol#http-to-error-code
+        // https://connect.build/docs/protocol#http-to-error-code
         fun fromHTTPStatus(status: Int): Code {
             return when (status) {
                 200 -> OK

@@ -53,7 +53,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun requestHeaders() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -80,7 +80,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -106,7 +106,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun compressedRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
             compressionPools = listOf(GzipCompressionPool)
@@ -134,7 +134,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun uncompressedResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -157,7 +157,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun compressedResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -180,7 +180,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun failureOnResponseHeaders() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -204,7 +204,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun responseErrorWithOnlyTrailers() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -231,7 +231,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun responseErrorWithTrailers() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -263,7 +263,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -287,7 +287,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun streamingRequestHeadersWithCompression() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
             compressionPools = listOf(GzipCompressionPool)
@@ -317,7 +317,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun streamingRequestHeadersNoCompression() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -342,7 +342,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -356,7 +356,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun compressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -371,7 +371,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun streamingResponseHeaders() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -397,7 +397,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun uncompressedStreamingResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -419,7 +419,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun compressedStreamingResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -447,7 +447,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun endStreamOnResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -472,7 +472,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
@@ -496,7 +496,7 @@ class GRPCWebInterceptorTest {
     @Test
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)

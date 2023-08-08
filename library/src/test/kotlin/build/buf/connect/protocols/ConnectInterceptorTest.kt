@@ -66,7 +66,7 @@ class ConnectInterceptorTest {
     @Test
     fun requestHeaders() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList()
         )
@@ -95,7 +95,7 @@ class ConnectInterceptorTest {
     @Test
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -120,7 +120,7 @@ class ConnectInterceptorTest {
     @Test
     fun compressedRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
             compressionPools = listOf(GzipCompressionPool)
@@ -148,7 +148,7 @@ class ConnectInterceptorTest {
     @Test
     fun uncompressedResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -170,7 +170,7 @@ class ConnectInterceptorTest {
     @Test
     fun compressedResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -192,7 +192,7 @@ class ConnectInterceptorTest {
     @Test
     fun responseError() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -230,7 +230,7 @@ class ConnectInterceptorTest {
     @Test
     fun responseErrorBadJSON() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -252,7 +252,7 @@ class ConnectInterceptorTest {
     @Test
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val grpcWebInterceptor = ConnectInterceptor(config)
@@ -276,7 +276,7 @@ class ConnectInterceptorTest {
     @Test
     fun streamingRequestHeadersWithCompression() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
             compressionPools = listOf(GzipCompressionPool)
@@ -306,7 +306,7 @@ class ConnectInterceptorTest {
     @Test
     fun streamingRequestHeadersNoCompression() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList()
         )
@@ -335,7 +335,7 @@ class ConnectInterceptorTest {
     @Test
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -349,7 +349,7 @@ class ConnectInterceptorTest {
     @Test
     fun compressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -364,7 +364,7 @@ class ConnectInterceptorTest {
     @Test
     fun streamingResponseHeaders() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -388,7 +388,7 @@ class ConnectInterceptorTest {
     @Test
     fun uncompressedStreamingResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = listOf(GzipCompressionPool)
         )
@@ -412,7 +412,7 @@ class ConnectInterceptorTest {
     @Test
     fun compressedStreamingResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
             compressionPools = listOf(GzipCompressionPool)
@@ -443,7 +443,7 @@ class ConnectInterceptorTest {
     @Test
     fun endStreamOnResponseMessage() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -488,7 +488,7 @@ class ConnectInterceptorTest {
     @Test
     fun endStreamResponseBadJSON() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -507,7 +507,7 @@ class ConnectInterceptorTest {
     @Test
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -531,7 +531,7 @@ class ConnectInterceptorTest {
     @Test
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy
         )
         val connectInterceptor = ConnectInterceptor(config)
@@ -555,7 +555,7 @@ class ConnectInterceptorTest {
     @Test
     fun getRequestCreatedForPayloadUnderLimit() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
@@ -591,7 +591,7 @@ class ConnectInterceptorTest {
     @Test
     fun fallbackRequestCreatedForPayloadOverLimit() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
@@ -622,7 +622,7 @@ class ConnectInterceptorTest {
     @Test
     fun getRequestCreatedForNoFallbackEnabled() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.Enabled
@@ -654,7 +654,7 @@ class ConnectInterceptorTest {
     @Test
     fun unaryPostRequestCreatedWithGetDisabled() {
         val config = ProtocolClientConfig(
-            host = "https://connectrpc.com",
+            host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.Disabled
