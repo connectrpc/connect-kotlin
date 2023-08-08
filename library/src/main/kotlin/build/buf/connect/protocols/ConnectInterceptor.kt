@@ -41,7 +41,7 @@ import java.net.URL
 
 /**
  * The Connect protocol.
- * https://connect.build/docs
+ * https://connectrpc.com/docs
  */
 internal class ConnectInterceptor(
     private val clientConfig: ProtocolClientConfig
