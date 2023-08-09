@@ -43,6 +43,11 @@ dependencies {
     implementation(project(":extensions:google-java"))
 
     implementation(project(":okhttp"))
+
+    testImplementation(libs.junit)
+    testImplementation(libs.assertj)
+    testImplementation(libs.mockito)
+    testImplementation(libs.kotlin.coroutines.core)
 }
 
 configure<SpotlessExtension> {

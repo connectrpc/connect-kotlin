@@ -175,6 +175,7 @@ class ProtocolClient(
                         )
                         StreamResult.Message(message)
                     } catch (e: Throwable) {
+                        isComplete = true
                         StreamResult.Complete(Code.UNKNOWN, e)
                     }
                 }
