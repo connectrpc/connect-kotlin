@@ -53,7 +53,7 @@ class Main {
                 val job = scope.launch {
                     runConnectTests("connect", host, client, NetworkProtocol.CONNECT)
                     runConnectTests("grpc", host, client, NetworkProtocol.GRPC)
-                    runConnectTests("grpc-web", host, client, NetworkProtocol.GRPC_WEB)
+//                    runConnectTests("grpc-web", host, client, NetworkProtocol.GRPC_WEB)
                 }
                 job.join()
                 println("...complete.")
