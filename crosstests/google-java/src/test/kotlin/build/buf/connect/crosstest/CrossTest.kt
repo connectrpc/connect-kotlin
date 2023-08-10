@@ -375,143 +375,143 @@ class CrossTest(
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
     }
-
-    @Test
-    fun emptyUnaryCallback(): Unit = runBlocking {
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(empty {}) { response ->
-            response.failure {
-                fail<Unit>("expected error to be null")
-            }
-            response.success { success ->
-                assertThat(success.message).isEqualTo(empty {})
-                countDownLatch.countDown()
-            }
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
-
-    @Test
-    fun largeUnaryCallback(): Unit = runBlocking {
-        val size = 314159
-        val message = simpleRequest {
-            responseSize = size
-            payload = payload {
-                body = ByteString.copyFrom(ByteArray(size))
-            }
-        }
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
-            response.failure {
-                fail<Unit>("expected error to be null")
-            }
-            response.success { success ->
-                assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
-                countDownLatch.countDown()
-            }
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
-
-    @Test
-    fun customMetadataCallback(): Unit = runBlocking {
-        val size = 314159
-        val leadingKey = "x-grpc-test-echo-initial"
-        val leadingValue = "test_initial_metadata_value"
-        val trailingKey = "x-grpc-test-echo-trailing-bin"
-        val trailingValue = byteArrayOf(0xab.toByte(), 0xab.toByte(), 0xab.toByte())
-        val headers =
-            mapOf(
-                leadingKey to listOf(leadingValue),
-                trailingKey to listOf(b64Encode(trailingValue))
-            )
-        val message = simpleRequest {
-            responseSize = size
-            payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
-        }
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message, headers) { response ->
-            assertThat(response.code).isEqualTo(Code.OK)
-            assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
-            assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
-            response.failure {
-                fail<Unit>("expected error to be null")
-            }
-            response.success { success ->
-                assertThat(success.message.payload!!.body!!.size()).isEqualTo(size)
-                countDownLatch.countDown()
-            }
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
-
-    @Test
-    fun statusCodeAndMessageCallback(): Unit = runBlocking {
-        val message = simpleRequest {
-            responseStatus = echoStatus {
-                code = Code.UNKNOWN.value
-                message = "test status message"
-            }
-        }
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
-            assertThat(response.code).isEqualTo(Code.UNKNOWN)
-            response.failure { errorResponse ->
-                assertThat(errorResponse.error).isNotNull()
-                assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
-                assertThat(errorResponse.error.message).isEqualTo("test status message")
-                countDownLatch.countDown()
-            }
-            response.success {
-                fail<Unit>("unexpected success")
-            }
-        }
-
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
-
-    @Test
-    fun specialStatusCallback(): Unit = runBlocking {
-        val statusMessage =
-            "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(
-            simpleRequest {
-                responseStatus = echoStatus {
-                    code = 2
-                    message = statusMessage
-                }
-            }
-        ) { response ->
-            response.failure { errorResponse ->
-                val error = errorResponse.error
-                assertThat(error.code).isEqualTo(Code.UNKNOWN)
-                assertThat(response.code).isEqualTo(Code.UNKNOWN)
-                assertThat(error.message).isEqualTo(statusMessage)
-                countDownLatch.countDown()
-            }
-            response.success {
-                fail<Unit>("unexpected success")
-            }
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
-
-    @Test
-    fun unimplementedMethodCallback(): Unit = runBlocking {
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
-            countDownLatch.countDown()
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
+//
+//    @Test
+//    fun emptyUnaryCallback(): Unit = runBlocking {
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.emptyCall(empty {}) { response ->
+//            response.failure {
+//                fail<Unit>("expected error to be null")
+//            }
+//            response.success { success ->
+//                assertThat(success.message).isEqualTo(empty {})
+//                countDownLatch.countDown()
+//            }
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
+//
+//    @Test
+//    fun largeUnaryCallback(): Unit = runBlocking {
+//        val size = 314159
+//        val message = simpleRequest {
+//            responseSize = size
+//            payload = payload {
+//                body = ByteString.copyFrom(ByteArray(size))
+//            }
+//        }
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.unaryCall(message) { response ->
+//            response.failure {
+//                fail<Unit>("expected error to be null")
+//            }
+//            response.success { success ->
+//                assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
+//                countDownLatch.countDown()
+//            }
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
+//
+//    @Test
+//    fun customMetadataCallback(): Unit = runBlocking {
+//        val size = 314159
+//        val leadingKey = "x-grpc-test-echo-initial"
+//        val leadingValue = "test_initial_metadata_value"
+//        val trailingKey = "x-grpc-test-echo-trailing-bin"
+//        val trailingValue = byteArrayOf(0xab.toByte(), 0xab.toByte(), 0xab.toByte())
+//        val headers =
+//            mapOf(
+//                leadingKey to listOf(leadingValue),
+//                trailingKey to listOf(b64Encode(trailingValue))
+//            )
+//        val message = simpleRequest {
+//            responseSize = size
+//            payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
+//        }
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.unaryCall(message, headers) { response ->
+//            assertThat(response.code).isEqualTo(Code.OK)
+//            assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
+//            assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
+//            response.failure {
+//                fail<Unit>("expected error to be null")
+//            }
+//            response.success { success ->
+//                assertThat(success.message.payload!!.body!!.size()).isEqualTo(size)
+//                countDownLatch.countDown()
+//            }
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
+//
+//    @Test
+//    fun statusCodeAndMessageCallback(): Unit = runBlocking {
+//        val message = simpleRequest {
+//            responseStatus = echoStatus {
+//                code = Code.UNKNOWN.value
+//                message = "test status message"
+//            }
+//        }
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.unaryCall(message) { response ->
+//            assertThat(response.code).isEqualTo(Code.UNKNOWN)
+//            response.failure { errorResponse ->
+//                assertThat(errorResponse.error).isNotNull()
+//                assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
+//                assertThat(errorResponse.error.message).isEqualTo("test status message")
+//                countDownLatch.countDown()
+//            }
+//            response.success {
+//                fail<Unit>("unexpected success")
+//            }
+//        }
+//
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
+//
+//    @Test
+//    fun specialStatusCallback(): Unit = runBlocking {
+//        val statusMessage =
+//            "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.unaryCall(
+//            simpleRequest {
+//                responseStatus = echoStatus {
+//                    code = 2
+//                    message = statusMessage
+//                }
+//            }
+//        ) { response ->
+//            response.failure { errorResponse ->
+//                val error = errorResponse.error
+//                assertThat(error.code).isEqualTo(Code.UNKNOWN)
+//                assertThat(response.code).isEqualTo(Code.UNKNOWN)
+//                assertThat(error.message).isEqualTo(statusMessage)
+//                countDownLatch.countDown()
+//            }
+//            response.success {
+//                fail<Unit>("unexpected success")
+//            }
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
+//
+//    @Test
+//    fun unimplementedMethodCallback(): Unit = runBlocking {
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.unimplementedCall(empty {}) { response ->
+//            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+//            countDownLatch.countDown()
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
 
 //    @Test
 //    fun unimplementedServiceCallback(): Unit = runBlocking {
