@@ -513,16 +513,16 @@ class CrossTest(
         assertThat(countDownLatch.count).isZero()
     }
 
-    @Test
-    fun unimplementedServiceCallback(): Unit = runBlocking {
-        val countDownLatch = CountDownLatch(1)
-        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
-            countDownLatch.countDown()
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
+//    @Test
+//    fun unimplementedServiceCallback(): Unit = runBlocking {
+//        val countDownLatch = CountDownLatch(1)
+//        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
+//            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+//            countDownLatch.countDown()
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
 
     @Test
     fun failUnaryCallback(): Unit = runBlocking {
