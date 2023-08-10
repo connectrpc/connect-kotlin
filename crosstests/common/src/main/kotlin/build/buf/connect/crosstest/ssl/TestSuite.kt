@@ -40,7 +40,7 @@ interface TestSuite {
     suspend fun getUnary()
 }
 
-interface UnaryTestSuite {
+interface UnaryCallbackTestSuite {
     suspend fun test(tag: String)
     suspend fun emptyUnary()
     suspend fun largeUnary()
