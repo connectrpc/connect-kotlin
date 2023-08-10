@@ -80,6 +80,14 @@ class Stream(
     }
 
     fun isClosed(): Boolean {
+        return isSendClosed() && isReceiveClosed()
+    }
+
+    fun isSendClosed(): Boolean {
         return isSendClosed.get()
+    }
+
+    fun isReceiveClosed(): Boolean {
+        return isReceiveClosed.get()
     }
 }

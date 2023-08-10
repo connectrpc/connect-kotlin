@@ -29,6 +29,14 @@ internal class ServerOnlyStream<Input, Output>(
         return messageStream.resultChannel()
     }
 
+    override suspend fun sendAndClose(input: Input): Result<Unit> {
+        return try {
+            messageStream.send(input)
+        } finally {
+            messageStream.close()
+        }
+    }
+
     override suspend fun send(input: Input): Result<Unit> {
         return messageStream.send(input)
     }
