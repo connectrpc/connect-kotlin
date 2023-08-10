@@ -1,6 +1,4 @@
 version: v1
-managed:
-  enabled: true
 plugins:
   # Java crosstests.
   - name: connect-kotlin
@@ -12,8 +10,8 @@ plugins:
       - generateSynchronousMethods=true
   - name: java
     out: google-java/src/main/java/generated
-  - name: kotlin
-    out: google-java/src/main/kotlin/generated
+#  - name: kotlin
+#    out: google-java/src/main/kotlin/generated
   # Javalite crosstests.
   - name: connect-kotlin
     out: google-javalite/src/main/kotlin/generated
@@ -21,6 +19,8 @@ plugins:
   - name: java
     out: google-javalite/src/main/java/generated
     opt: lite
-  - name: kotlin
-    out: google-javalite/src/main/kotlin/generated
-    opt: lite
+#  - name: kotlin
+#    out: google-javalite/src/main/kotlin/generated
+#    opt: lite
+  - plugin: buf.build/protocolbuffers/kotlin:v23.3
+    out: google-java/src/main/java/generated
