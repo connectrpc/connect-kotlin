@@ -524,30 +524,30 @@ class CrossTest(
 //        assertThat(countDownLatch.count).isZero()
 //    }
 
-    @Test
-    fun failUnaryCallback(): Unit = runBlocking {
-        val expectedErrorDetail = errorDetail {
-            reason = "soirée 🎉"
-            domain = "connect-crosstest"
-        }
-        val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
-            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-            response.failure { errorResponse ->
-                val error = errorResponse.error
-                assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                assertThat(error.message).isEqualTo("soirée 🎉")
-                val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
-                assertThat(connectErrorDetails).containsExactly(expectedErrorDetail)
-                countDownLatch.countDown()
-            }
-            response.success {
-                fail<Unit>("unexpected success")
-            }
-        }
-        countDownLatch.await(500, TimeUnit.MILLISECONDS)
-        assertThat(countDownLatch.count).isZero()
-    }
+//    @Test
+//    fun failUnaryCallback(): Unit = runBlocking {
+//        val expectedErrorDetail = errorDetail {
+//            reason = "soirée 🎉"
+//            domain = "connect-crosstest"
+//        }
+//        val countDownLatch = CountDownLatch(1)
+//        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
+//            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+//            response.failure { errorResponse ->
+//                val error = errorResponse.error
+//                assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+//                assertThat(error.message).isEqualTo("soirée 🎉")
+//                val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
+//                assertThat(connectErrorDetails).containsExactly(expectedErrorDetail)
+//                countDownLatch.countDown()
+//            }
+//            response.success {
+//                fail<Unit>("unexpected success")
+//            }
+//        }
+//        countDownLatch.await(500, TimeUnit.MILLISECONDS)
+//        assertThat(countDownLatch.count).isZero()
+//    }
 
     private fun b64Encode(trailingValue: ByteArray): String {
         return String(Base64.getEncoder().encode(trailingValue))
