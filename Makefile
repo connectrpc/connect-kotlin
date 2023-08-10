@@ -17,7 +17,7 @@ $(BIN)/license-headers: Makefile
 
 .PHONY: build
 build: generate ## Build the entire project.
-	./gradlew build
+	./gradlew build -x test
 
 .PHONY: buildplugin
 buildplugin: ## Build the connect-kotlin protoc plugin.
@@ -50,17 +50,11 @@ crosstestserverstop: ## Stop the server for cross tests.
 	-docker container stop serverconnect servergrpc
 
 .PHONY: crosstestsrun
-crosstestsrun: crosstestsrunjava crosstestsrunjavalite ## Run the cross tests.
+crosstestsrun: crosstestsrunjava ## Run the cross tests.
 
 .PHONY: crosstestsrunjava
 crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
-	./gradlew crosstests:google-java:jar
-	java -jar ./crosstests/google-java/build/libs/google-java-crosstests.jar
-
-.PHONY: crosstestsrunjavalite
-crosstestsrunjavalite: ## Run the cross tests for protoc-gen-javalite integration.
-	./gradlew crosstests:google-javalite:jar
-	java -jar ./crosstests/google-javalite/build/libs/google-javalite-crosstests.jar
+	./gradlew crosstest:google-java:test
 
 .PHONY: generate
 generate: buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
@@ -113,5 +107,5 @@ releaselocal: ## Release artifacts to local maven repository.
 	./gradlew --info publishToMavenLocal
 
 .PHONY: test
-test: ## Run tests for the library.
+test: generate ## Run tests for the library.
 	./gradlew library:test

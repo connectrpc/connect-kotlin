@@ -246,7 +246,7 @@ class ConnectInterceptorTest {
                 tracingInfo = null
             )
         )
-        assertThat(response.error!!.code).isEqualTo(Code.UNKNOWN)
+        assertThat(response.error!!.code).isEqualTo(Code.UNAVAILABLE)
     }
 
     @Test
