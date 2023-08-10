@@ -107,5 +107,5 @@ releaselocal: ## Release artifacts to local maven repository.
 	./gradlew --info publishToMavenLocal
 
 .PHONY: test
-test: ## Run tests for the library.
+test: generate ## Run tests for the library.
 	./gradlew library:test
