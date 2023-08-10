@@ -21,10 +21,10 @@ import build.buf.connect.Headers
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
-import build.buf.connect.UnaryBlockingCall
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.connect.StreamResult
+import build.buf.connect.UnaryBlockingCall
 import build.buf.connect.http.Cancelable
 import build.buf.connect.http.HTTPClientInterface
 import build.buf.connect.http.HTTPRequest

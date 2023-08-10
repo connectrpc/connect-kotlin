@@ -29,7 +29,7 @@ class UnaryBlockingCall<Output> {
      */
     fun execute(): ResponseMessage<Output> {
         val countDownLatch = CountDownLatch(1)
-        val reference = AtomicReference<ResponseMessage<Output>>();
+        val reference = AtomicReference<ResponseMessage<Output>>()
         executable { responseMessage ->
             reference.set(responseMessage)
             countDownLatch.countDown()
@@ -53,7 +53,7 @@ class UnaryBlockingCall<Output> {
      * underlying request.
      */
     internal fun setCancel(cancel: () -> Unit) {
-        this.cancel = cancel;
+        this.cancel = cancel
     }
 
     /**
