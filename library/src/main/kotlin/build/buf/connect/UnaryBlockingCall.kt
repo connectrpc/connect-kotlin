@@ -18,9 +18,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * A [Call] contains the way to make a blocking RPC call and cancelling the RPC.
+ * A [UnaryBlockingCall] contains the way to make a blocking RPC call and cancelling the RPC.
  */
-class Call<Output> {
+class UnaryBlockingCall<Output> {
     private var executable: ((ResponseMessage<Output>) -> Unit) -> Unit = { }
     private var cancel: () -> Unit = { }
 
@@ -45,10 +45,24 @@ class Call<Output> {
         cancel()
     }
 
+    /**
+     * Gives the blocking call a cancellation function to cancel the
+     * underlying request.
+     *
+     * @param cancel The function to call in order to cancel the
+     * underlying request.
+     */
     internal fun setCancel(cancel: () -> Unit) {
         this.cancel = cancel;
     }
 
+    /**
+     * Gives the blocking call the execution function to initiate
+     * the underlying request.
+     *
+     * @param executable The function to call in order to initiate
+     * a request.
+     */
     internal fun setExecute(executable: ((ResponseMessage<Output>) -> Unit) -> Unit) {
         this.executable = executable
     }

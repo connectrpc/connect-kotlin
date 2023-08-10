@@ -21,7 +21,7 @@ import build.buf.connect.Headers
 import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.ProtocolClientInterface
-import build.buf.connect.Call
+import build.buf.connect.UnaryBlockingCall
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.connect.StreamResult
@@ -120,15 +120,14 @@ class ProtocolClient(
         }
     }
 
-    override fun <Input : Any, Output : Any> unarySync(
+    override fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>
-    ): Call<Output> {
+    ): UnaryBlockingCall<Output> {
         val countDownLatch = CountDownLatch(1)
         val reference = AtomicReference<ResponseMessage<Output>>()
-        // Create a new Call object.
-        val call = Call<Output>()
+        val call = UnaryBlockingCall<Output>()
         // Set the unary synchronous executable.
         call.setExecute { callback: (ResponseMessage<Output>) -> Unit ->
             val cancellationFn = unary(request, headers, methodSpec) { responseMessage ->
@@ -136,7 +135,7 @@ class ProtocolClient(
                 reference.set(responseMessage)
                 countDownLatch.countDown()
             }
-            // Set the cancellation lambda.
+            // Set the cancellation function .
             call.setCancel(cancellationFn)
         }
         return call

@@ -65,11 +65,11 @@ interface ProtocolClientInterface {
      *
      * @return The ResponseMessage for the unary call.
      */
-    fun <Input : Any, Output : Any> unarySync(
+    fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>
-    ): Call<Output>
+    ): UnaryBlockingCall<Output>
 
     /**
      * Start a new bidirectional stream.

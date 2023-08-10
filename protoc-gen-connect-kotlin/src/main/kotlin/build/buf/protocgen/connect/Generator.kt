@@ -221,8 +221,8 @@ class Generator : CodeGenerator {
                         .build()
                     functions.add(unaryCallbackFunction)
                 }
-                if (configuration.generateSynchronousMethods) {
-                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Sync")
+                if (configuration.generateBlockingUnaryMethods) {
+                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.ABSTRACT)
                         .addParameter("request", inputClassName)
@@ -414,7 +414,7 @@ class Generator : CodeGenerator {
                         .build()
                     functions.add(unaryCallbackFunction)
                 }
-                if (configuration.generateSynchronousMethods) {
+                if (configuration.generateBlockingUnaryMethods) {
                     val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Sync")
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.OVERRIDE)
