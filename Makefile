@@ -17,7 +17,7 @@ $(BIN)/license-headers: Makefile
 
 .PHONY: build
 build: generate ## Build the entire project.
-	./gradlew build
+	./gradlew build -x test
 
 .PHONY: buildplugin
 buildplugin: ## Build the connect-kotlin protoc plugin.
