@@ -20,15 +20,18 @@ package build.buf.connect
  */
 interface ClientOnlyStreamInterface<Input, Output> {
     /**
-     *
-     */
-    suspend fun receiveAndClose(): StreamResult<Output>
-    /**
      * Send a request to the server over the stream.
      *
      * @param input The request message to send.
      */
     suspend fun send(input: Input): Result<Unit>
+
+    /**
+     * Receive a single response and close the stream.
+     *
+     * @return the single response [StreamResult].
+     */
+    suspend fun receiveAndClose(): StreamResult<Output>
 
     /**
      * Close the stream. No calls to [send] are valid after calling [close].
