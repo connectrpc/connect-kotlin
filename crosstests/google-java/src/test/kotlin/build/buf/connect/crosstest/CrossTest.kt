@@ -26,7 +26,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.Before
@@ -58,12 +57,13 @@ class CrossTest {
             .sslSocketFactory(sslSocketFactory, trustManager)
             .build()
         shortTimeoutConnectClient = ProtocolClient(
-            httpClient = ConnectOkHttpClient(client.newBuilder()
-                .connectTimeout(Duration.ofMillis(1))
-                .readTimeout(Duration.ofMillis(1))
-                .writeTimeout(Duration.ofMillis(1))
-                .callTimeout(Duration.ofMillis(1))
-                .build()
+            httpClient = ConnectOkHttpClient(
+                client.newBuilder()
+                    .connectTimeout(Duration.ofMillis(1))
+                    .readTimeout(Duration.ofMillis(1))
+                    .writeTimeout(Duration.ofMillis(1))
+                    .callTimeout(Duration.ofMillis(1))
+                    .build()
             ),
             ProtocolClientConfig(
                 host = host,
