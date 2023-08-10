@@ -193,13 +193,21 @@ class ProtocolClient(
         }
         continuation.invokeOnCancellation {
             httpStream.sendClose()
+            httpStream.receiveClose()
         }
         val stream = Stream(
             onSend = { buffer ->
                 httpStream.send(streamFunc.requestBodyFunction(buffer))
+            },
+            onReceiveClose = {
+                httpStream.receiveClose()
+            },
+            onSendClose = {
+                httpStream.sendClose()
             }
         )
         channel.invokeOnClose {
+            // Receive channel is closed so the stream's receive will be closed.
             stream.receiveClose()
         }
         continuation.resume(
