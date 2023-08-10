@@ -48,6 +48,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 import java.time.Duration
+import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -214,7 +215,7 @@ class CrossTest(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(trailingValue.b64Encode())
+                trailingKey to listOf(b64Encode(trailingValue))
             )
         val message = simpleRequest {
             responseSize = size
@@ -224,7 +225,7 @@ class CrossTest(
         testServiceConnectClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
-            assertThat(response.trailers[trailingKey]).containsExactly(trailingValue.b64Encode())
+            assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -424,7 +425,7 @@ class CrossTest(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(trailingValue.b64Encode())
+                trailingKey to listOf(b64Encode(trailingValue))
             )
         val message = simpleRequest {
             responseSize = size
@@ -434,7 +435,7 @@ class CrossTest(
         testServiceConnectClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
-            assertThat(response.trailers[trailingKey]).containsExactly(trailingValue.b64Encode())
+            assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -546,5 +547,9 @@ class CrossTest(
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    private fun b64Encode(trailingValue: ByteArray): String {
+        return String(Base64.getEncoder().encode(trailingValue))
     }
 }

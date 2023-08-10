@@ -21,14 +21,14 @@ sourceSets {
 }
 
 dependencies {
-    implementation(libs.okhttp.core)
+
     implementation(libs.kotlin.coroutines.core)
-    implementation(libs.assertj)
     implementation(libs.protobuf.kotlin)
     implementation(project(":crosstests:common"))
     implementation(project(":extensions:google-java"))
     implementation(project(":okhttp"))
 
+    testImplementation(libs.okhttp.core)
     testImplementation(libs.junit)
     testImplementation(libs.assertj)
     testImplementation(libs.mockito)
