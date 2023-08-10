@@ -375,8 +375,6 @@ class CrossTest(
         assertThat(countDownLatch.count).isZero()
     }
 
-
-
     @Test
     fun emptyUnaryCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
