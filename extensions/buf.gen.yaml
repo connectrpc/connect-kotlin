@@ -8,6 +8,3 @@ types:
 plugins:
   - name: java
     out: google-java/src/main/java
-  - name: java
-    out: google-javalite/src/main/java
-    opt: lite
