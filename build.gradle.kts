@@ -64,11 +64,11 @@ allprojects {
             pom {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
-                group = "build.buf"
+                group = "com.connectrpc"
                 val releaseVersion = project.findProperty("releaseVersion") as String?
                 // Default to snapshot versioning for local publishing.
                 version = releaseVersion ?: "0.0.0-SNAPSHOT"
-                url.set("https://github.com/bufbuild/connect-kotlin")
+                url.set("https://github.com/connectrpc/connect-kotlin")
                 licenses {
                     license {
                         name.set("The Apache Software License, Version 2.0")
@@ -83,9 +83,9 @@ allprojects {
                     }
                 }
                 scm {
-                    url.set("https://github.com/bufbuild/connect-kotlin")
-                    connection.set("scm:git:https://github.com/bufbuild/connect-kotlin.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/bufbuild/connect-kotlin.git")
+                    url.set("https://github.com/connectrpc/connect-kotlin")
+                    connection.set("scm:git:https://github.com/connectrpc/connect-kotlin.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/connectrpc/connect-kotlin.git")
                 }
             }
         }

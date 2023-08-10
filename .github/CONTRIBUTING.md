@@ -20,7 +20,7 @@ you to accept the CLA when you open your pull request.
 ```
 git clone git@github.com:your_github_username/connect-kotlin.git
 cd connect-kotlin
-git remote add upstream https://github.com/bufbuild/connect-kotlin.git
+git remote add upstream https://github.com/connectrpc/connect-kotlin.git
 git fetch upstream
 ```
 
@@ -58,7 +58,7 @@ We're much more likely to approve your changes if you:
 * Write a [good commit message][commit-message].
 * Maintain backward compatibility.
 
-[fork]: https://github.com/bufbuild/connect-kotlin/fork
-[open-issue]: https://github.com/bufbuild/connect-kotlin/issues/new
-[cla]: https://cla-assistant.io/bufbuild/connect-kotlin
+[fork]: https://github.com/connectrpc/connect-kotlin/fork
+[open-issue]: https://github.com/connectrpc/connect-kotlin/issues/new
+[cla]: https://cla-assistant.io/connectrpc/connect-kotlin
 [commit-message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
