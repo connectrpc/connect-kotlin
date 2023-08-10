@@ -87,6 +87,11 @@ allprojects {
                     connection.set("scm:git:https://github.com/bufbuild/connect-kotlin.git")
                     developerConnection.set("scm:git:ssh://git@github.com/bufbuild/connect-kotlin.git")
                 }
+                distributionManagement {
+                    relocation {
+                        groupId.set("com.connectrpc")
+                    }
+                }
             }
         }
     }
