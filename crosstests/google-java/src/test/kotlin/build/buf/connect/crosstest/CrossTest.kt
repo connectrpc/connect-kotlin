@@ -38,6 +38,8 @@ import java.util.concurrent.TimeUnit
 
 class CrossTest {
 
+    private lateinit var connectClient: ProtocolClient
+    private lateinit var shortTimeoutConnectClient: ProtocolClient
     private lateinit var unimplementedServiceClient: UnimplementedServiceClient
     private lateinit var testServiceConnectClient: TestServiceClient
 
@@ -55,7 +57,23 @@ class CrossTest {
             .callTimeout(Duration.ofMinutes(1))
             .sslSocketFactory(sslSocketFactory, trustManager)
             .build()
-        val connectClient = ProtocolClient(
+        shortTimeoutConnectClient = ProtocolClient(
+            httpClient = ConnectOkHttpClient(client.newBuilder()
+                .connectTimeout(Duration.ofMillis(1))
+                .readTimeout(Duration.ofMillis(1))
+                .writeTimeout(Duration.ofMillis(1))
+                .callTimeout(Duration.ofMillis(1))
+                .build()
+            ),
+            ProtocolClientConfig(
+                host = host,
+                serializationStrategy = GoogleJavaProtobufStrategy(),
+                networkProtocol = NetworkProtocol.CONNECT,
+                requestCompression = RequestCompression(10, GzipCompressionPool),
+                compressionPools = listOf(GzipCompressionPool)
+            )
+        )
+        connectClient = ProtocolClient(
             httpClient = ConnectOkHttpClient(client),
             ProtocolClientConfig(
                 host = host,
@@ -214,6 +232,43 @@ class CrossTest {
 
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    @Test
+    fun timeoutOnSleepingServer() = runBlocking {
+        val countDownLatch = CountDownLatch(1)
+        val client = TestServiceClient(shortTimeoutConnectClient)
+        val request = streamingOutputCallRequest {
+            payload = payload {
+                body = ByteString.copyFrom(ByteArray(271828))
+            }
+            responseParameters.add(
+                responseParameters {
+                    size = 31415
+                    intervalUs = 50_000
+                }
+            )
+        }
+        val stream = client.streamingOutputCall()
+        withContext(Dispatchers.IO) {
+            val job = async {
+                for (res in stream.resultChannel()) {
+                    res.maybeFold(
+                        onCompletion = { result ->
+                            assertThat(result.error).isNotNull()
+                            assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                            assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                            countDownLatch.countDown()
+                        }
+                    )
+                }
+            }
+            stream.send(request)
+            countDownLatch.await(5, TimeUnit.SECONDS)
+            job.cancel()
+            assertThat(countDownLatch.count).isZero()
+            stream.close()
+        }
     }
 
     @Test
