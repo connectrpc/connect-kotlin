@@ -54,7 +54,7 @@ crosstestsrun: crosstestsrunjava ## Run the cross tests.
 
 .PHONY: crosstestsrunjava
 crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
-	./gradlew test
+	./gradlew crosstest:google-java:test
 
 .PHONY: generate
 generate: buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.

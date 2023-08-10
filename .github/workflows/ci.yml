@@ -82,6 +82,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1.24.0
+        with:
+          github_token: ${{ github.token }}
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
         run: make test
   lint:
