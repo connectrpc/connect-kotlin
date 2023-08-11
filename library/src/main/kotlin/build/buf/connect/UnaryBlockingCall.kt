@@ -26,6 +26,7 @@ class UnaryBlockingCall<Output> {
 
     /**
      * Execute the underlying request.
+     * Subsequent calls will create a new request.
      */
     fun execute(): ResponseMessage<Output> {
         val countDownLatch = CountDownLatch(1)

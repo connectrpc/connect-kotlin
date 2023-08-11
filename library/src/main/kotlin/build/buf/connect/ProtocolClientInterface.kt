@@ -63,7 +63,7 @@ interface ProtocolClientInterface {
      * @param headers The outbound request headers to include.
      * @param methodSpec The Method for RPC path.
      *
-     * @return The ResponseMessage for the unary call.
+     * @return The [UnaryBlockingCall] for the unary request.
      */
     fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,

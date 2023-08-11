@@ -126,13 +126,11 @@ class ProtocolClient(
         methodSpec: MethodSpec<Input, Output>
     ): UnaryBlockingCall<Output> {
         val countDownLatch = CountDownLatch(1)
-        val reference = AtomicReference<ResponseMessage<Output>>()
         val call = UnaryBlockingCall<Output>()
         // Set the unary synchronous executable.
         call.setExecute { callback: (ResponseMessage<Output>) -> Unit ->
             val cancellationFn = unary(request, headers, methodSpec) { responseMessage ->
                 callback(responseMessage)
-                reference.set(responseMessage)
                 countDownLatch.countDown()
             }
             // Set the cancellation function .
