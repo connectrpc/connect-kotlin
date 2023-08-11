@@ -192,18 +192,27 @@ class ProtocolClient(
             channel.send(result)
         }
         continuation.invokeOnCancellation {
-            httpStream.close()
+            httpStream.sendClose()
+            httpStream.receiveClose()
+        }
+        val stream = Stream(
+            onSend = { buffer ->
+                httpStream.send(streamFunc.requestBodyFunction(buffer))
+            },
+            onReceiveClose = {
+                httpStream.receiveClose()
+            },
+            onSendClose = {
+                httpStream.sendClose()
+            }
+        )
+        channel.invokeOnClose {
+            // Receive channel is closed so the stream's receive will be closed.
+            stream.receiveClose()
         }
         continuation.resume(
             BidirectionalStream(
-                Stream(
-                    onSend = { buffer ->
-                        httpStream.send(streamFunc.requestBodyFunction(buffer))
-                    },
-                    onClose = {
-                        httpStream.close()
-                    }
-                ),
+                stream,
                 requestCodec,
                 channel
             )

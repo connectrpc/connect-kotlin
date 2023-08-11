@@ -39,6 +39,17 @@ interface ServerOnlyStreamInterface<Input, Output> {
     suspend fun send(input: Input): Result<Unit>
 
     /**
+     * Send a request to the server over the stream and closes the request.
+     *
+     * Can only be called exactly one time when starting the stream.
+     *
+     * @param input The request message to send.
+     * @return [Result.success] on send success, [Result.failure] on
+     *         any sends which are not successful.
+     */
+    suspend fun sendAndClose(input: Input): Result<Unit>
+
+    /**
      * Close the stream. No calls to [send] are valid after calling [close].
      */
     fun close()
