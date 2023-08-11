@@ -21,6 +21,7 @@ import build.buf.connect.MethodSpec
 import build.buf.connect.ProtocolClientInterface
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
+import build.buf.connect.UnaryBlockingCall
 import build.buf.protocgen.connect.internal.CodeGenerator
 import build.buf.protocgen.connect.internal.Configuration
 import build.buf.protocgen.connect.internal.Plugin
@@ -221,6 +222,16 @@ class Generator : CodeGenerator {
                         .build()
                     functions.add(unaryCallbackFunction)
                 }
+                if (configuration.generateBlockingUnaryMethods) {
+                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addParameter("request", inputClassName)
+                        .addParameter(headerParameterSpec)
+                        .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
+                        .build()
+                    functions.add(unarySuspendFunction)
+                }
             }
         }
         return functions
@@ -403,6 +414,28 @@ class Generator : CodeGenerator {
                         )
                         .build()
                     functions.add(unaryCallbackFunction)
+                }
+                if (configuration.generateBlockingUnaryMethods) {
+                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.OVERRIDE)
+                        .addParameter("request", inputClassName)
+                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
+                        .addStatement(
+                            "return %L",
+                            CodeBlock.builder()
+                                .addStatement("client.unaryBlocking(")
+                                .indent()
+                                .addStatement("request,")
+                                .addStatement("headers,")
+                                .add(methodSpecCallBlock)
+                                .unindent()
+                                .addStatement(")")
+                                .build()
+                        )
+                        .build()
+                    functions.add(unarySuspendFunction)
                 }
             }
         }

@@ -57,6 +57,21 @@ interface ProtocolClientInterface {
     ): ResponseMessage<Output>
 
     /**
+     * Perform a synchronous unary (non-streaming) request.
+     *
+     * @param request The outbound request message.
+     * @param headers The outbound request headers to include.
+     * @param methodSpec The Method for RPC path.
+     *
+     * @return The [UnaryBlockingCall] for the unary request.
+     */
+    fun <Input : Any, Output : Any> unaryBlocking(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>
+    ): UnaryBlockingCall<Output>
+
+    /**
      * Start a new bidirectional stream.
      *
      * @param headers The outbound request headers to include.

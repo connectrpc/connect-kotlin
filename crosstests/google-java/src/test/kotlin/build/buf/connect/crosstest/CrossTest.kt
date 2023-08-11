@@ -61,6 +61,7 @@ class CrossTest(
     private lateinit var shortTimeoutConnectClient: ProtocolClient
     private lateinit var unimplementedServiceClient: UnimplementedServiceClient
     private lateinit var testServiceConnectClient: TestServiceClient
+
     companion object {
         @JvmStatic
         @Parameters(name = "protocol")
@@ -374,6 +375,138 @@ class CrossTest(
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    @Test
+    fun emptyUnaryBlocking(): Unit = runBlocking {
+        val response = testServiceConnectClient.emptyCallBlocking(empty {}).execute()
+        response.failure {
+            fail<Unit>("expected error to be null")
+        }
+        response.success { success ->
+            assertThat(success.message).isEqualTo(empty {})
+        }
+    }
+
+    @Test
+    fun largeUnaryBlocking(): Unit = runBlocking {
+        val size = 314159
+        val message = simpleRequest {
+            responseSize = size
+            payload = payload {
+                body = ByteString.copyFrom(ByteArray(size))
+            }
+        }
+        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
+        response.failure {
+            fail<Unit>("expected error to be null")
+        }
+        response.success { success ->
+            assertThat(success.message.payload?.body?.toByteArray()?.size).isEqualTo(size)
+        }
+    }
+
+    @Test
+    fun customMetadataBlocking(): Unit = runBlocking {
+        val size = 314159
+        val leadingKey = "x-grpc-test-echo-initial"
+        val leadingValue = "test_initial_metadata_value"
+        val trailingKey = "x-grpc-test-echo-trailing-bin"
+        val trailingValue = byteArrayOf(0xab.toByte(), 0xab.toByte(), 0xab.toByte())
+        val headers =
+            mapOf(
+                leadingKey to listOf(leadingValue),
+                trailingKey to listOf(b64Encode(trailingValue))
+            )
+        val message = simpleRequest {
+            responseSize = size
+            payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
+        }
+        val response = testServiceConnectClient.unaryCallBlocking(message, headers).execute()
+        assertThat(response.code).isEqualTo(Code.OK)
+        assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
+        assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
+        response.failure {
+            fail<Unit>("expected error to be null")
+        }
+        response.success { success ->
+            assertThat(success.message.payload!!.body!!.size()).isEqualTo(size)
+        }
+    }
+
+    @Test
+    fun statusCodeAndMessageBlocking(): Unit = runBlocking {
+        val message = simpleRequest {
+            responseStatus = echoStatus {
+                code = Code.UNKNOWN.value
+                message = "test status message"
+            }
+        }
+        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
+        assertThat(response.code).isEqualTo(Code.UNKNOWN)
+        response.failure { errorResponse ->
+            assertThat(errorResponse.error).isNotNull()
+            assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
+            assertThat(errorResponse.error.message).isEqualTo("test status message")
+        }
+        response.success {
+            fail<Unit>("unexpected success")
+        }
+    }
+
+    @Test
+    fun specialStatusBlocking(): Unit = runBlocking {
+        val statusMessage =
+            "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
+        val response = testServiceConnectClient.unaryCallBlocking(
+            simpleRequest {
+                responseStatus = echoStatus {
+                    code = 2
+                    message = statusMessage
+                }
+            }
+        ).execute()
+        response.failure { errorResponse ->
+            val error = errorResponse.error
+            assertThat(error.code).isEqualTo(Code.UNKNOWN)
+            assertThat(response.code).isEqualTo(Code.UNKNOWN)
+            assertThat(error.message).isEqualTo(statusMessage)
+        }
+        response.success {
+            fail<Unit>("unexpected success")
+        }
+    }
+
+    @Test
+    fun unimplementedMethodBlocking(): Unit = runBlocking {
+        val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
+        assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+    }
+
+    @Test
+    fun unimplementedServiceBlocking(): Unit = runBlocking {
+        val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
+        assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+    }
+
+    @Test
+    fun failUnaryBlocking(): Unit = runBlocking {
+        val expectedErrorDetail = errorDetail {
+            reason = "soirée 🎉"
+            domain = "connect-crosstest"
+        }
+        val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
+        assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        response.failure { errorResponse ->
+            val error = errorResponse.error
+            assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+            assertThat(error.message).isEqualTo("soirée 🎉")
+            val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
+            assertThat(connectErrorDetails).containsExactly(expectedErrorDetail)
+        }
+        response.success {
+            fail<Unit>("unexpected success")
+        }
     }
 
     private fun b64Encode(trailingValue: ByteArray): String {

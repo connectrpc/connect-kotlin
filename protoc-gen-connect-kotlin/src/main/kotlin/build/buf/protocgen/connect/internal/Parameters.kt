@@ -16,6 +16,7 @@ package build.buf.protocgen.connect.internal
 
 internal const val CALLBACK_SIGNATURE = "generateCallbackMethods"
 internal const val COROUTINE_SIGNATURE = "generateCoroutineMethods"
+internal const val BLOCKING_UNARY_SIGNATURE = "generateBlockingUnaryMethods"
 
 /**
  * The protoc plugin configuration class representation.
@@ -24,7 +25,9 @@ internal data class Configuration(
     // Enable or disable callback signature generation.
     val generateCallbackMethods: Boolean,
     // Enable or disable coroutine signature generation.
-    val generateCoroutineMethods: Boolean
+    val generateCoroutineMethods: Boolean,
+    // Enable or disable blocking unary signature generation.
+    val generateBlockingUnaryMethods: Boolean
 )
 
 /**
@@ -39,6 +42,7 @@ internal fun parse(input: String): Configuration {
     val parameters = parseGeneratorParameter(input)
     return Configuration(
         generateCallbackMethods = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false,
-        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true // Defaulted to true.
+        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true, // Defaulted to true.
+        generateBlockingUnaryMethods = parameters[BLOCKING_UNARY_SIGNATURE]?.toBoolean() ?: false
     )
 }
