@@ -34,7 +34,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 
 /**
