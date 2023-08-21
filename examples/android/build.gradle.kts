@@ -19,6 +19,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    namespace = "build.buf.connect.examples.android"
 }
 
 dependencies {
