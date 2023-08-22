@@ -14,10 +14,10 @@
 
 package com.connectrpc.extensions
 
+import build.buf.google.rpc.Status
 import com.connectrpc.AnyError
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.ErrorDetailParser
-import build.buf.google.rpc.Status
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
 import okio.ByteString.Companion.decodeBase64
