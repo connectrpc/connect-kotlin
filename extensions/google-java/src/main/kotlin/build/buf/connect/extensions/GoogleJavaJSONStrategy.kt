@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.extensions
+package com.connectrpc.extensions
 
-import build.buf.connect.Codec
-import build.buf.connect.ErrorDetailParser
-import build.buf.connect.SerializationStrategy
-import build.buf.connect.codecNameJSON
+import com.connectrpc.Codec
+import com.connectrpc.ErrorDetailParser
+import com.connectrpc.SerializationStrategy
+import com.connectrpc.codecNameJSON
 import com.google.protobuf.GeneratedMessageV3
 import kotlin.reflect.KClass
 

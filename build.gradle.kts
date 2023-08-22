@@ -64,7 +64,7 @@ allprojects {
             pom {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
-                group = "build.buf"
+                group = "com.connectrpc"
                 val releaseVersion = project.findProperty("releaseVersion") as String?
                 // Default to snapshot versioning for local publishing.
                 version = releaseVersion ?: "0.0.0-SNAPSHOT"

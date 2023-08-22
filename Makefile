@@ -68,7 +68,7 @@ generatecrosstests: buildplugin ## Generate protofiles for cross tests.
 
 .PHONY: generateexamples
 generateexamples: buildplugin ## Generate proto files for example apps.
-	buf generate --template examples/buf.gen.yaml -o examples buf.build/bufbuild/eliza
+	buf generate --template examples/buf.gen.yaml -o examples buf.build/connectrpc/eliza
 
 .PHONY: help
 help: ## Describe useful make targets.

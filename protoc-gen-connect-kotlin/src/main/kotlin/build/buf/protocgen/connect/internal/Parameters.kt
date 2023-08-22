@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.protocgen.connect.internal
+package com.connectrpc.protocgen.connect.internal
 
 internal const val CALLBACK_SIGNATURE = "generateCallbackMethods"
 internal const val COROUTINE_SIGNATURE = "generateCoroutineMethods"

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.protocgen.connect
+package com.connectrpc.protocgen.connect
 
-import build.buf.protocgen.connect.internal.Plugin
+import com.connectrpc.protocgen.connect.internal.Plugin
 
 class Main {
     companion object {

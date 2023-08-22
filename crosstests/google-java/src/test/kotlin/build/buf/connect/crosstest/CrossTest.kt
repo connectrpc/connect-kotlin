@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest
+package com.connectrpc.crosstest
 
-import build.buf.connect.Code
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.RequestCompression
-import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.crosstest.ssl.sslContext
-import build.buf.connect.extensions.GoogleJavaProtobufStrategy
-import build.buf.connect.impl.ProtocolClient
-import build.buf.connect.okhttp.ConnectOkHttpClient
-import build.buf.connect.protocols.NetworkProtocol
+import com.connectrpc.Code
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.RequestCompression
+import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.crosstest.ssl.sslContext
+import com.connectrpc.extensions.GoogleJavaProtobufStrategy
+import com.connectrpc.impl.ProtocolClient
+import com.connectrpc.okhttp.ConnectOkHttpClient
+import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.ByteString
 import com.grpc.testing.ErrorDetail
 import com.grpc.testing.TestServiceClient

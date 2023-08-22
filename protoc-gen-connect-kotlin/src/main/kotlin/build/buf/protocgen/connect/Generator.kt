@@ -12,24 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.protocgen.connect
+package com.connectrpc.protocgen.connect
 
-import build.buf.connect.BidirectionalStreamInterface
-import build.buf.connect.ClientOnlyStreamInterface
-import build.buf.connect.Idempotency
-import build.buf.connect.MethodSpec
-import build.buf.connect.ProtocolClientInterface
-import build.buf.connect.ResponseMessage
-import build.buf.connect.ServerOnlyStreamInterface
-import build.buf.connect.UnaryBlockingCall
-import build.buf.protocgen.connect.internal.CodeGenerator
-import build.buf.protocgen.connect.internal.Configuration
-import build.buf.protocgen.connect.internal.Plugin
-import build.buf.protocgen.connect.internal.SourceInfo
-import build.buf.protocgen.connect.internal.getClassName
-import build.buf.protocgen.connect.internal.getFileJavaPackage
-import build.buf.protocgen.connect.internal.parse
-import build.buf.protocgen.connect.internal.withSourceInfo
+import com.connectrpc.BidirectionalStreamInterface
+import com.connectrpc.ClientOnlyStreamInterface
+import com.connectrpc.Idempotency
+import com.connectrpc.MethodSpec
+import com.connectrpc.ProtocolClientInterface
+import com.connectrpc.ResponseMessage
+import com.connectrpc.ServerOnlyStreamInterface
+import com.connectrpc.UnaryBlockingCall
+import com.connectrpc.protocgen.connect.internal.CodeGenerator
+import com.connectrpc.protocgen.connect.internal.Configuration
+import com.connectrpc.protocgen.connect.internal.Plugin
+import com.connectrpc.protocgen.connect.internal.SourceInfo
+import com.connectrpc.protocgen.connect.internal.getClassName
+import com.connectrpc.protocgen.connect.internal.getFileJavaPackage
+import com.connectrpc.protocgen.connect.internal.parse
+import com.connectrpc.protocgen.connect.internal.withSourceInfo
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto
 import com.google.protobuf.Descriptors
@@ -48,7 +48,7 @@ import com.squareup.kotlinpoet.asClassName
 import com.squareup.kotlinpoet.asTypeName
 
 /*
- * These are constants since build.buf.connect.Headers and build.buf.connect.http.Cancelable
+ * These are constants since com.connectrpc.Headers and com.connectrpc.http.Cancelable
  * are type aliases which doesn't have an underlying class for KotlinPoet to know what to do.
  *
  * The conventional and nicer way is to use the class type: Headers::class.asClassType() but
@@ -57,8 +57,8 @@ import com.squareup.kotlinpoet.asTypeName
  * Instead, this is the way to reference these objects for now. If there is ever a desire to
  * move off of type aliases, this can be changed without user API breakage.
  */
-private val HEADERS_CLASS_NAME = ClassName("build.buf.connect", "Headers")
-private val CANCELABLE_CLASS_NAME = ClassName("build.buf.connect.http", "Cancelable")
+private val HEADERS_CLASS_NAME = ClassName("com.connectrpc", "Headers")
+private val CANCELABLE_CLASS_NAME = ClassName("com.connectrpc.http", "Cancelable")
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
@@ -444,11 +444,11 @@ class Generator : CodeGenerator {
 
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
         // Get the package of the descriptor's file.
-        // e.g. "build.buf.connect".
+        // e.g. "com.connectrpc".
         val packageName = getFileJavaPackage(descriptor.file)
         // Get the fully qualified class name of the descriptor
         // and subtract the file's package.
-        // e.g. "build.buf.connect.EmptyMessage.InnerMessage"
+        // e.g. "com.connectrpc.EmptyMessage.InnerMessage"
         // becomes ["EmptyMessage", "InnerMessage"].
         val names = getClassName(descriptor)
             .removePrefix(packageName)

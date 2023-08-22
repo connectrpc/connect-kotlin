@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.okhttp
+package com.connectrpc.okhttp
 
-import build.buf.connect.Code
-import build.buf.connect.ConnectError
-import build.buf.connect.StreamResult
-import build.buf.connect.http.HTTPRequest
-import build.buf.connect.http.Stream
+import com.connectrpc.Code
+import com.connectrpc.ConnectError
+import com.connectrpc.StreamResult
+import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.Stream
 import kotlinx.coroutines.runBlocking
 import okhttp3.Call
 import okhttp3.Callback

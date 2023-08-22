@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest.ssl
+package com.connectrpc.crosstest.ssl
 
 /**
  * Test suite for the different cross testing for

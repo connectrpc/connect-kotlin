@@ -1,7 +1,7 @@
 version: v1
 managed:
   enabled: true
-  java_package_prefix: "build"
+  java_package_prefix: "com"
 plugins:
   - name: connect-kotlin
     out: generated-google-java/src/main/kotlin

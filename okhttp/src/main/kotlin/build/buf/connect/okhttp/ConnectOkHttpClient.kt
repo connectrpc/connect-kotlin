@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.okhttp
+package com.connectrpc.okhttp
 
-import build.buf.connect.Code
-import build.buf.connect.ConnectError
-import build.buf.connect.StreamResult
-import build.buf.connect.http.Cancelable
-import build.buf.connect.http.HTTPClientInterface
-import build.buf.connect.http.HTTPRequest
-import build.buf.connect.http.HTTPResponse
-import build.buf.connect.http.Stream
-import build.buf.connect.http.TracingInfo
+import com.connectrpc.Code
+import com.connectrpc.ConnectError
+import com.connectrpc.StreamResult
+import com.connectrpc.http.Cancelable
+import com.connectrpc.http.HTTPClientInterface
+import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Stream
+import com.connectrpc.http.TracingInfo
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers

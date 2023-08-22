@@ -1,7 +1,7 @@
 # Eliza chat app example
 
 This example app uses the `Connect` library and provides an interface for
-[chatting with Eliza](https://buf.build/bufbuild/eliza) via an Android application.
+[chatting with Eliza](https://buf.build/connectrpc/eliza) via an Android application.
 
 The app has support for chatting using a variety of protocols supported by
 the Connect-Kotlin library:

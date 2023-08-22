@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest.ssl
+package com.connectrpc.crosstest.ssl
 
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
