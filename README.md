@@ -25,9 +25,9 @@ public class ElizaServiceClient(
         request,
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Say",
-            buf.connect.demo.eliza.v1.SayRequest::class,
-            buf.connect.demo.eliza.v1.SayResponse::class
+            "connectrpc.eliza.eliza.v1.ElizaService/Say",
+            connectrpc.eliza.eliza.v1.SayRequest::class,
+            connectrpc.eliza.eliza.v1.SayResponse::class
         )
     )
 
@@ -35,9 +35,9 @@ public class ElizaServiceClient(
         BidirectionalStreamInterface<ConverseRequest, ConverseResponse> = client.stream(
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Converse",
-            buf.connect.demo.eliza.v1.ConverseRequest::class,
-            buf.connect.demo.eliza.v1.ConverseResponse::class
+            "connectrpc.eliza.eliza.v1.ElizaService/Converse",
+            connectrpc.eliza.eliza.v1.ConverseRequest::class,
+            connectrpc.eliza.eliza.v1.ConverseResponse::class
         )
     )
 
@@ -45,9 +45,9 @@ public class ElizaServiceClient(
         ServerOnlyStreamInterface<IntroduceRequest, IntroduceResponse> = client.serverStream(
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Introduce",
-            buf.connect.demo.eliza.v1.IntroduceRequest::class,
-            buf.connect.demo.eliza.v1.IntroduceResponse::class
+            "connectrpc.eliza.eliza.v1.ElizaService/Introduce",
+            connectrpc.eliza.eliza.v1.IntroduceRequest::class,
+            connectrpc.eliza.eliza.v1.IntroduceResponse::class
         )
     )
 }
@@ -102,7 +102,7 @@ It only takes ~10 minutes to complete a working chat app that uses Connect-Kotli
 
 Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
-is available on the [connect.build website][getting-started].
+is available on the [connectrpc.com website][getting-started].
 
 ## Generation Options 
 
@@ -146,7 +146,7 @@ for details.
 ## Ecosystem
 
 * [connect-swift]: Swift clients for idiomatic gRPC & Connect RPC
-* [connect-web]: TypeScript clients for web browsers
+* [connect-es]: Connect, gRPC, and gRPC-Web support for Protobuf and TypeScript
 * [connect-go]: Service handlers and clients for GoLang
 * [Buf Studio][buf-studio]: web UI for ad-hoc RPCs
 * [connect-crosstest]: gRPC and gRPC-Web interoperability tests
@@ -163,18 +163,18 @@ Offered under the [Apache 2 license][license].
 [blog]: https://buf.build/blog/connect-a-better-grpc
 [buf-studio]: https://buf.build/studio
 [connect-crosstest]: https://github.com/bufbuild/connect-crosstest
-[connect-go]: https://github.com/bufbuild/connect-go
-[connect-protocol]: https://connect.build/docs/protocol
+[connect-go]: https://github.com/connectrpc/connect-go
+[connect-protocol]: https://connectrpc.com/docs/protocol
 [connect-swift]: https://github.com/bufbuild/connect-swift
-[connect-web]: https://www.npmjs.com/package/@bufbuild/connect-web
-[error-handling]: https://connect.build/docs/kotlin/errors
-[getting-started]: https://connect.build/docs/kotlin/getting-started
+[connect-es]: https://www.npmjs.com/package/@connectrpc/connect
+[error-handling]: https://connectrpc.com/docs/kotlin/errors
+[getting-started]: https://connectrpc.com/docs/kotlin/getting-started
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 [grpc-web-protocol]: https://github.com/grpc/grpc-web
-[interceptors]: https://connect.build/docs/kotlin/interceptors
-[license]: https://github.com/bufbuild/connect-go/blob/main/LICENSE
+[interceptors]: https://connectrpc.com/docs/kotlin/interceptors
+[license]: https://github.com/connectrpc/connect-go/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
-[protocol]: https://connect.build/docs/protocol
-[server reflection]: https://github.com/bufbuild/connect-grpcreflect-go
+[protocol]: https://connectrpc.com/docs/protocol
+[server reflection]: https://github.com/connectrpc/grpcreflect-go
 [slack]: https://buf.build/links/slack
-[streaming]: https://connect.build/docs/kotlin/using-clients#using-generated-clients
+[streaming]: https://connectrpc.com/docs/kotlin/using-clients#using-generated-clients

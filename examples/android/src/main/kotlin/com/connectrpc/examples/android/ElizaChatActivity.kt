@@ -60,7 +60,7 @@ class ElizaChatActivity : AppCompatActivity() {
             .writeTimeout(10, TimeUnit.MINUTES)
             .callTimeout(10, TimeUnit.MINUTES)
             .build()
-        val host = "https://demo.connect.build"
+        val host = "https://demo.connectrpc.com"
         val protocol = intent.getStringExtra(PROTOCOL_KEY)
         // Get the user selected protocol.
         val selectedNetworkProtocolOption = when (protocol) {
