@@ -189,7 +189,8 @@ internal class GRPCInterceptor(
     private fun Headers.withGRPCRequestHeaders(): Headers {
         val headers = toMutableMap()
         if (headers.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
-            headers[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
+            // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#user-agents
+            headers[USER_AGENT] = listOf("grpc-kotlin-connect/${ConnectConstants.VERSION}")
         }
         headers[GRPC_TE_HEADER] = listOf("trailers")
         val requestCompression = clientConfig.requestCompression
