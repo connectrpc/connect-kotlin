@@ -308,7 +308,7 @@ class GRPCWebInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin dev")
+        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("connect-kotlin/dev")
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers["key"]).containsExactly("value")
