@@ -10,12 +10,19 @@ plugins {
 
 apply(plugin = "com.vanniktech.maven.publish.base")
 
+// The releaseVersion property is set on official releases in the release.yml workflow.
+// If not specified, we attempt to calculate a snapshot version based on the last tagged release.
+// So if the local build's last tag was v0.1.9, this will set snapshotVersion to 0.1.10-SNAPSHOT.
+// If this fails for any reason, we'll fall back to using 0.0.0-SNAPSHOT version.
 val versionDetails: groovy.lang.Closure<com.palantir.gradle.gitversion.VersionDetails> by extra
 val details = versionDetails()
-
-println("version=${details.version} lastTag=${details.lastTag} commitDistance=${details.commitDistance} gitHash=${details.gitHash} gitHashFull=${details.gitHashFull} branchName=${details.branchName} isCleanTag=${details.isCleanTag}")
-
-val releaseVersion = project.findProperty("releaseVersion") as String? ?: "0.0.0-SNAPSHOT"
+var snapshotVersion = "0.0.0-SNAPSHOT"
+val matchResult = """^v(\d+)\.(\d+)\.(\d+)$""".toRegex().matchEntire(details.lastTag)
+if (matchResult != null) {
+    val (major, minor, patch) = matchResult.destructured
+    snapshotVersion = "${major}.${minor}.${patch.toInt()+1}-SNAPSHOT"
+}
+val releaseVersion = project.findProperty("releaseVersion") as String? ?: snapshotVersion
 
 buildscript {
     dependencies {
