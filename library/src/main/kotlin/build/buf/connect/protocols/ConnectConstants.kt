@@ -31,9 +31,7 @@ const val GRPC_WEB_USER_AGENT = "x-user-agent"
 
 const val USER_AGENT = "user-agent"
 
-class ConnectConstants private constructor() {
-    companion object {
-        /** Version number of the connect-kotlin library */
-        val VERSION = Companion::class.java.`package`?.implementationVersion ?: "dev"
-    }
+object ConnectConstants {
+    /** Version number of the connect-kotlin library */
+    val VERSION = javaClass.`package`?.implementationVersion ?: "dev"
 }
