@@ -5,7 +5,11 @@ enableFeaturePreview("VERSION_CATALOGS")
 include(":crosstests:common")
 include(":crosstests:google-java")
 include(":crosstests:google-javalite")
-include(":examples:android")
+if (extra.has("skipAndroid") && extra.get("skipAndroid").toString().toBoolean()) {
+    println("Skipping Android build (skipAndroid=true)")
+} else {
+    include(":examples:android")
+}
 include(":examples:generated-google-java")
 include(":examples:generated-google-javalite")
 include(":examples:kotlin-google-java")

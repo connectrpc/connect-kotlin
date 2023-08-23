@@ -294,7 +294,7 @@ class GRPCInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
+        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin dev")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
     }
@@ -321,7 +321,7 @@ class GRPCInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
+        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin dev")
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
     }
 

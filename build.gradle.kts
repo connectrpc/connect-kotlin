@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 apply(plugin = "com.vanniktech.maven.publish.base")
 
+val releaseVersion = project.findProperty("releaseVersion") as String? ?: "0.0.0-SNAPSHOT"
+
 buildscript {
     dependencies {
         classpath(libs.dokka.core)
@@ -37,6 +39,7 @@ allprojects {
             this.archiveBaseName.set(resolvedName)
             manifest {
                 attributes("Automatic-Module-Name" to resolvedName)
+                attributes("Implementation-Version" to releaseVersion)
             }
         }
     }
@@ -65,9 +68,7 @@ allprojects {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
                 group = "build.buf"
-                val releaseVersion = project.findProperty("releaseVersion") as String?
-                // Default to snapshot versioning for local publishing.
-                version = releaseVersion ?: "0.0.0-SNAPSHOT"
+                version = releaseVersion
                 url.set("https://github.com/bufbuild/connect-kotlin")
                 licenses {
                     license {
@@ -119,13 +120,23 @@ subprojects {
     }
     tasks.withType<KotlinCompile> {
         kotlinOptions {
+            if (JavaVersion.current().isJava9Compatible) {
+                freeCompilerArgs = listOf("-Xjdk-release=1.8", "-opt-in=kotlin.RequiresOptIn")
+            }
             jvmTarget = "1.8"
+            languageVersion = "1.6"
+            apiVersion = "1.6"
         }
     }
     tasks.withType<JavaCompile> {
+        val defaultArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
+        if (JavaVersion.current().isJava9Compatible) doFirst {
+            options.compilerArgs = listOf("--release", "8") + defaultArgs
+        } else {
+            options.compilerArgs = defaultArgs
+        }
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()
         options.encoding = Charsets.UTF_8.toString()
-        options.compilerArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
     }
 }

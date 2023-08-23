@@ -28,3 +28,10 @@ const val GRPC_STATUS_DETAILS_TRAILERS = "grpc-status-details-bin"
 const val GRPC_STATUS_TRAILER = "grpc-status"
 const val GRPC_TE_HEADER = "te"
 const val GRPC_USER_AGENT = "x-user-agent"
+
+class ConnectConstants private constructor() {
+    companion object {
+        /** Version number of the connect-kotlin library */
+        val VERSION = Companion::class.java.`package`?.implementationVersion ?: "dev"
+    }
+}

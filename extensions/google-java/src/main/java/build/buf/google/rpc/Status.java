@@ -18,6 +18,16 @@
 package build.buf.google.rpc;
 
 /**
+ * <pre>
+ * The `Status` type defines a logical error model that is suitable for
+ * different programming environments, including REST APIs and RPC APIs. It is
+ * used by [gRPC](https://github.com/grpc). Each `Status` message contains
+ * three pieces of data: error code, error message, and error details.
+ *
+ * You can find out more about this error model and how to work with it in the
+ * [API Design Guide](https://cloud.google.com/apis/design/errors).
+ * </pre>
+ *
  * Protobuf type {@code google.rpc.Status}
  */
 public final class Status extends
@@ -41,11 +51,6 @@ private static final long serialVersionUID = 0L;
     return new Status();
   }
 
-  @java.lang.Override
-  public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return this.unknownFields;
-  }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
     return build.buf.google.rpc.StatusProto.internal_static_google_rpc_Status_descriptor;
@@ -62,6 +67,11 @@ private static final long serialVersionUID = 0L;
   public static final int CODE_FIELD_NUMBER = 1;
   private int code_ = 0;
   /**
+   * <pre>
+   * The status code, which should be an enum value of
+   * [google.rpc.Code][google.rpc.Code].
+   * </pre>
+   *
    * <code>int32 code = 1 [json_name = "code"];</code>
    * @return The code.
    */
@@ -74,6 +84,13 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings("serial")
   private volatile java.lang.Object message_ = "";
   /**
+   * <pre>
+   * A developer-facing error message, which should be in English. Any
+   * user-facing error message should be localized and sent in the
+   * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+   * by the client.
+   * </pre>
+   *
    * <code>string message = 2 [json_name = "message"];</code>
    * @return The message.
    */
@@ -91,6 +108,13 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
+   * <pre>
+   * A developer-facing error message, which should be in English. Any
+   * user-facing error message should be localized and sent in the
+   * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+   * by the client.
+   * </pre>
+   *
    * <code>string message = 2 [json_name = "message"];</code>
    * @return The bytes for message.
    */
@@ -113,6 +137,11 @@ private static final long serialVersionUID = 0L;
   @SuppressWarnings("serial")
   private java.util.List<com.google.protobuf.Any> details_;
   /**
+   * <pre>
+   * A list of messages that carry the error details.  There is a common set of
+   * message types for APIs to use.
+   * </pre>
+   *
    * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
    */
   @java.lang.Override
@@ -120,6 +149,11 @@ private static final long serialVersionUID = 0L;
     return details_;
   }
   /**
+   * <pre>
+   * A list of messages that carry the error details.  There is a common set of
+   * message types for APIs to use.
+   * </pre>
+   *
    * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
    */
   @java.lang.Override
@@ -128,6 +162,11 @@ private static final long serialVersionUID = 0L;
     return details_;
   }
   /**
+   * <pre>
+   * A list of messages that carry the error details.  There is a common set of
+   * message types for APIs to use.
+   * </pre>
+   *
    * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
    */
   @java.lang.Override
@@ -135,6 +174,11 @@ private static final long serialVersionUID = 0L;
     return details_.size();
   }
   /**
+   * <pre>
+   * A list of messages that carry the error details.  There is a common set of
+   * message types for APIs to use.
+   * </pre>
+   *
    * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
    */
   @java.lang.Override
@@ -142,6 +186,11 @@ private static final long serialVersionUID = 0L;
     return details_.get(index);
   }
   /**
+   * <pre>
+   * A list of messages that carry the error details.  There is a common set of
+   * message types for APIs to use.
+   * </pre>
+   *
    * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
    */
   @java.lang.Override
@@ -282,11 +331,13 @@ private static final long serialVersionUID = 0L;
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
+
   public static build.buf.google.rpc.Status parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
+
   public static build.buf.google.rpc.Status parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -329,6 +380,16 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
+   * <pre>
+   * The `Status` type defines a logical error model that is suitable for
+   * different programming environments, including REST APIs and RPC APIs. It is
+   * used by [gRPC](https://github.com/grpc). Each `Status` message contains
+   * three pieces of data: error code, error message, and error details.
+   *
+   * You can find out more about this error model and how to work with it in the
+   * [API Design Guide](https://cloud.google.com/apis/design/errors).
+   * </pre>
+   *
    * Protobuf type {@code google.rpc.Status}
    */
   public static final class Builder extends
@@ -571,6 +632,11 @@ private static final long serialVersionUID = 0L;
 
     private int code_ ;
     /**
+     * <pre>
+     * The status code, which should be an enum value of
+     * [google.rpc.Code][google.rpc.Code].
+     * </pre>
+     *
      * <code>int32 code = 1 [json_name = "code"];</code>
      * @return The code.
      */
@@ -579,18 +645,28 @@ private static final long serialVersionUID = 0L;
       return code_;
     }
     /**
+     * <pre>
+     * The status code, which should be an enum value of
+     * [google.rpc.Code][google.rpc.Code].
+     * </pre>
+     *
      * <code>int32 code = 1 [json_name = "code"];</code>
      * @param value The code to set.
      * @return This builder for chaining.
      */
     public Builder setCode(int value) {
-      
+
       code_ = value;
       bitField0_ |= 0x00000001;
       onChanged();
       return this;
     }
     /**
+     * <pre>
+     * The status code, which should be an enum value of
+     * [google.rpc.Code][google.rpc.Code].
+     * </pre>
+     *
      * <code>int32 code = 1 [json_name = "code"];</code>
      * @return This builder for chaining.
      */
@@ -603,6 +679,13 @@ private static final long serialVersionUID = 0L;
 
     private java.lang.Object message_ = "";
     /**
+     * <pre>
+     * A developer-facing error message, which should be in English. Any
+     * user-facing error message should be localized and sent in the
+     * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+     * by the client.
+     * </pre>
+     *
      * <code>string message = 2 [json_name = "message"];</code>
      * @return The message.
      */
@@ -619,6 +702,13 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A developer-facing error message, which should be in English. Any
+     * user-facing error message should be localized and sent in the
+     * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+     * by the client.
+     * </pre>
+     *
      * <code>string message = 2 [json_name = "message"];</code>
      * @return The bytes for message.
      */
@@ -636,6 +726,13 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A developer-facing error message, which should be in English. Any
+     * user-facing error message should be localized and sent in the
+     * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+     * by the client.
+     * </pre>
+     *
      * <code>string message = 2 [json_name = "message"];</code>
      * @param value The message to set.
      * @return This builder for chaining.
@@ -649,6 +746,13 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A developer-facing error message, which should be in English. Any
+     * user-facing error message should be localized and sent in the
+     * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+     * by the client.
+     * </pre>
+     *
      * <code>string message = 2 [json_name = "message"];</code>
      * @return This builder for chaining.
      */
@@ -659,6 +763,13 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A developer-facing error message, which should be in English. Any
+     * user-facing error message should be localized and sent in the
+     * [google.rpc.Status.details][google.rpc.Status.details] field, or localized
+     * by the client.
+     * </pre>
+     *
      * <code>string message = 2 [json_name = "message"];</code>
      * @param value The bytes for message to set.
      * @return This builder for chaining.
@@ -686,6 +797,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.Any, com.google.protobuf.Any.Builder, com.google.protobuf.AnyOrBuilder> detailsBuilder_;
 
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public java.util.List<com.google.protobuf.Any> getDetailsList() {
@@ -696,6 +812,11 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public int getDetailsCount() {
@@ -706,6 +827,11 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public com.google.protobuf.Any getDetails(int index) {
@@ -716,6 +842,11 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder setDetails(
@@ -733,6 +864,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder setDetails(
@@ -747,6 +883,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder addDetails(com.google.protobuf.Any value) {
@@ -763,6 +904,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder addDetails(
@@ -780,6 +926,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder addDetails(
@@ -794,6 +945,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder addDetails(
@@ -808,6 +964,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder addAllDetails(
@@ -823,6 +984,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder clearDetails() {
@@ -836,6 +1002,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public Builder removeDetails(int index) {
@@ -849,6 +1020,11 @@ private static final long serialVersionUID = 0L;
       return this;
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public com.google.protobuf.Any.Builder getDetailsBuilder(
@@ -856,6 +1032,11 @@ private static final long serialVersionUID = 0L;
       return getDetailsFieldBuilder().getBuilder(index);
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public com.google.protobuf.AnyOrBuilder getDetailsOrBuilder(
@@ -866,6 +1047,11 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public java.util.List<? extends com.google.protobuf.AnyOrBuilder> 
@@ -877,6 +1063,11 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public com.google.protobuf.Any.Builder addDetailsBuilder() {
@@ -884,6 +1075,11 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.Any.getDefaultInstance());
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public com.google.protobuf.Any.Builder addDetailsBuilder(
@@ -892,6 +1088,11 @@ private static final long serialVersionUID = 0L;
           index, com.google.protobuf.Any.getDefaultInstance());
     }
     /**
+     * <pre>
+     * A list of messages that carry the error details.  There is a common set of
+     * message types for APIs to use.
+     * </pre>
+     *
      * <code>repeated .google.protobuf.Any details = 3 [json_name = "details"];</code>
      */
     public java.util.List<com.google.protobuf.Any.Builder> 

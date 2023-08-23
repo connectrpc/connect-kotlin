@@ -192,7 +192,7 @@ internal class GRPCInterceptor(
         // https://github.com/grpc/grpc/blob/v1.51.1/doc/PROTOCOL-HTTP2.md#user-agents
         // But this behavior matches connect-web:
         // https://github.com/bufbuild/connect-web/blob/v0.4.0/packages/connect-core/src/grpc-web-create-request-header.ts#L33-L36
-        headers[GRPC_USER_AGENT] = listOf("@bufbuild/connect-kotlin")
+        headers[GRPC_USER_AGENT] = listOf("@bufbuild/connect-kotlin ${ConnectConstants.VERSION}")
         headers[GRPC_TE_HEADER] = listOf("trailers")
         val requestCompression = clientConfig.requestCompression
         if (requestCompression != null) {
