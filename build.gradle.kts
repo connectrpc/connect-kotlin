@@ -12,6 +12,7 @@ apply(plugin = "com.vanniktech.maven.publish.base")
 
 val versionDetails: groovy.lang.Closure<com.palantir.gradle.gitversion.VersionDetails> by extra
 val details = versionDetails()
+
 println("version=${details.version} lastTag=${details.lastTag} commitDistance=${details.commitDistance} gitHash=${details.gitHash} gitHashFull=${details.gitHashFull} branchName=${details.branchName} isCleanTag=${details.isCleanTag}")
 
 val releaseVersion = project.findProperty("releaseVersion") as String? ?: "0.0.0-SNAPSHOT"
