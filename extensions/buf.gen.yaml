@@ -6,5 +6,6 @@ types:
   include:
     - google.rpc.Status
 plugins:
-  - name: java
+  - plugin: java
     out: google-java/src/main/java
+    protoc_path: .tmp/bin/protoc

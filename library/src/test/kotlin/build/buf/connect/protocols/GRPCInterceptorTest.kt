@@ -85,6 +85,32 @@ class GRPCInterceptorTest {
     }
 
     @Test
+    fun requestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy
+        )
+        val grpcInterceptor = GRPCInterceptor(config)
+        val unaryFunction = grpcInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("key" to listOf("value"), "User-Agent" to listOf("my-custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[USER_AGENT]).isNull()
+        assertThat(request.headers["User-Agent"]).containsExactly("my-custom-user-agent")
+    }
+
+    @Test
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
@@ -294,9 +320,37 @@ class GRPCInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
+        assertThat(request.headers[USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
+    }
+
+    @Test
+    fun streamingRequestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            requestCompression = RequestCompression(1000, GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
+        )
+        val grpcInterceptor = GRPCInterceptor(config)
+        val streamFunction = grpcInterceptor.streamFunction()
+
+        val request = streamFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "",
+                headers = mapOf("User-Agent" to listOf("custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[USER_AGENT]).isNull()
+        assertThat(request.headers["User-Agent"]).containsExactly("custom-user-agent")
     }
 
     @Test
@@ -321,7 +375,7 @@ class GRPCInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
+        assertThat(request.headers[USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
     }
 

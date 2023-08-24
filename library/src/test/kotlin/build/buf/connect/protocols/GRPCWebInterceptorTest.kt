@@ -75,6 +75,33 @@ class GRPCWebInterceptorTest {
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
+        assertThat(request.headers[GRPC_WEB_USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
+    }
+
+    @Test
+    fun requestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy
+        )
+        val grpcWebInterceptor = GRPCWebInterceptor(config)
+        val unaryFunction = grpcWebInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "",
+                headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[GRPC_WEB_USER_AGENT]).isNull()
+        assertThat(request.headers["X-User-Agent"]).containsExactly("custom-user-agent")
     }
 
     @Test
@@ -308,10 +335,38 @@ class GRPCWebInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
-        assertThat(request.headers[GRPC_USER_AGENT]).containsExactly("@bufbuild/connect-kotlin")
+        assertThat(request.headers[GRPC_WEB_USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
         assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers["key"]).containsExactly("value")
+    }
+
+    @Test
+    fun streamingRequestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            requestCompression = RequestCompression(1000, GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
+        )
+        val grpcWebInterceptor = GRPCWebInterceptor(config)
+        val streamFunction = grpcWebInterceptor.streamFunction()
+
+        val request = streamFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[GRPC_WEB_USER_AGENT]).isNull()
+        assertThat(request.headers["X-User-Agent"]).containsExactly("custom-user-agent")
     }
 
     @Test

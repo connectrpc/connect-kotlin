@@ -1,11 +1,12 @@
 version: v1
 plugins:
-  - name: connect-kotlin
+  - plugin: connect-kotlin
     out: src/test/java/
-    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
+    path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
     opt:
       - generateCallbackMethods=true
       - generateCoroutineMethods=true
-  - name: java
+  - plugin: java
     out: src/test/java/
+    protoc_path: .tmp/bin/protoc
 

@@ -4,7 +4,25 @@ import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+plugins {
+    alias(libs.plugins.git)
+}
+
 apply(plugin = "com.vanniktech.maven.publish.base")
+
+// The releaseVersion property is set on official releases in the release.yml workflow.
+// If not specified, we attempt to calculate a snapshot version based on the last tagged release.
+// So if the local build's last tag was v0.1.9, this will set snapshotVersion to 0.1.10-SNAPSHOT.
+// If this fails for any reason, we'll fall back to using 0.0.0-SNAPSHOT version.
+val versionDetails: groovy.lang.Closure<com.palantir.gradle.gitversion.VersionDetails> by extra
+val details = versionDetails()
+var snapshotVersion = "0.0.0-SNAPSHOT"
+val matchResult = """^v(\d+)\.(\d+)\.(\d+)$""".toRegex().matchEntire(details.lastTag)
+if (matchResult != null) {
+    val (major, minor, patch) = matchResult.destructured
+    snapshotVersion = "${major}.${minor}.${patch.toInt()+1}-SNAPSHOT"
+}
+val releaseVersion = project.findProperty("releaseVersion") as String? ?: snapshotVersion
 
 buildscript {
     dependencies {
@@ -22,6 +40,7 @@ buildscript {
 }
 
 allprojects {
+    version = releaseVersion
     repositories {
         mavenCentral()
         google()
@@ -37,6 +56,7 @@ allprojects {
             this.archiveBaseName.set(resolvedName)
             manifest {
                 attributes("Automatic-Module-Name" to resolvedName)
+                attributes("Implementation-Version" to releaseVersion)
             }
         }
     }
@@ -65,9 +85,6 @@ allprojects {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
                 group = "build.buf"
-                val releaseVersion = project.findProperty("releaseVersion") as String?
-                // Default to snapshot versioning for local publishing.
-                version = releaseVersion ?: "0.0.0-SNAPSHOT"
                 url.set("https://github.com/bufbuild/connect-kotlin")
                 licenses {
                     license {
@@ -120,12 +137,19 @@ subprojects {
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "1.8"
+            languageVersion = "1.6"
+            apiVersion = "1.6"
         }
     }
     tasks.withType<JavaCompile> {
+        val defaultArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
+        if (JavaVersion.current().isJava9Compatible) doFirst {
+            options.compilerArgs = listOf("--release", "8") + defaultArgs
+        } else {
+            options.compilerArgs = defaultArgs
+        }
         sourceCompatibility = JavaVersion.VERSION_1_8.toString()
         targetCompatibility = JavaVersion.VERSION_1_8.toString()
         options.encoding = Charsets.UTF_8.toString()
-        options.compilerArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
     }
 }
