@@ -83,6 +83,7 @@ $(PROTOC):
 	@if ! command -v curl >/dev/null 2>/dev/null; then echo "error: curl must be installed" >&2; exit 1; fi
 	@if ! command -v unzip >/dev/null 2>/dev/null; then echo "error: unzip must be installed" >&2; exit 1; fi
 	@rm -f $(BIN)/protoc
+	$(eval PROTOC_TMP := $(shell mktemp -d))
 	curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(PROTOC_OS)-$(PROTOC_ARCH).zip -o $(PROTOC_TMP)/protoc.zip
 	@mkdir -p $(BIN)
 	unzip -q $(PROTOC_TMP)/protoc.zip -d $(dir $(BIN)) bin/protoc
