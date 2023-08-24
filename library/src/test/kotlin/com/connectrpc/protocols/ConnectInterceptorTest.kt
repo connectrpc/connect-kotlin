@@ -90,6 +90,34 @@ class ConnectInterceptorTest {
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("content_type")
+        assertThat(request.headers[USER_AGENT]).containsExactly("connect-kotlin/dev")
+    }
+
+    @Test
+    fun requestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList()
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("User-Agent" to listOf("custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[USER_AGENT]).isNull()
+        assertThat(request.headers["User-Agent"]).containsExactly("custom-user-agent")
     }
 
     @Test
@@ -301,6 +329,35 @@ class ConnectInterceptorTest {
         assertThat(request.headers[CONNECT_STREAMING_CONTENT_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("content_type")
+        assertThat(request.headers[USER_AGENT]).containsExactly("connect-kotlin/dev")
+    }
+
+    @Test
+    fun streamingRequestHeadersCustomUserAgent() {
+        val config = ProtocolClientConfig(
+            host = "https://buf.build",
+            serializationStrategy = serializationStrategy,
+            requestCompression = RequestCompression(1000, GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool)
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val streamFunction = connectInterceptor.streamFunction()
+
+        val request = streamFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = mapOf("User-Agent" to listOf("custom-user-agent")),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class
+                )
+            )
+        )
+        // this will only work if we do a case-insensitive lookup of headers
+        assertThat(request.headers[USER_AGENT]).isNull()
+        assertThat(request.headers["User-Agent"]).containsExactly("custom-user-agent")
     }
 
     @Test
@@ -330,6 +387,7 @@ class ConnectInterceptorTest {
         assertThat(request.headers[CONNECT_STREAMING_CONTENT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("content_type")
+        assertThat(request.headers[USER_AGENT]).containsExactly("connect-kotlin/dev")
     }
 
     @Test

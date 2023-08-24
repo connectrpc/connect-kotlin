@@ -30,6 +30,7 @@ import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
 import com.connectrpc.protocols.GETConfiguration
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
@@ -161,6 +162,7 @@ class ProtocolClient(
         return ClientOnlyStream(stream)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun <Input : Any, Output : Any> bidirectionalStream(
         methodSpec: MethodSpec<Input, Output>,
         headers: Headers

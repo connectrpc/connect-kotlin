@@ -6,7 +6,7 @@ plugins {
 tasks {
     compileKotlin {
         kotlinOptions {
-            freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+            freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
         }
     }
 }
