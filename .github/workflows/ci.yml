@@ -59,7 +59,6 @@ jobs:
       - uses: bufbuild/buf-setup-action@v1
         with:
           github_token: ${{ github.token }}
-      - uses: docker-practice/actions-setup-docker@master
       - uses: actions/setup-go@v4
       - name: Generate proto files for cross tests.
         run: make generatecrosstests
