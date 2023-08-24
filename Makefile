@@ -7,10 +7,15 @@ MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
+CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 CROSSTEST_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_VERSION := v1.26.1
+PROTOC_VERSION ?= 24.1
 GRADLE_ARGS ?=
+
+UNAME_OS := $(shell uname -s)
+UNAME_ARCH := $(shell uname -m)
 
 .PHONY: all
 all: build
@@ -60,18 +65,43 @@ crosstestsrun: crosstestsrunjava ## Run the cross tests.
 crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
 	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
 
+ifeq ($(UNAME_OS),Darwin)
+PROTOC_OS := osx
+ifeq ($(UNAME_ARCH),arm64)
+PROTOC_ARCH := aarch_64
+else
+PROTOC_ARCH := x86_64
+endif
+endif
+ifeq ($(UNAME_OS),Linux)
+PROTOC_OS = linux
+PROTOC_ARCH := $(UNAME_ARCH)
+endif
+
+PROTOC := $(CACHE)/protoc-$(PROTOC_VERSION).zip
+$(PROTOC):
+	@if ! command -v curl >/dev/null 2>/dev/null; then echo "error: curl must be installed" >&2; exit 1; fi
+	@if ! command -v unzip >/dev/null 2>/dev/null; then echo "error: unzip must be installed" >&2; exit 1; fi
+	@rm -f $(BIN)/protoc
+	curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(PROTOC_OS)-$(PROTOC_ARCH).zip -o $(PROTOC_TMP)/protoc.zip
+	@mkdir -p $(BIN)
+	unzip -q $(PROTOC_TMP)/protoc.zip -d $(dir $(BIN)) bin/protoc
+	@rm -rf $(PROTOC_TMP)
+	@mkdir -p $(dir $@)
+	@touch $@
+
 .PHONY: generate
-generate: buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
+generate: $(PROTOC) buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
 	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 
 .PHONY: generatecrosstests
-generatecrosstests: buildplugin ## Generate protofiles for cross tests.
+generatecrosstests: $(PROTOC) buildplugin ## Generate protofiles for cross tests.
 	buf generate --template crosstests/buf.gen.yaml -o crosstests
 
 .PHONY: generateexamples
-generateexamples: buildplugin ## Generate proto files for example apps.
+generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.
 	buf generate --template examples/buf.gen.yaml -o examples buf.build/bufbuild/eliza
 
 .PHONY: help
