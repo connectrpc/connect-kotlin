@@ -8,27 +8,18 @@ on:
 permissions:
   contents: read
 jobs:
-  plugins:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'gradle'
-      - uses: actions/setup-go@v4
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-      - uses: bufbuild/buf-setup-action@v1
-        with:
-          github_token: ${{ github.token }}
-      - name: Build plugin
-        run: make buildplugin
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          cache: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-build-go-modules
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -60,6 +51,8 @@ jobs:
         with:
           github_token: ${{ github.token }}
       - uses: actions/setup-go@v4
+        with:
+          cache: false
       - name: Generate proto files for cross tests.
         run: make generatecrosstests
       - name: Start test server
@@ -79,7 +72,7 @@ jobs:
         with:
           path: |
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-modules
+          key: ${{ runner.os }}-license-headers-go-modules
       - name: Check license headers
         run: |
           make licenseheaders
@@ -89,6 +82,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          cache: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-test-go-modules
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
