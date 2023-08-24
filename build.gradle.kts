@@ -40,6 +40,7 @@ buildscript {
 }
 
 allprojects {
+    version = releaseVersion
     repositories {
         mavenCentral()
         google()
@@ -84,7 +85,6 @@ allprojects {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
                 group = "build.buf"
-                version = releaseVersion
                 url.set("https://github.com/bufbuild/connect-kotlin")
                 licenses {
                     license {
@@ -136,9 +136,6 @@ subprojects {
     }
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            if (JavaVersion.current().isJava9Compatible) {
-                freeCompilerArgs = listOf("-Xjdk-release=1.8", "-opt-in=kotlin.RequiresOptIn")
-            }
             jvmTarget = "1.8"
             languageVersion = "1.6"
             apiVersion = "1.6"

@@ -10,6 +10,10 @@ BIN := .tmp/bin
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 CROSSTEST_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_VERSION := v1.26.1
+GRADLE_ARGS ?=
+
+.PHONY: all
+all: build
 
 $(BIN)/license-headers: Makefile
 	mkdir -p $(@D)
@@ -17,15 +21,15 @@ $(BIN)/license-headers: Makefile
 
 .PHONY: build
 build: generate ## Build the entire project.
-	./gradlew build -x test
+	./gradlew $(GRADLE_ARGS) build -x test
 
 .PHONY: buildplugin
 buildplugin: ## Build the connect-kotlin protoc plugin.
-	./gradlew protoc-gen-connect-kotlin:jar
+	./gradlew $(GRADLE_ARGS) protoc-gen-connect-kotlin:installDist
 
 .PHONY: clean
 clean: ## Cleans the underlying build.
-	./gradlew clean
+	./gradlew $(GRADLE_ARGS) clean
 	rm -rf examples/generated-google-java/src/main
 	rm -rf examples/generated-google-javalite/src/main
 
@@ -54,7 +58,7 @@ crosstestsrun: crosstestsrunjava ## Run the cross tests.
 
 .PHONY: crosstestsrunjava
 crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
-	./gradlew crosstest:google-java:test
+	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
 
 .PHONY: generate
 generate: buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
@@ -76,7 +80,7 @@ help: ## Describe useful make targets.
 
 .PHONY: installandroid
 installandroid: ## Install the example Android app.
-	./gradlew examples:android:installDebug
+	./gradlew $(GRADLE_ARGS) examples:android:installDebug
 
 .PHONY: licenseheaders
 licenseheaders: $(BIN)/license-headers ## Format all files, adding license headers.
@@ -91,21 +95,21 @@ licenseheaders: $(BIN)/license-headers ## Format all files, adding license heade
 .PHONY: lint
 lint: ## Run lint.
 	buf lint
-	./gradlew spotlessCheck
+	./gradlew $(GRADLE_ARGS) spotlessCheck
 
 .PHONY: lintfix
 lintfix: # Applies the lint changes.
-	./gradlew spotlessApply
+	./gradlew $(GRADLE_ARGS) spotlessApply
 
 .PHONY: release
 release: ## Upload artifacts to Sonatype Nexus.
-	./gradlew --info publish --stacktrace --no-daemon --no-parallel
-	./gradlew --info closeAndReleaseRepository
+	./gradlew $(GRADLE_ARGS) --info publish --stacktrace --no-daemon --no-parallel
+	./gradlew $(GRADLE_ARGS) --info closeAndReleaseRepository
 
 .PHONY: releaselocal
 releaselocal: ## Release artifacts to local maven repository.
-	./gradlew --info publishToMavenLocal
+	./gradlew $(GRADLE_ARGS) --info publishToMavenLocal
 
 .PHONY: test
 test: generate ## Run tests for the library.
-	./gradlew library:test
+	./gradlew $(GRADLE_ARGS) library:test

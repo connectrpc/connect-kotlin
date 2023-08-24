@@ -1,7 +1,5 @@
 rootProject.name = "connect-kotlin"
 
-enableFeaturePreview("VERSION_CATALOGS")
-
 include(":crosstests:common")
 include(":crosstests:google-java")
 include(":crosstests:google-javalite")
