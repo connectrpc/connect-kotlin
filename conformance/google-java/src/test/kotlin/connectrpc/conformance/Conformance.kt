@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest
+package connectrpc.conformance
 
 import build.buf.connect.Code
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.RequestCompression
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.crosstest.ssl.sslContext
+import connectrpc.conformance.ssl.sslContext
 import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeUnit
 
 
 @RunWith(Parameterized::class)
-class CrossTest(
+class Conformance(
     private val protocol: NetworkProtocol
 ) {
     private lateinit var connectClient: ProtocolClient
@@ -122,7 +122,7 @@ class CrossTest(
         val countDownLatch = CountDownLatch(1)
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val stream = testServiceConnectClient.failStreamingOutputCall()
         val sizes = listOf(
@@ -356,7 +356,7 @@ class CrossTest(
     fun failUnary(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
@@ -493,7 +493,7 @@ class CrossTest(
     fun failUnaryBlocking(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)

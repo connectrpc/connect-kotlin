@@ -24,7 +24,7 @@ dependencies {
 
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.protobuf.kotlin)
-    implementation(project(":crosstests:common"))
+    implementation(project(":conformance:common"))
     implementation(project(":extensions:google-java"))
     implementation(project(":okhttp"))
 

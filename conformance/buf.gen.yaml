@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
 plugins:
-  # Java crosstests.
+  # Java conformance.
   - plugin: connect-kotlin
     out: google-java/src/main/kotlin/generated
     path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
@@ -16,7 +16,7 @@ plugins:
   - plugin: kotlin
     out: google-java/src/main/kotlin/generated
     protoc_path: .tmp/bin/protoc
-  # Javalite crosstests.
+  # Javalite conformance.
   - plugin: connect-kotlin
     out: google-javalite/src/main/kotlin/generated
     path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin

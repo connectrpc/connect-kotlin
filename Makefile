@@ -9,7 +9,7 @@ MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
-CROSSTEST_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
+CONFORMANCE_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_VERSION := v1.26.1
 PROTOC_VERSION ?= 24.1
 GRADLE_ARGS ?=
@@ -38,32 +38,32 @@ clean: ## Cleans the underlying build.
 	rm -rf examples/generated-google-java/src/main
 	rm -rf examples/generated-google-javalite/src/main
 
-	rm -rf crosstests/google-java/src/main/java/generated
-	rm -rf crosstests/google-java/src/main/kotlin/generated
-	rm -rf crosstests/google-javalite/src/main/java/generated
-	rm -rf crosstests/google-javalite/src/main/kotlin/generated
+	rm -rf conformance/google-java/src/main/java/generated
+	rm -rf conformance/google-java/src/main/kotlin/generated
+	rm -rf conformance/google-javalite/src/main/java/generated
+	rm -rf conformance/google-javalite/src/main/kotlin/generated
 
 	rm -rf protoc-gen-connect-kotlin/src/test/java/
 
-.PHONY: crosstestserverrun
-crosstestserverrun: crosstestserverstop ## Run the server for cross tests.
+.PHONY: conformanceserverrun
+conformanceserverrun: conformanceserverstop ## Run the server for conformance tests.
 	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
 	docker run --rm --name servergrpc -p 8083:8083 -d \
-		bufbuild/connect-crosstest:$(CROSSTEST_VERSION) \
+		connectrpc/conformance:$(CONFORMANCE_VERSION) \
 		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
 
-.PHONY: crosstestserverstop
-crosstestserverstop: ## Stop the server for cross tests.
+.PHONY: conformanceserverstop
+conformanceserverstop: ## Stop the server for conformance tests.
 	-docker container stop serverconnect servergrpc
 
-.PHONY: crosstestsrun
-crosstestsrun: crosstestsrunjava ## Run the cross tests.
+.PHONY: conformancerun
+conformancerun: conformancerunjava ## Run the conformance tests.
 
-.PHONY: crosstestsrunjava
-crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
-	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
+.PHONY: conformancerunjava
+conformancerunjava: ## Run the conformance tests for protoc-gen-java integration.
+	./gradlew $(GRADLE_ARGS) conformance:google-java:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
@@ -92,14 +92,14 @@ $(PROTOC):
 	@touch $@
 
 .PHONY: generate
-generate: $(PROTOC) buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
+generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.
 	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 
-.PHONY: generatecrosstests
-generatecrosstests: $(PROTOC) buildplugin ## Generate protofiles for cross tests.
-	buf generate --template crosstests/buf.gen.yaml -o crosstests
+.PHONY: generateconformance
+generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
+	buf generate --template conformance/buf.gen.yaml -o conformance
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.
