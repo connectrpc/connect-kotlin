@@ -55,12 +55,8 @@ jobs:
           cache: false
       - name: Generate proto files for cross tests.
         run: make generatecrosstests
-      - name: Start test server
-        run: make crosstestserverrun
       - name: Run crosstests
         run: make crosstestsrun
-      - name: Stop test server
-        run: make crosstestserverstop
   license-headers:
     runs-on: ubuntu-latest
     steps:
