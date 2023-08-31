@@ -78,7 +78,7 @@ class CrossTest(
 
         @JvmField
         @ClassRule
-        val CROSSTEST_CONTAINER = GenericContainer("bufbuild/connect-crosstest:${CROSSTEST_VERSION}")
+        val CROSSTEST_CONTAINER = GenericContainer("bufbuild/connect-crosstest:$CROSSTEST_VERSION")
             .withExposedPorts(8080, 8081)
             .withCommand(
                 "/usr/local/bin/serverconnect",
@@ -89,7 +89,7 @@ class CrossTest(
                 "--cert",
                 "cert/localhost.crt",
                 "--key",
-                "cert/localhost.key",
+                "cert/localhost.key"
             )
     }
 
