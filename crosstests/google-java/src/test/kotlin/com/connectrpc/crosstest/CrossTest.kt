@@ -43,10 +43,12 @@ import okhttp3.Protocol
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.Before
+import org.junit.ClassRule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
+import org.testcontainers.containers.GenericContainer
 import java.time.Duration
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
@@ -63,6 +65,8 @@ class CrossTest(
     private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
+        const val CROSSTEST_VERSION = "162d496c009e2ffb1a638b4a2ea789e9cc3331bb"
+
         @JvmStatic
         @Parameters(name = "protocol")
         fun data(): Iterable<NetworkProtocol> {
@@ -71,12 +75,27 @@ class CrossTest(
                 NetworkProtocol.GRPC
             )
         }
+
+        @JvmField
+        @ClassRule
+        val CROSSTEST_CONTAINER = GenericContainer("bufbuild/connect-crosstest:$CROSSTEST_VERSION")
+            .withExposedPorts(8080, 8081)
+            .withCommand(
+                "/usr/local/bin/serverconnect",
+                "--h1port",
+                "8080",
+                "--h2port",
+                "8081",
+                "--cert",
+                "cert/localhost.crt",
+                "--key",
+                "cert/localhost.key"
+            )
     }
 
     @Before
     fun before() {
-        val port = 8081
-        val host = "https://localhost:$port"
+        val host = "https://localhost:${CROSSTEST_CONTAINER.getMappedPort(8081)}"
         val (sslSocketFactory, trustManager) = sslContext()
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
