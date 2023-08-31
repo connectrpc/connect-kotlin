@@ -33,6 +33,7 @@ dependencies {
     testImplementation(libs.assertj)
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
+    testImplementation(libs.testcontainers)
 }
 
 configure<SpotlessExtension> {

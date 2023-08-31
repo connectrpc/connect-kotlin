@@ -9,7 +9,6 @@ MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
-CONFORMANCE_VERSION := 162d496c009e2ffb1a638b4a2ea789e9cc3331bb
 LICENSE_HEADER_VERSION := v1.26.1
 PROTOC_VERSION ?= 24.1
 GRADLE_ARGS ?=
@@ -26,7 +25,7 @@ $(BIN)/license-headers: Makefile
 
 .PHONY: build
 build: generate ## Build the entire project.
-	./gradlew $(GRADLE_ARGS) build -x test
+	./gradlew $(GRADLE_ARGS) build
 
 .PHONY: buildplugin
 buildplugin: ## Build the connect-kotlin protoc plugin.
@@ -44,19 +43,6 @@ clean: ## Cleans the underlying build.
 	rm -rf conformance/google-javalite/src/main/kotlin/generated
 
 	rm -rf protoc-gen-connect-kotlin/src/test/java/
-
-.PHONY: conformanceserverrun
-conformanceserverrun: conformanceserverstop ## Run the server for conformance tests.
-	docker run --rm --name serverconnect -p 8080:8080 -p 8081:8081 -d \
-		connectrpc/conformance:$(CONFORMANCE_VERSION) \
-		/usr/local/bin/serverconnect --h1port "8080" --h2port "8081" --cert "cert/localhost.crt" --key "cert/localhost.key"
-	docker run --rm --name servergrpc -p 8083:8083 -d \
-		connectrpc/conformance:$(CONFORMANCE_VERSION) \
-		/usr/local/bin/servergrpc --port "8083" --cert "cert/localhost.crt" --key "cert/localhost.key"
-
-.PHONY: conformanceserverstop
-conformanceserverstop: ## Stop the server for conformance tests.
-	-docker container stop serverconnect servergrpc
 
 .PHONY: conformancerun
 conformancerun: conformancerunjava ## Run the conformance tests.

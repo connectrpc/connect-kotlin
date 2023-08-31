@@ -55,12 +55,8 @@ jobs:
           cache: false
       - name: Generate proto files for conformance tests.
         run: make generateconformance
-      - name: Start test server
-        run: make conformanceserverrun
       - name: Run conformance tests
         run: make conformancerun
-      - name: Stop test server
-        run: make conformanceserverstop
   license-headers:
     runs-on: ubuntu-latest
     steps:
