@@ -16,7 +16,7 @@ package com.connectrpc.extensions
 
 import com.connectrpc.AnyError
 import com.connectrpc.ConnectErrorDetail
-import com.connectrpc.google.rpc.Status
+import build.buf.google.rpc.Status
 import com.google.protobuf.ByteString
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
