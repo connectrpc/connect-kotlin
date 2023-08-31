@@ -25,9 +25,9 @@ public class ElizaServiceClient(
         request,
         headers,
         MethodSpec(
-            "connectrpc.eliza.eliza.v1.ElizaService/Say",
-            connectrpc.eliza.eliza.v1.SayRequest::class,
-            connectrpc.eliza.eliza.v1.SayResponse::class
+            "connectrpc.eliza.v1.ElizaService/Say",
+            com.connectrpc.eliza.v1.SayRequest::class,
+            com.connectrpc.eliza.v1.SayResponse::class
         )
     )
 
@@ -35,9 +35,9 @@ public class ElizaServiceClient(
         BidirectionalStreamInterface<ConverseRequest, ConverseResponse> = client.stream(
         headers,
         MethodSpec(
-            "connectrpc.eliza.eliza.v1.ElizaService/Converse",
-            connectrpc.eliza.eliza.v1.ConverseRequest::class,
-            connectrpc.eliza.eliza.v1.ConverseResponse::class
+            "connectrpc.eliza.v1.ElizaService/Converse",
+            com.connectrpc.eliza.v1.ConverseRequest::class,
+            com.connectrpc.eliza.v1.ConverseResponse::class
         )
     )
 
@@ -45,9 +45,9 @@ public class ElizaServiceClient(
         ServerOnlyStreamInterface<IntroduceRequest, IntroduceResponse> = client.serverStream(
         headers,
         MethodSpec(
-            "connectrpc.eliza.eliza.v1.ElizaService/Introduce",
-            connectrpc.eliza.eliza.v1.IntroduceRequest::class,
-            connectrpc.eliza.eliza.v1.IntroduceResponse::class
+            "connectrpc.eliza.v1.ElizaService/Introduce",
+            com.connectrpc.eliza.v1.IntroduceRequest::class,
+            com.connectrpc.eliza.v1.IntroduceResponse::class
         )
     )
 }
@@ -172,7 +172,7 @@ Offered under the [Apache 2 license][license].
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 [grpc-web-protocol]: https://github.com/grpc/grpc-web
 [interceptors]: https://connectrpc.com/docs/kotlin/interceptors
-[license]: https://github.com/connectrpc/connect-go/blob/main/LICENSE
+[license]: https://github.com/connectrpc/connect-kotlin/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
 [protocol]: https://connectrpc.com/docs/protocol
 [server reflection]: https://github.com/connectrpc/grpcreflect-go
