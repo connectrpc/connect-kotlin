@@ -34,15 +34,6 @@ buildplugin: ## Build the connect-kotlin protoc plugin.
 .PHONY: clean
 clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
-	rm -rf examples/generated-google-java/src/main
-	rm -rf examples/generated-google-javalite/src/main
-
-	rm -rf crosstests/google-java/src/main/java/generated
-	rm -rf crosstests/google-java/src/main/kotlin/generated
-	rm -rf crosstests/google-javalite/src/main/java/generated
-	rm -rf crosstests/google-javalite/src/main/kotlin/generated
-
-	rm -rf protoc-gen-connect-kotlin/src/test/java/
 
 .PHONY: crosstestsrun
 crosstestsrun: crosstestsrunjava ## Run the cross tests.
