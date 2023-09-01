@@ -40,7 +40,7 @@ conformancerun: conformancerunjava ## Run the conformance tests.
 
 .PHONY: conformancerunjava
 conformancerunjava: generate ## Run the conformance tests for protoc-gen-java integration.
-	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
+	./gradlew $(GRADLE_ARGS) conformance:google-java:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
