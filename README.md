@@ -104,7 +104,7 @@ Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
 is available on the [connect.build website][getting-started].
 
-## Generation Options
+## Generation Options 
 
 | **Option**                     | **Type** | **Default** | **Details**                                     |
 |--------------------------------|:--------:|:-----------:|-------------------------------------------------|
@@ -114,10 +114,10 @@ is available on the [connect.build website][getting-started].
 
 ## Example Apps
 
-Example apps are available in [`/examples`](./examples). First, run `make generate` to generate
+Example apps are available in [`/examples`](./examples). First, run `make generate` to generate 
 code for the Protobuf plugins.
 
-For the [Android example](./examples/android), you can run `make installandroid` to build and install
+For the [Android example](./examples/android), you can run `make installandroid` to build and install 
 a fully functional Android application using Connect-Kotlin.
 
 Additionally, there are pure Kotlin examples that demonstrate a simple main executable using Connect-Kotlin:
