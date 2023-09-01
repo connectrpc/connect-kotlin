@@ -39,7 +39,7 @@ clean: ## Cleans the underlying build.
 crosstestsrun: crosstestsrunjava ## Run the cross tests.
 
 .PHONY: crosstestsrunjava
-crosstestsrunjava: ## Run the cross tests for protoc-gen-java integration.
+crosstestsrunjava: generate ## Run the cross tests for protoc-gen-java integration.
 	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
 
 ifeq ($(UNAME_OS),Darwin)
