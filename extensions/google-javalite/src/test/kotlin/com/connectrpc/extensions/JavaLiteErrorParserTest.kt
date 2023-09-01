@@ -33,7 +33,7 @@ class JavaLiteErrorParserTest {
             .setMessage("hello")
             .build()
         val serializedError = AnyError(
-            "type.googleapis.com/com.connectrpc.generated.v1.Status",
+            "type.googleapis.com/com.connectrpc.google.rpc.Status",
             proto.toByteArray().toByteString().base64().encodeUtf8()
         )
         val unpacked = parser.unpack(serializedError, Status::class)
