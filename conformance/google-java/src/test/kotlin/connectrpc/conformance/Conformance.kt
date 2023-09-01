@@ -18,7 +18,6 @@ import build.buf.connect.Code
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.RequestCompression
 import build.buf.connect.compression.GzipCompressionPool
-import connectrpc.conformance.ssl.sslContext
 import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
@@ -34,6 +33,7 @@ import com.grpc.testing.payload
 import com.grpc.testing.responseParameters
 import com.grpc.testing.simpleRequest
 import com.grpc.testing.streamingOutputCallRequest
+import connectrpc.conformance.ssl.sslContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
