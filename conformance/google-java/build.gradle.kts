@@ -15,13 +15,14 @@ tasks {
 }
 
 sourceSets {
-    java.sourceSets["main"].java {
-        srcDir("src/main/java/generated")
+    main {
+        java {
+            srcDir("build/generated/sources/bufgen")
+        }
     }
 }
 
 dependencies {
-
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.protobuf.kotlin)
     implementation(project(":conformance:common"))
@@ -38,6 +39,6 @@ dependencies {
 
 configure<SpotlessExtension> {
     kotlin {
-        targetExclude("**/generated/**/*.kt")
+        targetExclude("build/generated/sources/bufgen/**/*.kt")
     }
 }

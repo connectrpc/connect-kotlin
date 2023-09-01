@@ -3,14 +3,7 @@
 !/**/src/**/build/*
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
-/examples/generated-google-java/src/main/
-/examples/generated-google-javalite/src/main/
-/conformance/google-java/src/main/kotlin/generated/
-/conformance/google-java/src/main/java/generated/
-/conformance/google-javalite/src/main/kotlin/generated/
-/conformance/google-javalite/src/main/java/generated/
 /local.properties
-/protoc-gen-connect-kotlin/src/test/java/
 /.gradle
 /.idea
 /.tmp

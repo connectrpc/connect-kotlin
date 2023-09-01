@@ -34,22 +34,13 @@ buildplugin: ## Build the connect-kotlin protoc plugin.
 .PHONY: clean
 clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
-	rm -rf examples/generated-google-java/src/main
-	rm -rf examples/generated-google-javalite/src/main
-
-	rm -rf conformance/google-java/src/main/java/generated
-	rm -rf conformance/google-java/src/main/kotlin/generated
-	rm -rf conformance/google-javalite/src/main/java/generated
-	rm -rf conformance/google-javalite/src/main/kotlin/generated
-
-	rm -rf protoc-gen-connect-kotlin/src/test/java/
 
 .PHONY: conformancerun
 conformancerun: conformancerunjava ## Run the conformance tests.
 
 .PHONY: conformancerunjava
-conformancerunjava: ## Run the conformance tests for protoc-gen-java integration.
-	./gradlew $(GRADLE_ARGS) conformance:google-java:test
+conformancerunjava: generate ## Run the conformance tests for protoc-gen-java integration.
+	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
