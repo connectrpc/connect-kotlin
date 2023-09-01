@@ -65,6 +65,9 @@ internal class ConnectInterceptor(
                             .map { compressionPool -> compressionPool.name() }
                     )
                 }
+                if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
+                    requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
+                }
                 val requestCompression = clientConfig.requestCompression
                 val requestMessage = Buffer()
                 if (request.message != null) {
@@ -126,6 +129,9 @@ internal class ConnectInterceptor(
                         CONNECT_STREAMING_CONTENT_ENCODING,
                         listOf(requestCompression.compressionPool.name())
                     )
+                }
+                if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
+                    requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
                 }
                 requestHeaders.put(
                     CONNECT_STREAMING_ACCEPT_ENCODING,

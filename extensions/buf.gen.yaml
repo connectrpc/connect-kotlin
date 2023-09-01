@@ -6,5 +6,10 @@ types:
   include:
     - google.rpc.Status
 plugins:
-  - name: java
-    out: google-java/src/main/java
+  - plugin: java
+    out: google-java/build/generated/sources/bufgen
+    protoc_path: .tmp/bin/protoc
+  - plugin: java
+    out: google-javalite/build/generated/sources/bufgen
+    protoc_path: .tmp/bin/protoc
+    opt: lite

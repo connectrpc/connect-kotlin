@@ -24,14 +24,17 @@ import build.buf.connect.ProtocolClientInterface
 import build.buf.connect.ResponseMessage
 import build.buf.connect.ServerOnlyStreamInterface
 import build.buf.connect.StreamResult
+import build.buf.connect.UnaryBlockingCall
 import build.buf.connect.http.Cancelable
 import build.buf.connect.http.HTTPClientInterface
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.Stream
 import build.buf.connect.protocols.GETConfiguration
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
+import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
 
 /**
@@ -117,6 +120,25 @@ class ProtocolClient(
         }
     }
 
+    override fun <Input : Any, Output : Any> unaryBlocking(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>
+    ): UnaryBlockingCall<Output> {
+        val countDownLatch = CountDownLatch(1)
+        val call = UnaryBlockingCall<Output>()
+        // Set the unary synchronous executable.
+        call.setExecute { callback: (ResponseMessage<Output>) -> Unit ->
+            val cancellationFn = unary(request, headers, methodSpec) { responseMessage ->
+                callback(responseMessage)
+                countDownLatch.countDown()
+            }
+            // Set the cancellation function .
+            call.setCancel(cancellationFn)
+        }
+        return call
+    }
+
     override suspend fun <Input : Any, Output : Any> stream(
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>
@@ -140,6 +162,7 @@ class ProtocolClient(
         return ClientOnlyStream(stream)
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun <Input : Any, Output : Any> bidirectionalStream(
         methodSpec: MethodSpec<Input, Output>,
         headers: Headers
@@ -192,18 +215,27 @@ class ProtocolClient(
             channel.send(result)
         }
         continuation.invokeOnCancellation {
-            httpStream.close()
+            httpStream.sendClose()
+            httpStream.receiveClose()
+        }
+        val stream = Stream(
+            onSend = { buffer ->
+                httpStream.send(streamFunc.requestBodyFunction(buffer))
+            },
+            onReceiveClose = {
+                httpStream.receiveClose()
+            },
+            onSendClose = {
+                httpStream.sendClose()
+            }
+        )
+        channel.invokeOnClose {
+            // Receive channel is closed so the stream's receive will be closed.
+            stream.receiveClose()
         }
         continuation.resume(
             BidirectionalStream(
-                Stream(
-                    onSend = { buffer ->
-                        httpStream.send(streamFunc.requestBodyFunction(buffer))
-                    },
-                    onClose = {
-                        httpStream.close()
-                    }
-                ),
+                stream,
                 requestCodec,
                 channel
             )

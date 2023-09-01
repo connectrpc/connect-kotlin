@@ -19,6 +19,14 @@ dependencies {
     implementation(libs.kotlin.reflect)
 }
 
+sourceSets {
+    main {
+        java {
+            srcDir("build/generated/sources/bufgen")
+        }
+    }
+}
+
 configure<MavenPublishBaseExtension> {
     configure(
         KotlinJvm(javadocJar = Dokka("dokkaGfm"))

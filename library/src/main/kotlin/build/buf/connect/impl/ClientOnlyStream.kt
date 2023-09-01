@@ -16,6 +16,7 @@ package build.buf.connect.impl
 
 import build.buf.connect.BidirectionalStreamInterface
 import build.buf.connect.ClientOnlyStreamInterface
+import build.buf.connect.StreamResult
 
 /**
  * Concrete implementation of [ClientOnlyStreamInterface].
@@ -25,6 +26,15 @@ internal class ClientOnlyStream<Input, Output>(
 ) : ClientOnlyStreamInterface<Input, Output> {
     override suspend fun send(input: Input): Result<Unit> {
         return messageStream.send(input)
+    }
+
+    override suspend fun receiveAndClose(): StreamResult<Output> {
+        val resultChannel = messageStream.resultChannel()
+        try {
+            return resultChannel.receive()
+        } finally {
+            resultChannel.cancel()
+        }
     }
 
     override fun close() {

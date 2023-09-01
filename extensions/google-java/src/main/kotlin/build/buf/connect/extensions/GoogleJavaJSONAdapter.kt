@@ -56,7 +56,7 @@ internal class GoogleJavaJSONAdapter<E : GeneratedMessageV3>(
     }
 
     override fun serialize(message: E): Buffer {
-        val jsonString = JsonFormat.printer().print(message as E)
+        val jsonString = JsonFormat.printer().print(message)
         return Buffer().write(jsonString.encodeUtf8())
     }
 

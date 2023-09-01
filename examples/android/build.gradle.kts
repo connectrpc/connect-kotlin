@@ -4,12 +4,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion(32)
+    compileSdk = 32
 
     defaultConfig {
         applicationId = "build.buf.connect.examples.android"
-        minSdkVersion(28)
-        targetSdkVersion(32)
+        minSdk = 28
+        targetSdk = 32
         versionCode = 1
         versionName = "1.0"
         multiDexEnabled = true
@@ -19,6 +19,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    namespace = "build.buf.connect.examples.android"
 }
 
 dependencies {

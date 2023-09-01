@@ -27,6 +27,13 @@ interface ClientOnlyStreamInterface<Input, Output> {
     suspend fun send(input: Input): Result<Unit>
 
     /**
+     * Receive a single response and close the stream.
+     *
+     * @return the single response [StreamResult].
+     */
+    suspend fun receiveAndClose(): StreamResult<Output>
+
+    /**
      * Close the stream. No calls to [send] are valid after calling [close].
      */
     fun close()

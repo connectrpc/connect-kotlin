@@ -3,20 +3,18 @@ plugins {
     kotlin("jvm")
 }
 
+application {
+    mainClass.set("build.buf.connect.examples.kotlin.Main")
+}
+
 tasks {
     jar {
         manifest {
-            attributes(mapOf("Main-Class" to "build.buf.connect.examples.kotlin.Main"))
+            attributes(mapOf("Main-Class" to application.mainClass.get()))
         }
-        duplicatesStrategy = DuplicatesStrategy.WARN
-        // This line of code recursively collects and copies all of a project's files
-        // and adds them to the JAR itself. One can extend this task, to skip certain
-        // files or particular types at will
-        val sourcesMain = sourceSets.main.get()
-        val contents = configurations.runtimeClasspath.get()
-            .map { if (it.isDirectory) it else zipTree(it) } +
-            sourcesMain.output
-        from(contents)
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+            exclude("META-INF/**/*")
+        }
     }
 }
 

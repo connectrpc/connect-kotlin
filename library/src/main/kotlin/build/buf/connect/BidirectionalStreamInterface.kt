@@ -42,10 +42,36 @@ interface BidirectionalStreamInterface<Input, Output> {
     fun close()
 
     /**
-     * Determine if the underlying stream is closed.
+     * Determine if the underlying send and receive stream is closed.
      *
-     * @return true if the underlying stream is closed. If the stream is still open,
+     * @return true if the underlying send and receive stream is closed. If the stream is still open,
      *         this will return false.
      */
     fun isClosed(): Boolean
+
+    /**
+     * Close the send stream. No calls to [send] are valid after calling [sendClose].
+     */
+    fun sendClose()
+
+    /**
+     * Close the receive stream.
+     */
+    fun receiveClose()
+
+    /**
+     * Determine if the underlying client send stream is closed.
+     *
+     * @return true if the underlying client receive stream is closed. If the stream is still open,
+     *         this will return false.
+     */
+    fun isSendClosed(): Boolean
+
+    /**
+     * Determine if the underlying client receive stream is closed.
+     *
+     * @return true if the underlying client receive stream is closed. If the stream is still open,
+     *         this will return false.
+     */
+    fun isReceiveClosed(): Boolean
 }
