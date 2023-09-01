@@ -1,7 +1,7 @@
 version: v1
 managed:
   enabled: true
-  java_package_prefix: "build.buf"
+  java_package_prefix: "com.connectrpc"
 types:
   include:
     - google.rpc.Status
