@@ -10,8 +10,10 @@ plugins {
 }
 
 sourceSets {
-    java.sourceSets["main"].java {
-        srcDir("src/main/java/generated")
+    main {
+        java {
+            srcDir("build/generated/sources/bufgen")
+        }
     }
 }
 

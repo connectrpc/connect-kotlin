@@ -37,6 +37,14 @@ dependencies {
     testImplementation(libs.kotlin.coroutines.core)
 }
 
+sourceSets {
+    test {
+        java {
+            srcDir(layout.buildDirectory.dir("generated/sources/bufgen"))
+        }
+    }
+}
+
 configure<MavenPublishBaseExtension> {
     configure(
         KotlinJvm(javadocJar = Dokka("dokkaGfm"))

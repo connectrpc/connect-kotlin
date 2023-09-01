@@ -12,8 +12,10 @@ tasks {
 }
 
 sourceSets {
-    java.sourceSets["main"].java {
-        srcDir("src/main/java/")
+    main {
+        java {
+            srcDir("build/generated/sources/bufgen")
+        }
     }
 }
 
