@@ -149,7 +149,7 @@ for details.
 * [connect-es]: Type-safe APIs with Protobuf and TypeScript.
 * [connect-go]: Service handlers and clients for GoLang
 * [Buf Studio][buf-studio]: web UI for ad-hoc RPCs
-* [connect-conformance]: gRPC and gRPC-Web interoperability tests
+* [conformance]: Connect, gRPC, and gRPC-Web interoperability tests
 
 ## Status
 
@@ -162,7 +162,7 @@ Offered under the [Apache 2 license][license].
 
 [blog]: https://buf.build/blog/connect-a-better-grpc
 [buf-studio]: https://buf.build/studio
-[connect-conformance]: https://github.com/connectrpc/conformance
+[conformance]: https://github.com/connectrpc/conformance
 [connect-go]: https://github.com/connectrpc/connect-go
 [connect-protocol]: https://connect.build/docs/protocol
 [connect-swift]: https://github.com/bufbuild/connect-swift
