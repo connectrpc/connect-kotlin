@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Eliza Connect App</string>
-    <string name="edit_text_hint">I feel good.</string>
-    <string name="send">Send</string>
-    <string name="eliza">Eliza</string>
-</resources>
