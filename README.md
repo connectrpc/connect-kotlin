@@ -172,9 +172,9 @@ Offered under the [Apache 2 license][license].
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 [grpc-web-protocol]: https://github.com/grpc/grpc-web
 [interceptors]: https://connect.build/docs/kotlin/interceptors
-[license]: https://github.com/connectrpc/connect-go/blob/main/LICENSE
+[license]: https://github.com/bufbuild/connect-go/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
 [protocol]: https://connect.build/docs/protocol
-[server reflection]: https://github.com/connectrpc/connect-grpcreflect-go
+[server reflection]: https://github.com/bufbuild/connect-grpcreflect-go
 [slack]: https://buf.build/links/slack
 [streaming]: https://connect.build/docs/kotlin/using-clients#using-generated-clients
