@@ -53,8 +53,6 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           cache: false
-      - name: Generate proto files for conformance tests.
-        run: make generateconformance
       - name: Run conformance tests
         run: make conformancerun
   license-headers:

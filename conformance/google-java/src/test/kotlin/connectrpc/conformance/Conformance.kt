@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package connectrpc.conformance
+package com.connectrpc.conformance
 
 import build.buf.connect.Code
 import build.buf.connect.ProtocolClientConfig
@@ -33,7 +33,7 @@ import com.grpc.testing.payload
 import com.grpc.testing.responseParameters
 import com.grpc.testing.simpleRequest
 import com.grpc.testing.streamingOutputCallRequest
-import connectrpc.conformance.ssl.sslContext
+import com.connectrpc.conformance.ssl.sslContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking

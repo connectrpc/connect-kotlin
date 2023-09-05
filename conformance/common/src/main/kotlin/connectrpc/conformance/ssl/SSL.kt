@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package connectrpc.conformance.ssl
+package com.connectrpc.conformance.ssl
 
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
