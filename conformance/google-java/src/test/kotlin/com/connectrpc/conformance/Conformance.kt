@@ -22,6 +22,7 @@ import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
+import com.connectrpc.conformance.ssl.sslContext
 import com.google.protobuf.ByteString
 import com.grpc.testing.ErrorDetail
 import com.grpc.testing.TestServiceClient
@@ -33,7 +34,6 @@ import com.grpc.testing.payload
 import com.grpc.testing.responseParameters
 import com.grpc.testing.simpleRequest
 import com.grpc.testing.streamingOutputCallRequest
-import com.connectrpc.conformance.ssl.sslContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
