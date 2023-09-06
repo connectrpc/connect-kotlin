@@ -24,16 +24,16 @@ import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
 import com.connectrpc.conformance.ssl.sslContext
 import com.google.protobuf.ByteString
-import com.grpc.testing.ErrorDetail
-import com.grpc.testing.TestServiceClient
-import com.grpc.testing.UnimplementedServiceClient
-import com.grpc.testing.echoStatus
-import com.grpc.testing.empty
-import com.grpc.testing.errorDetail
-import com.grpc.testing.payload
-import com.grpc.testing.responseParameters
-import com.grpc.testing.simpleRequest
-import com.grpc.testing.streamingOutputCallRequest
+import com.connectrpc.conformance.v1.ErrorDetail
+import com.connectrpc.conformance.v1.TestServiceClient
+import com.connectrpc.conformance.v1.UnimplementedServiceClient
+import com.connectrpc.conformance.v1.echoStatus
+import com.google.protobuf.Empty
+import com.connectrpc.conformance.v1.errorDetail
+import com.connectrpc.conformance.v1.payload
+import com.connectrpc.conformance.v1.responseParameters
+import com.connectrpc.conformance.v1.simpleRequest
+import com.connectrpc.conformance.v1.streamingOutputCallRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -65,7 +65,7 @@ class Conformance(
     private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
-        const val CONFORMANCE_VERSION = "162d496c009e2ffb1a638b4a2ea789e9cc3331bb"
+        const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
 
         @JvmStatic
         @Parameters(name = "protocol")
@@ -189,12 +189,12 @@ class Conformance(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(empty {}) { response ->
+        testServiceConnectClient.emptyCall(Empty.newBuilder().build()) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
-                assertThat(success.message).isEqualTo(empty {})
+                assertThat(success.message).isEqualTo(Empty.newBuilder().build())
                 countDownLatch.countDown()
             }
         }
@@ -352,7 +352,7 @@ class Conformance(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(empty {}) { response ->
+        testServiceConnectClient.unimplementedCall(Empty.newBuilder().build()) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -363,7 +363,7 @@ class Conformance(
     @Test
     fun unimplementedService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
+        unimplementedServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -398,12 +398,12 @@ class Conformance(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.emptyCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
         response.success { success ->
-            assertThat(success.message).isEqualTo(empty {})
+            assertThat(success.message).isEqualTo(Empty.newBuilder().build())
         }
     }
 
@@ -498,13 +498,13 @@ class Conformance(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
     @Test
     fun unimplementedServiceBlocking(): Unit = runBlocking {
-        val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
+        val response = unimplementedServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
