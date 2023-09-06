@@ -4,9 +4,8 @@ lint:
     - DEFAULT
   ignore:
     # We don't control these definitions, so we ignore lint errors.
-    - grpc/testing/empty.proto
-    - grpc/testing/messages.proto
-    - grpc/testing/test.proto
+    - connectrpc/conformance/v1/messages.proto
+    - connectrpc/conformance/v1/test.proto
 breaking:
   use:
     - WIRE_JSON

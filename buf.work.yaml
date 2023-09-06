@@ -1,4 +1,4 @@
 version: v1
 directories:
-  - crosstests/proto
+  - conformance/proto
   - protoc-gen-connect-kotlin/proto

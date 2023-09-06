@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest.ssl
+package com.connectrpc.conformance.ssl
 
 /**
- * Test suite for the different cross testing for
+ * Test suite for the different conformance testing for
  * protoc-gen-java, protoc-gen-javalite.
  *
  * Primarily to help keep all the suites in sync.

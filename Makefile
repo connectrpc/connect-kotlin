@@ -35,12 +35,12 @@ buildplugin: ## Build the connect-kotlin protoc plugin.
 clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
 
-.PHONY: crosstestsrun
-crosstestsrun: crosstestsrunjava ## Run the cross tests.
+.PHONY: conformancerun
+conformancerun: conformancerunjava ## Run the conformance tests.
 
-.PHONY: crosstestsrunjava
-crosstestsrunjava: generate ## Run the cross tests for protoc-gen-java integration.
-	./gradlew $(GRADLE_ARGS) crosstest:google-java:test
+.PHONY: conformancerunjava
+conformancerunjava: generate ## Run the conformance tests for protoc-gen-java integration.
+	./gradlew $(GRADLE_ARGS) conformance:google-java:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
@@ -69,14 +69,14 @@ $(PROTOC):
 	@touch $@
 
 .PHONY: generate
-generate: $(PROTOC) buildplugin generatecrosstests generateexamples ## Generate proto files for the entire project.
+generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.
 	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 
-.PHONY: generatecrosstests
-generatecrosstests: $(PROTOC) buildplugin ## Generate protofiles for cross tests.
-	buf generate --template crosstests/buf.gen.yaml -o crosstests
+.PHONY: generateconformance
+generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
+	buf generate --template conformance/buf.gen.yaml -o conformance
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.

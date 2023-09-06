@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest.ssl
+package com.connectrpc.conformance.ssl
 
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -32,7 +32,7 @@ fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
     val certificate = clientCert.byteInputStream(Charsets.UTF_8).use { stream ->
         CertificateFactory.getInstance("X.509").generateCertificate(stream) as X509Certificate
     }
-    val certificateAuthority = crosstestCACert.byteInputStream(Charsets.UTF_8).use { stream ->
+    val certificateAuthority = conformanceCACert.byteInputStream(Charsets.UTF_8).use { stream ->
         CertificateFactory.getInstance("X.509").generateCertificate(stream) as X509Certificate
     }
     val publicKey = certificate.getPublicKey() as RSAPublicKey
@@ -56,7 +56,7 @@ fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
     return result.sslSocketFactory() to result.trustManager
 }
 
-// https://github.com/bufbuild/connect-crosstest/blob/main/cert/client.crt
+// https://github.com/connectrpc/conformance/blob/main/cert/client.crt
 // cert issues: https://stackoverflow.com/questions/9210514/unable-to-find-valid-certification-path-to-requested-target-error-even-after-c
 private const val clientCert = """-----BEGIN CERTIFICATE-----
 MIIEODCCAiCgAwIBAgIRAJTCeo42f8lts3VeDnN7CVwwDQYJKoZIhvcNAQELBQAw
@@ -84,9 +84,9 @@ FjL/opqnz8GV8od9hLHJfwclPBSEA0fp7yNvOzKm1lNPEX009ME1hK4dLKNCqv3x
 g+mJcflVCfjEqJzfEy4wPq5SJzOIzXva6DyBpA==
 -----END CERTIFICATE-----"""
 
-// https://github.com/bufbuild/connect-crosstest/blob/main/cert/CrosstestCA.crt
+// https://github.com/connectrpc/conformance/blob/main/cert/ConformanceCA.crt
 // Certificate authority for the trusted cert.
-private const val crosstestCACert = """-----BEGIN CERTIFICATE-----
+private const val conformanceCACert = """-----BEGIN CERTIFICATE-----
 MIIE7DCCAtSgAwIBAgIBATANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDEwtDcm9z
 c3Rlc3RDQTAeFw0yMjA1MDMxNzA5NTlaFw0yMzExMDMxNzE5NTZaMBYxFDASBgNV
 BAMTC0Nyb3NzdGVzdENBMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA
@@ -149,7 +149,7 @@ YfnVHhS0VV49dKIqrsP8o1qZJRhjcq/J/Rrm2ZFHfdLCOOnd9VG4W2I1WB9MDc4t
 raq4CptHPEywZgBR95C0Jv3y
 -----END PRIVATE KEY-----"""
 
-// https://github.com/bufbuild/connect-crosstest/blob/main/cert/client.key
+// https://github.com/connectrpc/conformance/blob/main/cert/client.key
 const val rsaClientKey = """-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEAqCSOgQ3rFjxEZu84yxgPT6dF0kd656XnF0yiAcGpq9+YK/yL
 eIwGTDAVAR4XbywdKQI9f4ZVi7w0ErkAb37K9iq6jr7VTj9HOSgs8B47y5soYb4z

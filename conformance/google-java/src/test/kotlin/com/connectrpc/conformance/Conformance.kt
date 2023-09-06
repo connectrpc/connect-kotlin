@@ -12,28 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package build.buf.connect.crosstest
+package com.connectrpc.conformance
 
 import build.buf.connect.Code
 import build.buf.connect.ProtocolClientConfig
 import build.buf.connect.RequestCompression
 import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.crosstest.ssl.sslContext
 import build.buf.connect.extensions.GoogleJavaProtobufStrategy
 import build.buf.connect.impl.ProtocolClient
 import build.buf.connect.okhttp.ConnectOkHttpClient
 import build.buf.connect.protocols.NetworkProtocol
+import com.connectrpc.conformance.ssl.sslContext
+import com.connectrpc.conformance.v1.ErrorDetail
+import com.connectrpc.conformance.v1.TestServiceClient
+import com.connectrpc.conformance.v1.UnimplementedServiceClient
+import com.connectrpc.conformance.v1.echoStatus
+import com.connectrpc.conformance.v1.errorDetail
+import com.connectrpc.conformance.v1.payload
+import com.connectrpc.conformance.v1.responseParameters
+import com.connectrpc.conformance.v1.simpleRequest
+import com.connectrpc.conformance.v1.streamingOutputCallRequest
 import com.google.protobuf.ByteString
-import com.grpc.testing.ErrorDetail
-import com.grpc.testing.TestServiceClient
-import com.grpc.testing.UnimplementedServiceClient
-import com.grpc.testing.echoStatus
-import com.grpc.testing.empty
-import com.grpc.testing.errorDetail
-import com.grpc.testing.payload
-import com.grpc.testing.responseParameters
-import com.grpc.testing.simpleRequest
-import com.grpc.testing.streamingOutputCallRequest
+import com.google.protobuf.Empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit
 
 
 @RunWith(Parameterized::class)
-class CrossTest(
+class Conformance(
     private val protocol: NetworkProtocol
 ) {
     private lateinit var connectClient: ProtocolClient
@@ -65,7 +65,7 @@ class CrossTest(
     private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
-        const val CROSSTEST_VERSION = "162d496c009e2ffb1a638b4a2ea789e9cc3331bb"
+        const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
 
         @JvmStatic
         @Parameters(name = "protocol")
@@ -78,7 +78,7 @@ class CrossTest(
 
         @JvmField
         @ClassRule
-        val CROSSTEST_CONTAINER = GenericContainer("bufbuild/connect-crosstest:$CROSSTEST_VERSION")
+        val CONFORMANCE_CONTAINER = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
             .withExposedPorts(8080, 8081)
             .withCommand(
                 "/usr/local/bin/serverconnect",
@@ -95,7 +95,7 @@ class CrossTest(
 
     @Before
     fun before() {
-        val host = "https://localhost:${CROSSTEST_CONTAINER.getMappedPort(8081)}"
+        val host = "https://localhost:${CONFORMANCE_CONTAINER.getMappedPort(8081)}"
         val (sslSocketFactory, trustManager) = sslContext()
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
@@ -141,7 +141,7 @@ class CrossTest(
         val countDownLatch = CountDownLatch(1)
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val stream = testServiceConnectClient.failStreamingOutputCall()
         val sizes = listOf(
@@ -189,12 +189,12 @@ class CrossTest(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(empty {}) { response ->
+        testServiceConnectClient.emptyCall(Empty.newBuilder().build()) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
-                assertThat(success.message).isEqualTo(empty {})
+                assertThat(success.message).isEqualTo(Empty.newBuilder().build())
                 countDownLatch.countDown()
             }
         }
@@ -352,7 +352,7 @@ class CrossTest(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(empty {}) { response ->
+        testServiceConnectClient.unimplementedCall(Empty.newBuilder().build()) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -363,7 +363,7 @@ class CrossTest(
     @Test
     fun unimplementedService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
+        unimplementedServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -375,7 +375,7 @@ class CrossTest(
     fun failUnary(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
@@ -398,12 +398,12 @@ class CrossTest(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.emptyCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
         response.success { success ->
-            assertThat(success.message).isEqualTo(empty {})
+            assertThat(success.message).isEqualTo(Empty.newBuilder().build())
         }
     }
 
@@ -498,13 +498,13 @@ class CrossTest(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
     @Test
     fun unimplementedServiceBlocking(): Unit = runBlocking {
-        val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
+        val response = unimplementedServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
@@ -512,7 +512,7 @@ class CrossTest(
     fun failUnaryBlocking(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)

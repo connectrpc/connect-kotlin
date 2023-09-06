@@ -1,8 +1,8 @@
 rootProject.name = "connect-kotlin"
 
-include(":crosstests:common")
-include(":crosstests:google-java")
-include(":crosstests:google-javalite")
+include(":conformance:common")
+include(":conformance:google-java")
+include(":conformance:google-javalite")
 if (extra.has("skipAndroid") && extra.get("skipAndroid").toString().toBoolean()) {
     println("Skipping Android build (skipAndroid=true)")
 } else {

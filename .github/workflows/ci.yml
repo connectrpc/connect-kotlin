@@ -38,7 +38,7 @@ jobs:
           git diff-index --quiet HEAD --
       - name: Build project
         run: make build
-  crosstests:
+  conformance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -53,10 +53,8 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           cache: false
-      - name: Generate proto files for cross tests.
-        run: make generatecrosstests
-      - name: Run crosstests
-        run: make crosstestsrun
+      - name: Run conformance tests
+        run: make conformancerun
   license-headers:
     runs-on: ubuntu-latest
     steps:
