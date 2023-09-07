@@ -33,7 +33,6 @@ import build.buf.connect.compression.CompressionPool
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
@@ -46,9 +45,7 @@ import java.net.URL
 internal class ConnectInterceptor(
     private val clientConfig: ProtocolClientConfig
 ) : Interceptor {
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val moshi = Moshi.Builder().build()
     private val serializationStrategy = clientConfig.serializationStrategy
     private var responseCompressionPool: CompressionPool? = null
 
