@@ -4,12 +4,10 @@
 Connect-Kotlin
 ==============
 
-Connect-Kotlin is a slim library for building browser and gRPC-compatible HTTP APIs.
-You write a short [Protocol Buffer][protobuf] schema and implement your
-application logic, and Connect generates code to handle marshaling, routing,
-compression, and content type negotiation. It also generates an idiomatic,
-type-safe client. Handlers and clients support three protocols: gRPC, gRPC-Web,
-and Connect's own protocol.
+Connect-Kotlin is a slim library for using generated, type-safe, and idiomatic 
+Kotlin clients to communicate with your app's servers using [Protocol Buffers (Protobuf)][protobuf]. 
+It works with the [Connect][connect-protocol], [gRPC][grpc-protocol], and
+[gRPC-Web][grpc-web-protocol] protocols.
 
 Given a simple Protobuf schema, Connect-Kotlin generates idiomatic Kotlin
 protocol interfaces and client implementations:
@@ -170,7 +168,7 @@ Offered under the [Apache 2 license][license].
 [error-handling]: https://connect.build/docs/kotlin/errors
 [getting-started]: https://connect.build/docs/kotlin/getting-started
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-[grpc-web-protocol]: https://github.com/grpc/grpc-web
+[grpc-web-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
 [interceptors]: https://connect.build/docs/kotlin/interceptors
 [license]: https://github.com/bufbuild/connect-go/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
