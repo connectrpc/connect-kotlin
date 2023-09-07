@@ -33,7 +33,6 @@ import build.buf.connect.compression.CompressionPool
 import build.buf.connect.http.HTTPRequest
 import build.buf.connect.http.HTTPResponse
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.encodeUtf8
