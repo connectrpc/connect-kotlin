@@ -47,9 +47,7 @@ class ConnectInterceptorTest {
     private val errorDetailParser: ErrorDetailParser = mock { }
     private val serializationStrategy: SerializationStrategy = mock { }
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val moshi = Moshi.Builder().build()
 
     @Before
     fun setup() {

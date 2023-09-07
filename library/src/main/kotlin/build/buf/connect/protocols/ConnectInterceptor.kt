@@ -46,9 +46,7 @@ import java.net.URL
 internal class ConnectInterceptor(
     private val clientConfig: ProtocolClientConfig
 ) : Interceptor {
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val moshi = Moshi.Builder().build()
     private val serializationStrategy = clientConfig.serializationStrategy
     private var responseCompressionPool: CompressionPool? = null
 

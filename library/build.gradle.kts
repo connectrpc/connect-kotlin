@@ -6,6 +6,7 @@ plugins {
     kotlin("jvm")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish.base")
+    alias(libs.plugins.ksp)
 }
 
 dependencies {
@@ -15,6 +16,8 @@ dependencies {
 
     implementation(libs.moshiKotlin)
     implementation(libs.kotlin.coroutines.core)
+
+    ksp(libs.moshiKotlinCodegen)
 }
 
 configure<MavenPublishBaseExtension> {
