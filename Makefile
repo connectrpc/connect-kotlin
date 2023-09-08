@@ -110,7 +110,7 @@ lintfix: # Applies the lint changes.
 	./gradlew $(GRADLE_ARGS) spotlessApply
 
 .PHONY: release
-release: ## Upload artifacts to Sonatype Nexus.
+release: generate ## Upload artifacts to Sonatype Nexus.
 	./gradlew $(GRADLE_ARGS) --info publish --stacktrace --no-daemon --no-parallel
 	./gradlew $(GRADLE_ARGS) --info closeAndReleaseRepository
 
