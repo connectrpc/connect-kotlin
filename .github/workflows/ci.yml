@@ -38,6 +38,8 @@ jobs:
           git diff-index --quiet HEAD --
       - name: Build project
         run: make build
+      - name: Install to local repository
+        run: make releaselocal
   conformance:
     runs-on: ubuntu-latest
     steps:
