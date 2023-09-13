@@ -4,12 +4,10 @@
 Connect-Kotlin
 ==============
 
-Connect-Kotlin is a slim library for building browser and gRPC-compatible HTTP APIs.
-You write a short [Protocol Buffer][protobuf] schema and implement your
-application logic, and Connect generates code to handle marshaling, routing,
-compression, and content type negotiation. It also generates an idiomatic,
-type-safe client. Handlers and clients support three protocols: gRPC, gRPC-Web,
-and Connect's own protocol.
+Connect-Kotlin is a slim library for using generated, type-safe, and idiomatic 
+Kotlin clients to communicate with your app's servers using [Protocol Buffers (Protobuf)][protobuf]. 
+It works with the [Connect][connect-protocol], [gRPC][grpc-protocol], and
+[gRPC-Web][grpc-web-protocol] protocols.
 
 Given a simple Protobuf schema, Connect-Kotlin generates idiomatic Kotlin
 protocol interfaces and client implementations:
@@ -104,7 +102,7 @@ Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
 is available on the [connectrpc.com website][getting-started].
 
-## Generation Options 
+## Generation Options
 
 | **Option**                     | **Type** | **Default** | **Details**                                     |
 |--------------------------------|:--------:|:-----------:|-------------------------------------------------|
@@ -114,10 +112,10 @@ is available on the [connectrpc.com website][getting-started].
 
 ## Example Apps
 
-Example apps are available in [`/examples`](./examples). First, run `make generate` to generate 
+Example apps are available in [`/examples`](./examples). First, run `make generate` to generate
 code for the Protobuf plugins.
 
-For the [Android example](./examples/android), you can run `make installandroid` to build and install 
+For the [Android example](./examples/android), you can run `make installandroid` to build and install
 a fully functional Android application using Connect-Kotlin.
 
 Additionally, there are pure Kotlin examples that demonstrate a simple main executable using Connect-Kotlin:
@@ -146,10 +144,10 @@ for details.
 ## Ecosystem
 
 * [connect-swift]: Swift clients for idiomatic gRPC & Connect RPC
-* [connect-es]: Connect, gRPC, and gRPC-Web support for Protobuf and TypeScript
+* [connect-es]: Type-safe APIs with Protobuf and TypeScript.
 * [connect-go]: Service handlers and clients for GoLang
 * [Buf Studio][buf-studio]: web UI for ad-hoc RPCs
-* [connect-crosstest]: gRPC and gRPC-Web interoperability tests
+* [conformance]: Connect, gRPC, and gRPC-Web interoperability tests
 
 ## Status
 
@@ -162,7 +160,7 @@ Offered under the [Apache 2 license][license].
 
 [blog]: https://buf.build/blog/connect-a-better-grpc
 [buf-studio]: https://buf.build/studio
-[connect-crosstest]: https://github.com/bufbuild/connect-crosstest
+[conformance]: https://github.com/connectrpc/conformance
 [connect-go]: https://github.com/connectrpc/connect-go
 [connect-protocol]: https://connectrpc.com/docs/protocol
 [connect-swift]: https://github.com/bufbuild/connect-swift
@@ -170,7 +168,7 @@ Offered under the [Apache 2 license][license].
 [error-handling]: https://connectrpc.com/docs/kotlin/errors
 [getting-started]: https://connectrpc.com/docs/kotlin/getting-started
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
-[grpc-web-protocol]: https://github.com/grpc/grpc-web
+[grpc-web-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
 [interceptors]: https://connectrpc.com/docs/kotlin/interceptors
 [license]: https://github.com/connectrpc/connect-kotlin/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers

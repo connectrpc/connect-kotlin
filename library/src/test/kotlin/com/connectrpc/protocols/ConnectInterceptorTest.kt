@@ -31,7 +31,6 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.TracingInfo
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import okio.internal.commonAsUtf8ToByteArray
@@ -47,9 +46,7 @@ class ConnectInterceptorTest {
     private val errorDetailParser: ErrorDetailParser = mock { }
     private val serializationStrategy: SerializationStrategy = mock { }
 
-    private val moshi = Moshi.Builder()
-        .add(KotlinJsonAdapterFactory())
-        .build()
+    private val moshi = Moshi.Builder().build()
 
     @Before
     fun setup() {

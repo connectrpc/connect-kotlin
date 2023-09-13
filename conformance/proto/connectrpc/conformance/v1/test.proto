@@ -19,11 +19,11 @@
 // call that always returns a readable non-ASCII error with error details.
 // FailStreamingOutputCall(StreamingOutputCallRequest) returns (stream StreamingOutputCallResponse):
 // this RPC is a server streaming call that always returns a readable non-ASCII error with error details.
-// UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty): this RPC
+// UnimplementedStreamingOutputCall(google.protobuf.Empty) returns (stream google.protobuf.Empty): this RPC
 // is a server streaming call that will not be implemented.
 //
 // The UnimplementedService has been extended to include the following RPCs:
-// UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty): this RPC
+// UnimplementedStreamingOutputCall(google.protobuf.Empty) returns (stream google.protobuf.Empty): this RPC
 // is a server streaming call that will not be implemented.
 
 // Copyright 2015-2016 gRPC authors.
@@ -45,16 +45,16 @@
 
 syntax = "proto3";
 
-package grpc.testing;
+package connectrpc.conformance.v1;
 
-import "grpc/testing/empty.proto";
-import "grpc/testing/messages.proto";
+import "connectrpc/conformance/v1/messages.proto";
+import "google/protobuf/empty.proto";
 
 // A simple service to test the various types of RPCs and experiment with
 // performance with various types of payload.
 service TestService {
   // One empty request followed by one empty response.
-  rpc EmptyCall(grpc.testing.Empty) returns (grpc.testing.Empty);
+  rpc EmptyCall(google.protobuf.Empty) returns (google.protobuf.Empty);
 
   // One request followed by one response.
   rpc UnaryCall(SimpleRequest) returns (SimpleResponse);
@@ -95,27 +95,27 @@ service TestService {
 
   // The test server will not implement this method. It will be used
   // to test the behavior when clients call unimplemented methods.
-  rpc UnimplementedCall(grpc.testing.Empty) returns (grpc.testing.Empty);
+  rpc UnimplementedCall(google.protobuf.Empty) returns (google.protobuf.Empty);
 
   // The test server will not implement this method. It will be used
   // to test the behavior when clients call unimplemented streaming output methods.
-  rpc UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty);
+  rpc UnimplementedStreamingOutputCall(google.protobuf.Empty) returns (stream google.protobuf.Empty);
 }
 
 // A simple service NOT implemented at servers so clients can test for
 // that case.
 service UnimplementedService {
   // A call that no server should implement
-  rpc UnimplementedCall(grpc.testing.Empty) returns (grpc.testing.Empty);
+  rpc UnimplementedCall(google.protobuf.Empty) returns (google.protobuf.Empty);
 
   // A call that no server should implement
-  rpc UnimplementedStreamingOutputCall(grpc.testing.Empty) returns (stream grpc.testing.Empty);
+  rpc UnimplementedStreamingOutputCall(google.protobuf.Empty) returns (stream google.protobuf.Empty);
 }
 
 // A service used to control reconnect server.
 service ReconnectService {
-  rpc Start(grpc.testing.ReconnectParams) returns (grpc.testing.Empty);
-  rpc Stop(grpc.testing.Empty) returns (grpc.testing.ReconnectInfo);
+  rpc Start(ReconnectParams) returns (google.protobuf.Empty);
+  rpc Stop(google.protobuf.Empty) returns (ReconnectInfo);
 }
 
 // A service used to obtain stats for verifying LB behavior.
@@ -129,8 +129,8 @@ service LoadBalancerStatsService {
 
 // A service to remotely control health status of an xDS test server.
 service XdsUpdateHealthService {
-  rpc SetServing(grpc.testing.Empty) returns (grpc.testing.Empty);
-  rpc SetNotServing(grpc.testing.Empty) returns (grpc.testing.Empty);
+  rpc SetServing(google.protobuf.Empty) returns (google.protobuf.Empty);
+  rpc SetNotServing(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
 // A service to dynamically update the configuration of an xDS test client.
