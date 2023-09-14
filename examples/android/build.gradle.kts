@@ -7,7 +7,7 @@ android {
     compileSdk = 32
 
     defaultConfig {
-        applicationId = "build.buf.connect.examples.android"
+        applicationId = "com.connectrpc.examples.android"
         minSdk = 28
         targetSdk = 32
         versionCode = 1
@@ -19,7 +19,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    namespace = "build.buf.connect.examples.android"
+    namespace = "com.connectrpc.examples.android"
 }
 
 dependencies {

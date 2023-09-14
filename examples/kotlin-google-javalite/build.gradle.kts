@@ -4,7 +4,7 @@ plugins {
 }
 
 application {
-    mainClass.set("build.buf.connect.examples.kotlin.Main")
+    mainClass.set("com.connectrpc.examples.kotlin.Main")
 }
 
 tasks {

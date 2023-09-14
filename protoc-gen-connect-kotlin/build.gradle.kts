@@ -12,7 +12,7 @@ plugins {
 }
 
 application {
-    mainClass.set("build.buf.protocgen.connect.Main")
+    mainClass.set("com.connectrpc.protocgen.connect.Main")
 }
 
 tasks {
