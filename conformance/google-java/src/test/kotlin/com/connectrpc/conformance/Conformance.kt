@@ -14,14 +14,14 @@
 
 package com.connectrpc.conformance
 
-import build.buf.connect.Code
-import build.buf.connect.ProtocolClientConfig
-import build.buf.connect.RequestCompression
-import build.buf.connect.compression.GzipCompressionPool
-import build.buf.connect.extensions.GoogleJavaProtobufStrategy
-import build.buf.connect.impl.ProtocolClient
-import build.buf.connect.okhttp.ConnectOkHttpClient
-import build.buf.connect.protocols.NetworkProtocol
+import com.connectrpc.Code
+import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.RequestCompression
+import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.extensions.GoogleJavaProtobufStrategy
+import com.connectrpc.impl.ProtocolClient
+import com.connectrpc.okhttp.ConnectOkHttpClient
+import com.connectrpc.protocols.NetworkProtocol
 import com.connectrpc.conformance.ssl.sslContext
 import com.connectrpc.conformance.v1.ErrorDetail
 import com.connectrpc.conformance.v1.TestServiceClient
