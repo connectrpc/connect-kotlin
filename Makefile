@@ -97,7 +97,7 @@ licenseheaders: $(BIN)/license-headers ## Format all files, adding license heade
 		<(git ls-files --deleted | sort -u) | \
 		xargs $(BIN)/license-header \
 			--license-type "apache" \
-			--copyright-holder "Buf Technologies, Inc." \
+			--copyright-holder "The Connect Authors" \
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: lint
