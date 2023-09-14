@@ -18,10 +18,6 @@ import com.connectrpc.Code
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.compression.GzipCompressionPool
-import com.connectrpc.extensions.GoogleJavaProtobufStrategy
-import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.okhttp.ConnectOkHttpClient
-import com.connectrpc.protocols.NetworkProtocol
 import com.connectrpc.conformance.ssl.sslContext
 import com.connectrpc.conformance.v1.ErrorDetail
 import com.connectrpc.conformance.v1.TestServiceClient
@@ -32,6 +28,10 @@ import com.connectrpc.conformance.v1.payload
 import com.connectrpc.conformance.v1.responseParameters
 import com.connectrpc.conformance.v1.simpleRequest
 import com.connectrpc.conformance.v1.streamingOutputCallRequest
+import com.connectrpc.extensions.GoogleJavaProtobufStrategy
+import com.connectrpc.impl.ProtocolClient
+import com.connectrpc.okhttp.ConnectOkHttpClient
+import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.ByteString
 import com.google.protobuf.Empty
 import kotlinx.coroutines.Dispatchers
