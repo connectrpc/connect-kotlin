@@ -49,36 +49,38 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 import java.time.Duration
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-
 @RunWith(Parameterized::class)
 class Conformance(
-    private val protocol: NetworkProtocol
+    private val clientProtocol: NetworkProtocol,
+    private val serverProtocol: NetworkProtocol
 ) {
-    private lateinit var connectClient: ProtocolClient
+    private lateinit var protocolClient: ProtocolClient
     private lateinit var shortTimeoutConnectClient: ProtocolClient
     private lateinit var unimplementedServiceClient: UnimplementedServiceClient
-    private lateinit var testServiceConnectClient: TestServiceClient
+    private lateinit var testServiceClient: TestServiceClient
 
     companion object {
-        const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
+        private const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
 
         @JvmStatic
-        @Parameters(name = "protocol")
-        fun data(): Iterable<NetworkProtocol> {
+        @Parameters(name = "client={0},server={1}")
+        fun data(): Iterable<Array<NetworkProtocol>> {
             return arrayListOf(
-                NetworkProtocol.CONNECT,
-                NetworkProtocol.GRPC
+                arrayOf(NetworkProtocol.CONNECT, NetworkProtocol.CONNECT),
+                arrayOf(NetworkProtocol.GRPC, NetworkProtocol.CONNECT),
+                arrayOf(NetworkProtocol.GRPC, NetworkProtocol.GRPC)
             )
         }
 
         @JvmField
         @ClassRule
-        val CONFORMANCE_CONTAINER = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
+        val CONFORMANCE_CONTAINER_CONNECT = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
             .withExposedPorts(8080, 8081)
             .withCommand(
                 "/usr/local/bin/serverconnect",
@@ -91,11 +93,28 @@ class Conformance(
                 "--key",
                 "cert/localhost.key"
             )
+            .waitingFor(HostPortWaitStrategy().forPorts(8081))
+
+        @JvmField
+        @ClassRule
+        val CONFORMANCE_CONTAINER_GRPC = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
+            .withExposedPorts(8081)
+            .withCommand(
+                "/usr/local/bin/servergrpc",
+                "--port",
+                "8081",
+                "--cert",
+                "cert/localhost.crt",
+                "--key",
+                "cert/localhost.key"
+            )
+            .waitingFor(HostPortWaitStrategy().forPorts(8081))
     }
 
     @Before
     fun before() {
-        val host = "https://localhost:${CONFORMANCE_CONTAINER.getMappedPort(8081)}"
+        val serverPort = if (serverProtocol == NetworkProtocol.CONNECT) CONFORMANCE_CONTAINER_CONNECT.getMappedPort(8081) else CONFORMANCE_CONTAINER_GRPC.getMappedPort(8081)
+        val host = "https://localhost:$serverPort"
         val (sslSocketFactory, trustManager) = sslContext()
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
@@ -117,23 +136,23 @@ class Conformance(
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaProtobufStrategy(),
-                networkProtocol = protocol,
+                networkProtocol = clientProtocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
                 compressionPools = listOf(GzipCompressionPool)
             )
         )
-        connectClient = ProtocolClient(
+        protocolClient = ProtocolClient(
             httpClient = ConnectOkHttpClient(client),
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaProtobufStrategy(),
-                networkProtocol = protocol,
+                networkProtocol = clientProtocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
                 compressionPools = listOf(GzipCompressionPool)
             )
         )
-        testServiceConnectClient = TestServiceClient(connectClient)
-        unimplementedServiceClient = UnimplementedServiceClient(connectClient)
+        testServiceClient = TestServiceClient(protocolClient)
+        unimplementedServiceClient = UnimplementedServiceClient(protocolClient)
     }
 
     @Test
@@ -143,7 +162,7 @@ class Conformance(
             reason = "soirée 🎉"
             domain = "connect-conformance"
         }
-        val stream = testServiceConnectClient.failStreamingOutputCall()
+        val stream = testServiceClient.failStreamingOutputCall()
         val sizes = listOf(
             31415,
             9,
@@ -189,7 +208,7 @@ class Conformance(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(Empty.newBuilder().build()) { response ->
+        testServiceClient.emptyCall(Empty.newBuilder().build()) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -212,7 +231,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
+        testServiceClient.unaryCall(message) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -242,7 +261,7 @@ class Conformance(
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message, headers) { response ->
+        testServiceClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -267,7 +286,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
+        testServiceClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.error).isNotNull()
@@ -326,7 +345,7 @@ class Conformance(
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(
+        testServiceClient.unaryCall(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -352,7 +371,7 @@ class Conformance(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(Empty.newBuilder().build()) { response ->
+        testServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -378,7 +397,7 @@ class Conformance(
             domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
+        testServiceClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.error
@@ -398,7 +417,7 @@ class Conformance(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
@@ -416,7 +435,7 @@ class Conformance(
                 body = ByteString.copyFrom(ByteArray(size))
             }
         }
-        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
+        val response = testServiceClient.unaryCallBlocking(message).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
@@ -441,7 +460,7 @@ class Conformance(
             responseSize = size
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
-        val response = testServiceConnectClient.unaryCallBlocking(message, headers).execute()
+        val response = testServiceClient.unaryCallBlocking(message, headers).execute()
         assertThat(response.code).isEqualTo(Code.OK)
         assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
         assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -461,7 +480,7 @@ class Conformance(
                 message = "test status message"
             }
         }
-        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
+        val response = testServiceClient.unaryCallBlocking(message).execute()
         assertThat(response.code).isEqualTo(Code.UNKNOWN)
         response.failure { errorResponse ->
             assertThat(errorResponse.error).isNotNull()
@@ -477,7 +496,7 @@ class Conformance(
     fun specialStatusBlocking(): Unit = runBlocking {
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
-        val response = testServiceConnectClient.unaryCallBlocking(
+        val response = testServiceClient.unaryCallBlocking(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -498,7 +517,7 @@ class Conformance(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
@@ -514,7 +533,7 @@ class Conformance(
             reason = "soirée 🎉"
             domain = "connect-conformance"
         }
-        val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
+        val response = testServiceClient.failUnaryCallBlocking(simpleRequest {}).execute()
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         response.failure { errorResponse ->
             val error = errorResponse.error

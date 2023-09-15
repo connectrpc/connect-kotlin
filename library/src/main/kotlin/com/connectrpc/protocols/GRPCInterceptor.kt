@@ -72,14 +72,15 @@ internal class GRPCInterceptor(
                 )
             },
             responseFunction = { response ->
+                val headers = response.headers
                 val trailers = response.trailers
-                val completion = completionParser.parse(trailers)
+                // Handle Trailers-Only response: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#responses
+                val completion = completionParser.parse(trailers.ifEmpty { headers })
                 val code = completion?.code ?: Code.UNKNOWN
-                val responseHeaders = response.headers.toMutableMap()
                 if (response.code != Code.OK) {
                     return@UnaryFunction HTTPResponse(
                         code = response.code,
-                        headers = response.headers.toMutableMap(),
+                        headers = headers,
                         message = Buffer(),
                         trailers = trailers,
                         error = response.error,
@@ -87,7 +88,7 @@ internal class GRPCInterceptor(
                     )
                 }
                 val compressionPool =
-                    clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
+                    clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
                 if (code == Code.OK) {
                     val (_, message) = Envelope.unpackWithHeaderByte(
                         response.message.buffer,
@@ -95,7 +96,7 @@ internal class GRPCInterceptor(
                     )
                     HTTPResponse(
                         code = code,
-                        headers = responseHeaders,
+                        headers = headers,
                         message = message,
                         trailers = trailers,
                         error = response.error,
@@ -109,7 +110,7 @@ internal class GRPCInterceptor(
                     }
                     HTTPResponse(
                         code = code,
-                        headers = responseHeaders,
+                        headers = headers,
                         message = result,
                         trailers = trailers,
                         error = ConnectError(
@@ -142,7 +143,7 @@ internal class GRPCInterceptor(
             streamResultFunction = { res ->
                 val streamResult = res.fold(
                     onHeaders = { result ->
-                        val responseHeaders = result.headers.filter { entry -> !entry.key.startsWith("trailer") }.toMutableMap()
+                        val responseHeaders = result.headers.filter { entry -> !entry.key.startsWith("trailer") }
                         responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
                         StreamResult.Headers(responseHeaders)
                     },

@@ -93,7 +93,7 @@ internal class ConnectInterceptor(
                 trailers.putAll(response.headers.toTrailers())
                 trailers.putAll(response.trailers)
                 val responseHeaders =
-                    response.headers.filter { entry -> !entry.key.startsWith("trailer") }.toMutableMap()
+                    response.headers.filter { entry -> !entry.key.startsWith("trailer") }
                 val compressionPool = clientConfig.compressionPool(responseHeaders[CONTENT_ENCODING]?.first())
                 val (code, connectError) = if (response.code != Code.OK) {
                     val error = parseConnectUnaryError(code = response.code, response.headers, response.message.buffer)
@@ -150,7 +150,7 @@ internal class ConnectInterceptor(
                 val streamResult: StreamResult<Buffer> = res.fold(
                     onHeaders = { result ->
                         val responseHeaders =
-                            result.headers.filter { entry -> !entry.key.startsWith("trailer") }.toMutableMap()
+                            result.headers.filter { entry -> !entry.key.startsWith("trailer") }
                         responseCompressionPool =
                             clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())
                         StreamResult.Headers(responseHeaders)

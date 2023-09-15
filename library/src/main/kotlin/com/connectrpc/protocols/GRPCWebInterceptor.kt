@@ -75,19 +75,19 @@ internal class GRPCWebInterceptor(
                 )
             },
             responseFunction = { response ->
+                val headers = response.headers
                 if (response.code != Code.OK) {
                     return@UnaryFunction HTTPResponse(
                         code = response.code,
-                        headers = response.headers.toMutableMap(),
+                        headers = headers,
                         message = Buffer(),
                         trailers = emptyMap(),
                         error = response.error,
                         tracingInfo = response.tracingInfo
                     )
                 }
-                val responseHeaders = response.headers.toMutableMap()
                 val compressionPool =
-                    clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
+                    clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
                 // gRPC Web returns data in 2 chunks (either/both of which may be compressed):
                 // 1. OPTIONAL (when not trailers-only): The (headers and length prefixed)
                 //    message data.
@@ -106,7 +106,7 @@ internal class GRPCWebInterceptor(
                     }
                     HTTPResponse(
                         code = code,
-                        headers = responseHeaders,
+                        headers = headers,
                         message = result,
                         trailers = trailers,
                         error = ConnectError(
@@ -160,7 +160,7 @@ internal class GRPCWebInterceptor(
                     }
                     HTTPResponse(
                         code = finalCode,
-                        headers = responseHeaders,
+                        headers = headers,
                         message = unpacked,
                         trailers = finalTrailers,
                         error = error,
@@ -188,7 +188,7 @@ internal class GRPCWebInterceptor(
             streamResultFunction = { res ->
                 val streamResult = res.fold(
                     onHeaders = { result ->
-                        val responseHeaders = result.headers.filter { entry -> !entry.key.startsWith("trailer") }.toMutableMap()
+                        val responseHeaders = result.headers.filter { entry -> !entry.key.startsWith("trailer") }
                         responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
                         // Trailers are passed in the headers for GRPC.
                         val streamTrailers: Trailers = responseHeaders
