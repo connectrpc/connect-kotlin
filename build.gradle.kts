@@ -85,8 +85,8 @@ allprojects {
             pom {
                 description.set("Simple, reliable, interoperable. A better RPC.")
                 name.set("connect-library") // This is overwritten in subprojects.
-                group = "build.buf"
-                url.set("https://github.com/bufbuild/connect-kotlin")
+                group = "com.connectrpc"
+                url.set("https://github.com/connectrpc/connect-kotlin")
                 licenses {
                     license {
                         name.set("The Apache Software License, Version 2.0")
@@ -96,14 +96,14 @@ allprojects {
                 }
                 developers {
                     developer {
-                        id.set("bufbuild")
-                        name.set("Buf Technologies")
+                        id.set("connectrpc")
+                        name.set("The Connect Authors")
                     }
                 }
                 scm {
-                    url.set("https://github.com/bufbuild/connect-kotlin")
-                    connection.set("scm:git:https://github.com/bufbuild/connect-kotlin.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/bufbuild/connect-kotlin.git")
+                    url.set("https://github.com/connectrpc/connect-kotlin")
+                    connection.set("scm:git:https://github.com/connectrpc/connect-kotlin.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/connectrpc/connect-kotlin.git")
                 }
             }
         }

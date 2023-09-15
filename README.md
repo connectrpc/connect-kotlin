@@ -1,4 +1,4 @@
-![Build](https://github.com/bufbuild/connect-kotlin/actions/workflows/ci.yml/badge.svg)
+![Build](https://github.com/connectrpc/connect-kotlin/actions/workflows/ci.yml/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Connect-Kotlin
@@ -23,9 +23,9 @@ public class ElizaServiceClient(
         request,
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Say",
-            buf.connect.demo.eliza.v1.SayRequest::class,
-            buf.connect.demo.eliza.v1.SayResponse::class
+            "connectrpc.eliza.v1.ElizaService/Say",
+            com.connectrpc.eliza.v1.SayRequest::class,
+            com.connectrpc.eliza.v1.SayResponse::class
         )
     )
 
@@ -33,9 +33,9 @@ public class ElizaServiceClient(
         BidirectionalStreamInterface<ConverseRequest, ConverseResponse> = client.stream(
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Converse",
-            buf.connect.demo.eliza.v1.ConverseRequest::class,
-            buf.connect.demo.eliza.v1.ConverseResponse::class
+            "connectrpc.eliza.v1.ElizaService/Converse",
+            com.connectrpc.eliza.v1.ConverseRequest::class,
+            com.connectrpc.eliza.v1.ConverseResponse::class
         )
     )
 
@@ -43,9 +43,9 @@ public class ElizaServiceClient(
         ServerOnlyStreamInterface<IntroduceRequest, IntroduceResponse> = client.serverStream(
         headers,
         MethodSpec(
-            "buf.connect.demo.eliza.v1.ElizaService/Introduce",
-            buf.connect.demo.eliza.v1.IntroduceRequest::class,
-            buf.connect.demo.eliza.v1.IntroduceResponse::class
+            "connectrpc.eliza.v1.ElizaService/Introduce",
+            com.connectrpc.eliza.v1.IntroduceRequest::class,
+            com.connectrpc.eliza.v1.IntroduceResponse::class
         )
     )
 }
@@ -100,7 +100,7 @@ It only takes ~10 minutes to complete a working chat app that uses Connect-Kotli
 
 Comprehensive documentation for everything, including
 [interceptors][interceptors], [streaming][streaming], and [error handling][error-handling]
-is available on the [connect.build website][getting-started].
+is available on the [connectrpc.com website][getting-started].
 
 ## Generation Options
 
@@ -162,17 +162,17 @@ Offered under the [Apache 2 license][license].
 [buf-studio]: https://buf.build/studio
 [conformance]: https://github.com/connectrpc/conformance
 [connect-go]: https://github.com/connectrpc/connect-go
-[connect-protocol]: https://connect.build/docs/protocol
+[connect-protocol]: https://connectrpc.com/docs/protocol
 [connect-swift]: https://github.com/bufbuild/connect-swift
-[connect-es]: https://github.com/connectrpc/connect-es
-[error-handling]: https://connect.build/docs/kotlin/errors
-[getting-started]: https://connect.build/docs/kotlin/getting-started
+[connect-es]: https://www.npmjs.com/package/@connectrpc/connect
+[error-handling]: https://connectrpc.com/docs/kotlin/errors
+[getting-started]: https://connectrpc.com/docs/kotlin/getting-started
 [grpc-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 [grpc-web-protocol]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
-[interceptors]: https://connect.build/docs/kotlin/interceptors
-[license]: https://github.com/bufbuild/connect-go/blob/main/LICENSE
+[interceptors]: https://connectrpc.com/docs/kotlin/interceptors
+[license]: https://github.com/connectrpc/connect-kotlin/blob/main/LICENSE
 [protobuf]: https://developers.google.com/protocol-buffers
-[protocol]: https://connect.build/docs/protocol
-[server reflection]: https://github.com/bufbuild/connect-grpcreflect-go
+[protocol]: https://connectrpc.com/docs/protocol
+[server reflection]: https://github.com/connectrpc/grpcreflect-go
 [slack]: https://buf.build/links/slack
-[streaming]: https://connect.build/docs/kotlin/using-clients#using-generated-clients
+[streaming]: https://connectrpc.com/docs/kotlin/using-clients#using-generated-clients

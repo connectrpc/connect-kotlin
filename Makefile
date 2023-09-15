@@ -80,7 +80,7 @@ generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformanc
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.
-	buf generate --template examples/buf.gen.yaml -o examples buf.build/bufbuild/eliza
+	buf generate --template examples/buf.gen.yaml -o examples buf.build/connectrpc/eliza
 
 .PHONY: help
 help: ## Describe useful make targets.
@@ -97,7 +97,7 @@ licenseheaders: $(BIN)/license-headers ## Format all files, adding license heade
 		<(git ls-files --deleted | sort -u) | \
 		xargs $(BIN)/license-header \
 			--license-type "apache" \
-			--copyright-holder "Buf Technologies, Inc." \
+			--copyright-holder "The Connect Authors" \
 			--year-range "$(LICENSE_HEADER_YEAR_RANGE)"
 
 .PHONY: lint
