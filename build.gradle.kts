@@ -96,8 +96,8 @@ allprojects {
                 }
                 developers {
                     developer {
-                        id.set("bufbuild")
-                        name.set("Buf Technologies")
+                        id.set("connectrpc")
+                        name.set("The Connect Authors")
                     }
                 }
                 scm {
