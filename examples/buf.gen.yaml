@@ -1,17 +1,18 @@
 version: v1
 managed:
   enabled: true
-  java_package_prefix: "build"
+  java_package_prefix: "com"
 plugins:
-  - name: connect-kotlin
-    out: generated-google-java/src/main/kotlin
-    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
-  - name: java
-    out: generated-google-java/src/main/java
-
-  - name: connect-kotlin
-    out: generated-google-javalite/src/main/kotlin
-    path: ./protoc-gen-connect-kotlin/protoc-gen-connect-kotlin
-  - name: java
-    out: generated-google-javalite/src/main/java
+  - plugin: connect-kotlin
+    out: generated-google-java/build/generated/sources/bufgen
+    path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
+  - plugin: java
+    out: generated-google-java/build/generated/sources/bufgen
+    protoc_path: .tmp/bin/protoc
+  - plugin: connect-kotlin
+    out: generated-google-javalite/build/generated/sources/bufgen
+    path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
+  - plugin: java
+    out: generated-google-javalite/build/generated/sources/bufgen
+    protoc_path: .tmp/bin/protoc
     opt: lite

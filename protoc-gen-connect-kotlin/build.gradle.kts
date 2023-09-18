@@ -11,25 +11,23 @@ plugins {
     id("com.vanniktech.maven.publish.base")
 }
 
+application {
+    mainClass.set("com.connectrpc.protocgen.connect.Main")
+}
+
 tasks {
     jar {
         manifest {
-            attributes(mapOf("Main-Class" to "build.buf.protocgen.connect.Main"))
+            attributes(mapOf("Main-Class" to application.mainClass.get()))
         }
-        duplicatesStrategy = DuplicatesStrategy.WARN
-        // This line of code recursively collects and copies all of a project's files
-        // and adds them to the JAR itself. One can extend this task, to skip certain
-        // files or particular types at will
-        val sourcesMain = sourceSets.main.get()
-        val contents = configurations.runtimeClasspath.get()
-            .map { if (it.isDirectory) it else zipTree(it) } +
-            sourcesMain.output
-        from(contents)
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+            exclude("META-INF/**/*")
+        }
     }
 }
 
 dependencies {
-    implementation(project(":okhttp"))
+    implementation(project(":library"))
     implementation(libs.protobuf.java)
     implementation(libs.kotlinpoet)
 
@@ -37,6 +35,14 @@ dependencies {
     testImplementation(libs.assertj)
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
+}
+
+sourceSets {
+    test {
+        java {
+            srcDir(layout.buildDirectory.dir("generated/sources/bufgen"))
+        }
+    }
 }
 
 configure<MavenPublishBaseExtension> {
