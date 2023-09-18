@@ -681,7 +681,7 @@ class Conformance(
     fun failUnaryCallback(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
-            domain = "connect-crosstest"
+            domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
