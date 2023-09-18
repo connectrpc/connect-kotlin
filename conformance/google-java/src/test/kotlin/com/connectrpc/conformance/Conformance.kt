@@ -33,7 +33,6 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.ByteString
-import com.google.protobuf.Empty
 import com.google.protobuf.empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -209,12 +208,12 @@ class Conformance(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.emptyCall(Empty.newBuilder().build()) { response ->
+        testServiceClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
-                assertThat(success.message).isEqualTo(Empty.newBuilder().build())
+                assertThat(success.message).isEqualTo(empty {})
                 countDownLatch.countDown()
             }
         }
@@ -372,7 +371,7 @@ class Conformance(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
+        testServiceClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -383,7 +382,7 @@ class Conformance(
     @Test
     fun unimplementedService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        unimplementedServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
+        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -418,12 +417,12 @@ class Conformance(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceClient.emptyCallBlocking(empty {}).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
         response.success { success ->
-            assertThat(success.message).isEqualTo(Empty.newBuilder().build())
+            assertThat(success.message).isEqualTo(empty {})
         }
     }
 
@@ -518,13 +517,13 @@ class Conformance(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceClient.unimplementedCallBlocking(empty {}).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
     @Test
     fun unimplementedServiceBlocking(): Unit = runBlocking {
-        val response = unimplementedServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
+        val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
@@ -551,7 +550,7 @@ class Conformance(
     @Test
     fun emptyUnaryCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(empty {}) { response ->
+        testServiceClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -574,7 +573,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
+        testServiceClient.unaryCall(message) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -604,7 +603,7 @@ class Conformance(
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message, headers) { response ->
+        testServiceClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -629,7 +628,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(message) { response ->
+        testServiceClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.error).isNotNull()
@@ -651,7 +650,7 @@ class Conformance(
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unaryCall(
+        testServiceClient.unaryCall(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -677,7 +676,7 @@ class Conformance(
     @Test
     fun unimplementedMethodCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(empty {}) { response ->
+        testServiceClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -703,7 +702,7 @@ class Conformance(
             domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
+        testServiceClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.error
