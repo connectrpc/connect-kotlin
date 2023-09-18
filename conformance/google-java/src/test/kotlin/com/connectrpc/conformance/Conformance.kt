@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit
 @RunWith(Parameterized::class)
 class Conformance(
     private val clientProtocol: NetworkProtocol,
-    private val serverProtocol: NetworkProtocol
+    private val serverType: ServerType
 ) {
     private lateinit var protocolClient: ProtocolClient
     private lateinit var shortTimeoutConnectClient: ProtocolClient
@@ -70,11 +70,11 @@ class Conformance(
 
         @JvmStatic
         @Parameters(name = "client={0},server={1}")
-        fun data(): Iterable<Array<NetworkProtocol>> {
+        fun data(): Iterable<Array<Any>> {
             return arrayListOf(
-                arrayOf(NetworkProtocol.CONNECT, NetworkProtocol.CONNECT),
-                arrayOf(NetworkProtocol.GRPC, NetworkProtocol.CONNECT),
-                arrayOf(NetworkProtocol.GRPC, NetworkProtocol.GRPC)
+                arrayOf(NetworkProtocol.CONNECT, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC, ServerType.GRPC_GO)
             )
         }
 
@@ -113,7 +113,7 @@ class Conformance(
 
     @Before
     fun before() {
-        val serverPort = if (serverProtocol == NetworkProtocol.CONNECT) CONFORMANCE_CONTAINER_CONNECT.getMappedPort(8081) else CONFORMANCE_CONTAINER_GRPC.getMappedPort(8081)
+        val serverPort = if (serverType == ServerType.CONNECT_GO) CONFORMANCE_CONTAINER_CONNECT.getMappedPort(8081) else CONFORMANCE_CONTAINER_GRPC.getMappedPort(8081)
         val host = "https://localhost:$serverPort"
         val (sslSocketFactory, trustManager) = sslContext()
         val client = OkHttpClient.Builder()
