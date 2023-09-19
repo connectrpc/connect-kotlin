@@ -21,12 +21,10 @@ import com.connectrpc.Interceptor
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.StreamFunction
 import com.connectrpc.StreamResult
-import com.connectrpc.Trailers
 import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPResponse
 import okio.Buffer
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The gRPC HTTP implementation

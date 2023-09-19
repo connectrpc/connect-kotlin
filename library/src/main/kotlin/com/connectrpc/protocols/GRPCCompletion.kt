@@ -17,7 +17,6 @@ package com.connectrpc.protocols
 import com.connectrpc.Code
 import com.connectrpc.ConnectError
 import com.connectrpc.ConnectErrorDetail
-import com.connectrpc.ErrorDetailParser
 import com.connectrpc.Headers
 import com.connectrpc.SerializationStrategy
 import okio.ByteString

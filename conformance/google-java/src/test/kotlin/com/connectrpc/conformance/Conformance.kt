@@ -57,13 +57,13 @@ import java.util.concurrent.TimeUnit
 
 @RunWith(Parameterized::class)
 class Conformance(
-    private val clientProtocol: NetworkProtocol,
+    private val protocol: NetworkProtocol,
     private val serverType: ServerType
 ) {
-    private lateinit var protocolClient: ProtocolClient
+    private lateinit var connectClient: ProtocolClient
     private lateinit var shortTimeoutConnectClient: ProtocolClient
     private lateinit var unimplementedServiceClient: UnimplementedServiceClient
-    private lateinit var testServiceClient: TestServiceClient
+    private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
         private const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
@@ -137,23 +137,23 @@ class Conformance(
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaProtobufStrategy(),
-                networkProtocol = clientProtocol,
+                networkProtocol = protocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
                 compressionPools = listOf(GzipCompressionPool)
             )
         )
-        protocolClient = ProtocolClient(
+        connectClient = ProtocolClient(
             httpClient = ConnectOkHttpClient(client),
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaProtobufStrategy(),
-                networkProtocol = clientProtocol,
+                networkProtocol = protocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
                 compressionPools = listOf(GzipCompressionPool)
             )
         )
-        testServiceClient = TestServiceClient(protocolClient)
-        unimplementedServiceClient = UnimplementedServiceClient(protocolClient)
+        testServiceConnectClient = TestServiceClient(connectClient)
+        unimplementedServiceClient = UnimplementedServiceClient(connectClient)
     }
 
     @Test
@@ -163,7 +163,7 @@ class Conformance(
             reason = "soirée 🎉"
             domain = "connect-conformance"
         }
-        val stream = testServiceClient.failStreamingOutputCall()
+        val stream = testServiceConnectClient.failStreamingOutputCall()
         val sizes = listOf(
             31415,
             9,
@@ -212,7 +212,7 @@ class Conformance(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.emptyCall(empty {}) { response ->
+        testServiceConnectClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -235,7 +235,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message) { response ->
+        testServiceConnectClient.unaryCall(message) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -265,7 +265,7 @@ class Conformance(
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message, headers) { response ->
+        testServiceConnectClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -290,7 +290,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message) { response ->
+        testServiceConnectClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.error).isNotNull()
@@ -352,7 +352,7 @@ class Conformance(
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(
+        testServiceConnectClient.unaryCall(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -378,7 +378,7 @@ class Conformance(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unimplementedCall(empty {}) { response ->
+        testServiceConnectClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -431,7 +431,7 @@ class Conformance(
             domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.failUnaryCall(simpleRequest {}) { response ->
+        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.error
@@ -451,7 +451,7 @@ class Conformance(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceClient.emptyCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.emptyCallBlocking(empty {}).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
@@ -469,7 +469,7 @@ class Conformance(
                 body = ByteString.copyFrom(ByteArray(size))
             }
         }
-        val response = testServiceClient.unaryCallBlocking(message).execute()
+        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
@@ -494,7 +494,7 @@ class Conformance(
             responseSize = size
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
-        val response = testServiceClient.unaryCallBlocking(message, headers).execute()
+        val response = testServiceConnectClient.unaryCallBlocking(message, headers).execute()
         assertThat(response.code).isEqualTo(Code.OK)
         assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
         assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -514,7 +514,7 @@ class Conformance(
                 message = "test status message"
             }
         }
-        val response = testServiceClient.unaryCallBlocking(message).execute()
+        val response = testServiceConnectClient.unaryCallBlocking(message).execute()
         assertThat(response.code).isEqualTo(Code.UNKNOWN)
         response.failure { errorResponse ->
             assertThat(errorResponse.error).isNotNull()
@@ -530,7 +530,7 @@ class Conformance(
     fun specialStatusBlocking(): Unit = runBlocking {
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
-        val response = testServiceClient.unaryCallBlocking(
+        val response = testServiceConnectClient.unaryCallBlocking(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -551,7 +551,7 @@ class Conformance(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceClient.unimplementedCallBlocking(empty {}).execute()
+        val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
@@ -567,7 +567,7 @@ class Conformance(
             reason = "soirée 🎉"
             domain = "connect-conformance"
         }
-        val response = testServiceClient.failUnaryCallBlocking(simpleRequest {}).execute()
+        val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         response.failure { errorResponse ->
             val error = errorResponse.error
@@ -584,7 +584,7 @@ class Conformance(
     @Test
     fun emptyUnaryCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.emptyCall(empty {}) { response ->
+        testServiceConnectClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -607,7 +607,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message) { response ->
+        testServiceConnectClient.unaryCall(message) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
@@ -637,7 +637,7 @@ class Conformance(
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message, headers) { response ->
+        testServiceConnectClient.unaryCall(message, headers) { response ->
             assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
@@ -662,7 +662,7 @@ class Conformance(
             }
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(message) { response ->
+        testServiceConnectClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.error).isNotNull()
@@ -684,7 +684,7 @@ class Conformance(
         val statusMessage =
             "\\t\\ntest with whitespace\\r\\nand Unicode BMP ☺ and non-BMP \uD83D\uDE08\\t\\n"
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unaryCall(
+        testServiceConnectClient.unaryCall(
             simpleRequest {
                 responseStatus = echoStatus {
                     code = 2
@@ -710,7 +710,7 @@ class Conformance(
     @Test
     fun unimplementedMethodCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.unimplementedCall(empty {}) { response ->
+        testServiceConnectClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -736,7 +736,7 @@ class Conformance(
             domain = "connect-conformance"
         }
         val countDownLatch = CountDownLatch(1)
-        testServiceClient.failUnaryCall(simpleRequest {}) { response ->
+        testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.error
