@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal fun OkHttpClient.initializeStream(
     method: String,
     request: HTTPRequest,
-    onResult: suspend (StreamResult<Buffer>) -> Unit
+    onResult: suspend (StreamResult<Buffer>) -> Unit,
 ): Stream {
     val isSendClosed = AtomicBoolean(false)
     val isReceiveClosed = AtomicBoolean(false)
@@ -71,7 +71,7 @@ internal fun OkHttpClient.initializeStream(
         onSendClose = {
             isSendClosed.set(true)
             duplexRequestBody.close()
-        }
+        },
     ) {
         isReceiveClosed.set(true)
         call.cancel()
@@ -80,7 +80,7 @@ internal fun OkHttpClient.initializeStream(
 
 private class ResponseCallback(
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
-    private val isClosed: AtomicBoolean
+    private val isClosed: AtomicBoolean,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
         runBlocking {
@@ -105,7 +105,7 @@ private class ResponseCallback(
                 val finalResult = StreamResult.Complete<Buffer>(
                     code = code,
                     trailers = response.safeTrailers() ?: emptyMap(),
-                    error = ConnectError(code = code)
+                    error = ConnectError(code = code),
                 )
                 onResult(finalResult)
                 return@runBlocking
@@ -117,7 +117,7 @@ private class ResponseCallback(
                         while (!sourceBuffer.safeExhausted() && !isClosed.get()) {
                             val buffer = readStream(sourceBuffer)
                             val streamResult = StreamResult.Message(
-                                message = buffer
+                                message = buffer,
                             )
                             onResult(streamResult)
                         }
@@ -129,7 +129,7 @@ private class ResponseCallback(
                         val finalResult = StreamResult.Complete<Buffer>(
                             code = code,
                             trailers = response.safeTrailers() ?: emptyMap(),
-                            error = exception
+                            error = exception,
                         )
                         onResult(finalResult)
                     }
@@ -182,7 +182,7 @@ private class ResponseCallback(
 
 internal class PipeDuplexRequestBody(
     private val contentType: MediaType?,
-    pipeMaxBufferSize: Long = 1024 * 1024
+    pipeMaxBufferSize: Long = 1024 * 1024,
 ) : RequestBody() {
     private val pipe = Pipe(pipeMaxBufferSize)
 

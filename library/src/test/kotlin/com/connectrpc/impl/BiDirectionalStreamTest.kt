@@ -43,8 +43,8 @@ class BiDirectionalStreamTest {
             httpClient = mock { },
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -53,8 +53,8 @@ class BiDirectionalStreamTest {
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
-                    String::class
-                )
+                    String::class,
+                ),
             )
 
             stream.close()
@@ -73,8 +73,8 @@ class BiDirectionalStreamTest {
             httpClient = mock { },
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -83,8 +83,8 @@ class BiDirectionalStreamTest {
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
-                    String::class
-                )
+                    String::class,
+                ),
             )
 
             stream.close()

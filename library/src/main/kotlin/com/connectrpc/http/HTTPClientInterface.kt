@@ -50,7 +50,7 @@ interface HTTPClientInterface {
 class Stream(
     private val onSend: (Buffer) -> Unit,
     private val onSendClose: () -> Unit = {},
-    private val onReceiveClose: () -> Unit = {}
+    private val onReceiveClose: () -> Unit = {},
 ) {
     private val isSendClosed = AtomicReference(false)
     private val isReceiveClosed = AtomicReference(false)

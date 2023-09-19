@@ -14,10 +14,10 @@
 
 package com.connectrpc.extensions
 
+import com.connectrpc.CODEC_NAME_PROTO
 import com.connectrpc.Codec
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.SerializationStrategy
-import com.connectrpc.codecNameProto
 import com.google.protobuf.GeneratedMessageLite
 import kotlin.reflect.KClass
 
@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
  */
 class GoogleJavaLiteProtobufStrategy : SerializationStrategy {
     override fun serializationName(): String {
-        return codecNameProto
+        return CODEC_NAME_PROTO
     }
 
     /**

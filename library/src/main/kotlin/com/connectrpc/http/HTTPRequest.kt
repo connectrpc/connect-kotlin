@@ -31,7 +31,7 @@ class HTTPRequest internal constructor(
     // Body data to send with the request.
     val message: ByteArray? = null,
     // The method spec associated with the request.
-    val methodSpec: MethodSpec<*, *>
+    val methodSpec: MethodSpec<*, *>,
 ) {
     /**
      * Clones the [HTTPRequest] with override values.
@@ -49,14 +49,14 @@ class HTTPRequest internal constructor(
         // Body data to send with the request.
         message: ByteArray? = this.message,
         // The method spec associated with the request.
-        methodSpec: MethodSpec<*, *> = this.methodSpec
+        methodSpec: MethodSpec<*, *> = this.methodSpec,
     ): HTTPRequest {
         return HTTPRequest(
             url,
             contentType,
             headers,
             message,
-            methodSpec
+            methodSpec,
         )
     }
 }

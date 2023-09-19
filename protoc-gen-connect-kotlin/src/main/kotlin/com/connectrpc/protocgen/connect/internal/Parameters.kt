@@ -27,7 +27,7 @@ internal data class Configuration(
     // Enable or disable coroutine signature generation.
     val generateCoroutineMethods: Boolean,
     // Enable or disable blocking unary signature generation.
-    val generateBlockingUnaryMethods: Boolean
+    val generateBlockingUnaryMethods: Boolean,
 )
 
 /**
@@ -43,6 +43,6 @@ internal fun parse(input: String): Configuration {
     return Configuration(
         generateCallbackMethods = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false,
         generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true, // Defaulted to true.
-        generateBlockingUnaryMethods = parameters[BLOCKING_UNARY_SIGNATURE]?.toBoolean() ?: false
+        generateBlockingUnaryMethods = parameters[BLOCKING_UNARY_SIGNATURE]?.toBoolean() ?: false,
     )
 }

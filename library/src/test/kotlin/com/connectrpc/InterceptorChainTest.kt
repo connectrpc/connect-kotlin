@@ -26,10 +26,10 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import java.net.URL
 
-private val methodSpec = MethodSpec(
+private val METHOD_SPEC = MethodSpec(
     path = "",
     requestClass = Any::class,
-    responseClass = Any::class
+    responseClass = Any::class,
 )
 
 class InterceptorChainTest {
@@ -50,13 +50,13 @@ class InterceptorChainTest {
             },
             { _: ProtocolClientConfig ->
                 SimpleInterceptor("4")
-            }
+            },
         )
         val protocolClientConfig = ProtocolClientConfig(
             host = "host",
             serializationStrategy = mock { },
             networkProtocol = NetworkProtocol.CONNECT,
-            interceptors = interceptorFactories
+            interceptors = interceptorFactories,
         )
         unaryChain = protocolClientConfig.createInterceptorChain()
         streamingChain = protocolClientConfig.createStreamingInterceptorChain()
@@ -64,7 +64,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, methodSpec))
+        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, METHOD_SPEC))
         assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -76,7 +76,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, methodSpec))
+        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, METHOD_SPEC))
         assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -112,7 +112,7 @@ class InterceptorChainTest {
                         it.contentType,
                         headers,
                         it.message,
-                        methodSpec
+                        METHOD_SPEC,
                     )
                 },
                 responseFunction = {
@@ -126,9 +126,9 @@ class InterceptorChainTest {
                         it.message,
                         it.trailers,
                         it.tracingInfo,
-                        it.error
+                        it.error,
                     )
-                }
+                },
             )
         }
 
@@ -144,7 +144,7 @@ class InterceptorChainTest {
                         it.contentType,
                         headers,
                         it.message,
-                        methodSpec
+                        METHOD_SPEC,
                     )
                 },
                 requestBodyFunction = {
@@ -160,9 +160,9 @@ class InterceptorChainTest {
                             StreamResult.Headers(headers)
                         },
                         onMessage = { it },
-                        onCompletion = { it }
+                        onCompletion = { it },
                     )
-                }
+                },
             )
         }
     }

@@ -34,7 +34,7 @@ internal const val TRAILERS_BIT = 0b10000000
  * https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
  */
 internal class GRPCWebInterceptor(
-    private val clientConfig: ProtocolClientConfig
+    private val clientConfig: ProtocolClientConfig,
 ) : Interceptor {
     private val serializationStrategy = clientConfig.serializationStrategy
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
@@ -60,7 +60,7 @@ internal class GRPCWebInterceptor(
                 val envelopedMessage = Envelope.pack(
                     requestMessage,
                     requestCompressionPool?.compressionPool,
-                    requestCompressionPool?.minBytes
+                    requestCompressionPool?.minBytes,
                 )
 
                 request.clone(
@@ -68,7 +68,7 @@ internal class GRPCWebInterceptor(
                     // The underlying content type is overridden here.
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
                     headers = requestHeaders.withGRPCRequestHeaders(),
-                    message = envelopedMessage.readByteArray()
+                    message = envelopedMessage.readByteArray(),
                 )
             },
             responseFunction = { response ->
@@ -80,7 +80,7 @@ internal class GRPCWebInterceptor(
                         message = Buffer(),
                         trailers = emptyMap(),
                         error = response.error,
-                        tracingInfo = response.tracingInfo
+                        tracingInfo = response.tracingInfo,
                     )
                 }
                 val compressionPool =
@@ -110,9 +110,9 @@ internal class GRPCWebInterceptor(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),
-                            details = completion?.errorDetails ?: emptyList()
+                            details = completion?.errorDetails ?: emptyList(),
                         ),
-                        tracingInfo = response.tracingInfo
+                        tracingInfo = response.tracingInfo,
                     )
                 } else {
                     // Unpack the current message and trailers.
@@ -126,7 +126,7 @@ internal class GRPCWebInterceptor(
                     // currentMessage will contain remaining bytes unread by unpackWithHeaderByte.
                     val (headerByte, unpacked) = Envelope.unpackWithHeaderByte(
                         currentMessage,
-                        compressionPool
+                        compressionPool,
                     )
                     // Check if the current message contains only trailers.
                     val trailerBuffer = if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
@@ -135,7 +135,7 @@ internal class GRPCWebInterceptor(
                         // The previous chunk is the message which means this is the trailers.
                         val (_, trailerBuffer) = Envelope.unpackWithHeaderByte(
                             responseBuffer,
-                            compressionPool
+                            compressionPool,
                         )
                         trailerBuffer
                     }
@@ -150,7 +150,7 @@ internal class GRPCWebInterceptor(
                             code = finalCode,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = errorMessage.utf8(),
-                            details = completionWithMessage.errorDetails
+                            details = completionWithMessage.errorDetails,
                         )
                     } else {
                         null
@@ -161,10 +161,10 @@ internal class GRPCWebInterceptor(
                         message = unpacked,
                         trailers = finalTrailers,
                         error = error,
-                        tracingInfo = response.tracingInfo
+                        tracingInfo = response.tracingInfo,
                     )
                 }
-            }
+            },
         )
     }
 
@@ -175,7 +175,7 @@ internal class GRPCWebInterceptor(
                     url = request.url,
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
                     headers = request.headers.withGRPCRequestHeaders(),
-                    message = request.message
+                    message = request.message,
                 )
             },
             requestBodyFunction = { buffer ->
@@ -193,7 +193,7 @@ internal class GRPCWebInterceptor(
                             return@fold StreamResult.Complete(
                                 code = completion.code,
                                 error = connectError,
-                                trailers = responseHeaders
+                                trailers = responseHeaders,
                             )
                         }
                         StreamResult.Headers(responseHeaders)
@@ -201,7 +201,7 @@ internal class GRPCWebInterceptor(
                     onMessage = { result ->
                         val (headerByte, unpackedMessage) = Envelope.unpackWithHeaderByte(
                             result.message,
-                            responseCompressionPool
+                            responseCompressionPool,
                         )
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
@@ -211,17 +211,17 @@ internal class GRPCWebInterceptor(
                             return@fold StreamResult.Complete(
                                 code = code,
                                 error = connectError,
-                                trailers = streamTrailers
+                                trailers = streamTrailers,
                             )
                         }
                         StreamResult.Message(unpackedMessage)
                     },
                     onCompletion = { result ->
                         result
-                    }
+                    },
                 )
                 streamResult
-            }
+            },
         )
     }
 

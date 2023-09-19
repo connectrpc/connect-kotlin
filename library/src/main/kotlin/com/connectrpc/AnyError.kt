@@ -21,5 +21,5 @@ import okio.ByteString
  */
 class AnyError(
     val typeUrl: String,
-    val value: ByteString = ByteString.EMPTY
+    val value: ByteString = ByteString.EMPTY,
 )

@@ -24,9 +24,9 @@ import okio.ByteString
 //
 // The [google.golang.org/genproto/googleapis/rpc/errdetails] package contains a
 // variety of Protobuf messages commonly used as error details.
-data class ConnectErrorDetail constructor(
+data class ConnectErrorDetail(
     val type: String,
-    val payload: ByteString
+    val payload: ByteString,
 ) {
     val pb = AnyError(type, payload)
 }

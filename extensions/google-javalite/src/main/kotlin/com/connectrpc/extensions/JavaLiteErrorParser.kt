@@ -47,7 +47,7 @@ internal object JavaLiteErrorParser : ErrorDetailParser {
             ConnectErrorDetail(
                 type = msg.typeUrl,
                 payload = msg.value.toStringUtf8().decodeBase64()
-                    ?: msg.value.toStringUtf8().encodeUtf8()
+                    ?: msg.value.toStringUtf8().encodeUtf8(),
             )
         }
     }

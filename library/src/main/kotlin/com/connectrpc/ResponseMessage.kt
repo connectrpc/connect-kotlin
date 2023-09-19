@@ -23,7 +23,7 @@ sealed class ResponseMessage<Output>(
     // Response headers specified by the server.
     open val headers: Headers,
     // Trailers provided by the server.
-    open val trailers: Trailers
+    open val trailers: Trailers,
 ) {
     class Success<Output>(
         // The message.
@@ -33,7 +33,7 @@ sealed class ResponseMessage<Output>(
         // Response headers specified by the server.
         override val headers: Headers,
         // Trailers provided by the server.
-        override val trailers: Trailers
+        override val trailers: Trailers,
     ) : ResponseMessage<Output>(code, headers, trailers)
 
     class Failure<Output>(
@@ -44,7 +44,7 @@ sealed class ResponseMessage<Output>(
         // Response headers specified by the server.
         override val headers: Headers,
         // Trailers provided by the server.
-        override val trailers: Trailers
+        override val trailers: Trailers,
     ) : ResponseMessage<Output>(code, headers, trailers)
 
     fun <E> failure(function: (Failure<Output>) -> E?): E? {
@@ -81,7 +81,7 @@ fun ResponseMessage<*>.exceptionOrNull(): Throwable? {
  */
 inline fun <R, T> ResponseMessage<T>.fold(
     onSuccess: (value: T) -> R,
-    onFailure: (exception: Throwable) -> R
+    onFailure: (exception: Throwable) -> R,
 ): R {
     return when (this) {
         is ResponseMessage.Success -> onSuccess(this.message)

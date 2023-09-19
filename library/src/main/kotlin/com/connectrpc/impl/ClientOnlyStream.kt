@@ -22,7 +22,7 @@ import com.connectrpc.StreamResult
  * Concrete implementation of [ClientOnlyStreamInterface].
  */
 internal class ClientOnlyStream<Input, Output>(
-    private val messageStream: BidirectionalStreamInterface<Input, Output>
+    private val messageStream: BidirectionalStreamInterface<Input, Output>,
 ) : ClientOnlyStreamInterface<Input, Output> {
     override suspend fun send(input: Input): Result<Unit> {
         return messageStream.send(input)

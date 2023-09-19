@@ -1,5 +1,3 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
-
 plugins {
     application
     java
@@ -35,10 +33,4 @@ dependencies {
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
     testImplementation(libs.testcontainers)
-}
-
-configure<SpotlessExtension> {
-    kotlin {
-        targetExclude("build/generated/sources/bufgen/**/*.kt")
-    }
 }

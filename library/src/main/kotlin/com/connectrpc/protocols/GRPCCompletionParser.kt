@@ -25,7 +25,7 @@ import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 
 class GRPCCompletionParser(
-    private val errorDetailParser: ErrorDetailParser
+    private val errorDetailParser: ErrorDetailParser,
 ) {
     /**
      * Parses the completion of a GRPC response from the Headers (for trailers-only responses) or Trailers.
@@ -51,7 +51,7 @@ class GRPCCompletionParser(
             status,
             message,
             details,
-            metadata
+            metadata,
         )
     }
 

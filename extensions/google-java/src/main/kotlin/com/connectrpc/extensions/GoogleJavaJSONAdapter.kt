@@ -14,8 +14,8 @@
 
 package com.connectrpc.extensions
 
+import com.connectrpc.CODEC_NAME_JSON
 import com.connectrpc.Codec
-import com.connectrpc.codecNameJSON
 import com.google.protobuf.GeneratedMessageV3
 import com.google.protobuf.Internal
 import com.google.protobuf.util.JsonFormat
@@ -29,7 +29,7 @@ import kotlin.reflect.KClass
  * deserializing and serializing data types.
  */
 internal class GoogleJavaJSONAdapter<E : GeneratedMessageV3>(
-    clazz: KClass<E>
+    clazz: KClass<E>,
 ) : Codec<E> {
     /**
      * Casting assumes the user is using Google's GeneratedMessageV3 type.
@@ -40,7 +40,7 @@ internal class GoogleJavaJSONAdapter<E : GeneratedMessageV3>(
     }
 
     override fun encodingName(): String {
-        return codecNameJSON
+        return CODEC_NAME_JSON
     }
 
     /**

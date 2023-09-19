@@ -65,7 +65,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = emptyList()
+            compressionPools = emptyList(),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -78,9 +78,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
@@ -95,7 +95,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
-            compressionPools = emptyList()
+            compressionPools = emptyList(),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -108,9 +108,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         // this will only work if we do a case-insensitive lookup of headers
         assertThat(request.headers[USER_AGENT]).isNull()
@@ -121,7 +121,7 @@ class ConnectInterceptorTest {
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -135,9 +135,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.message!!.commonToUtf8String()).isEqualTo("message")
     }
@@ -148,7 +148,7 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -162,9 +162,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         val decompressed = GzipCompressionPool.decompress(Buffer().write(request.message!!))
         assertThat(decompressed.readUtf8()).isEqualTo("message")
@@ -175,7 +175,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -186,8 +186,8 @@ class ConnectInterceptorTest {
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -197,7 +197,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -208,8 +208,8 @@ class ConnectInterceptorTest {
                 headers = mapOf(CONTENT_ENCODING to listOf(GzipCompressionPool.name())),
                 message = GzipCompressionPool.compress(Buffer().write("message".encodeUtf8())),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -219,7 +219,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -229,9 +229,9 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value"
-                )
-            )
+                    "value",
+                ),
+            ),
         )
         val adapter = moshi.adapter(ErrorPayloadJSON::class.java)
         val json = adapter.toJson(error)
@@ -242,8 +242,8 @@ class ConnectInterceptorTest {
                 message = Buffer().write(json.encodeUtf8()),
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         assertThat(response.error!!.message).isEqualTo("no more resources!")
@@ -257,7 +257,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -268,8 +268,8 @@ class ConnectInterceptorTest {
                 message = Buffer().write("garbage json".encodeUtf8()),
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.error!!.code).isEqualTo(Code.UNAVAILABLE)
     }
@@ -278,7 +278,7 @@ class ConnectInterceptorTest {
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = ConnectInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -289,8 +289,8 @@ class ConnectInterceptorTest {
                 emptyMap(),
                 Buffer(),
                 emptyMap(),
-                TracingInfo(888)
-            )
+                TracingInfo(888),
+            ),
         )
         assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
     }
@@ -304,7 +304,7 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -317,9 +317,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[CONNECT_STREAMING_ACCEPT_ENCODING]).containsExactly(GzipCompressionPool.name())
@@ -335,7 +335,7 @@ class ConnectInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -348,9 +348,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         // this will only work if we do a case-insensitive lookup of headers
         assertThat(request.headers[USER_AGENT]).isNull()
@@ -362,7 +362,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = emptyList()
+            compressionPools = emptyList(),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -375,9 +375,9 @@ class ConnectInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[CONNECT_STREAMING_ACCEPT_ENCODING]).isNullOrEmpty()
@@ -391,7 +391,7 @@ class ConnectInterceptorTest {
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -406,7 +406,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -421,7 +421,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -430,9 +430,9 @@ class ConnectInterceptorTest {
             StreamResult.Headers(
                 headers = mapOf(
                     "trailer-x-some-key" to listOf("some_value"),
-                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")
-                )
-            )
+                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
@@ -445,7 +445,7 @@ class ConnectInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -455,8 +455,8 @@ class ConnectInterceptorTest {
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()))
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString())
-            )
+                Buffer().write(envelopedMessage.readByteString()),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -470,7 +470,7 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -478,16 +478,16 @@ class ConnectInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
-                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")
-                )
-            )
+                    CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
+                ),
+            ),
         )
 
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()), GzipCompressionPool, 1)
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(envelopedMessage.readByteString())
-            )
+                Buffer().write(envelopedMessage.readByteString()),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -499,7 +499,7 @@ class ConnectInterceptorTest {
     fun endStreamOnResponseMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -509,13 +509,13 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value"
-                )
-            )
+                    "value",
+                ),
+            ),
         )
         val endStream = EndStreamResponseJSON(
             error = error,
-            metadata = emptyMap()
+            metadata = emptyMap(),
         )
         val adapter = moshi.adapter(EndStreamResponseJSON::class.java)
         val json = adapter.toJson(endStream)
@@ -527,8 +527,8 @@ class ConnectInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write(endStreamMessage.readByteString())
-            )
+                Buffer().write(endStreamMessage.readByteString()),
+            ),
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
@@ -544,15 +544,15 @@ class ConnectInterceptorTest {
     fun endStreamResponseBadJSON() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write("some garbage json".encodeUtf8())
-            )
+                Buffer().write("some garbage json".encodeUtf8()),
+            ),
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
@@ -563,7 +563,7 @@ class ConnectInterceptorTest {
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -572,9 +572,9 @@ class ConnectInterceptorTest {
             StreamResult.Complete(
                 code = Code.OK,
                 trailers = mapOf(
-                    "key" to listOf("value")
-                )
-            )
+                    "key" to listOf("value"),
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
@@ -587,7 +587,7 @@ class ConnectInterceptorTest {
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
@@ -597,9 +597,9 @@ class ConnectInterceptorTest {
                 code = Code.UNKNOWN,
                 error = ConnectError(
                     Code.UNKNOWN,
-                    message = "error_message"
-                )
-            )
+                    message = "error_message",
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
@@ -614,8 +614,8 @@ class ConnectInterceptorTest {
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
-                maxMessageBytes = 10_000
-            )
+                maxMessageBytes = 10_000,
+            ),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -630,9 +630,9 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS
-                )
-            )
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
+                ),
+            ),
         )
 
         val queryMap = parseQuery(request)
@@ -650,8 +650,8 @@ class ConnectInterceptorTest {
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
             getConfiguration = GETConfiguration.EnabledWithFallback(
-                maxMessageBytes = 1
-            )
+                maxMessageBytes = 1,
+            ),
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -666,9 +666,9 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS
-                )
-            )
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
+                ),
+            ),
         )
         assertThat(request.url.query).isNull()
         assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)
@@ -680,7 +680,7 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = GETConfiguration.Enabled
+            getConfiguration = GETConfiguration.Enabled,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -694,9 +694,9 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS
-                )
-            )
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
+                ),
+            ),
         )
         val queryMap = parseQuery(request)
         assertThat(queryMap.get(GETConstants.MESSAGE_QUERY_PARAM_KEY)).isNotNull()
@@ -712,7 +712,7 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             compressionPools = emptyList(),
-            getConfiguration = GETConfiguration.Disabled
+            getConfiguration = GETConfiguration.Disabled,
         )
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
@@ -727,9 +727,9 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS
-                )
-            )
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
+                ),
+            ),
         )
         assertThat(request.url.query).isNull()
         assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)

@@ -84,7 +84,7 @@ generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps
 
 .PHONY: help
 help: ## Describe useful make targets.
-	grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "%-30s %s\n", $$1, $$2}'
 
 .PHONY: installandroid
 installandroid: ## Install the example Android app.
@@ -106,7 +106,7 @@ lint: ## Run lint.
 	./gradlew $(GRADLE_ARGS) spotlessCheck
 
 .PHONY: lintfix
-lintfix: # Applies the lint changes.
+lintfix: ## Applies the lint changes.
 	./gradlew $(GRADLE_ARGS) spotlessApply
 
 .PHONY: release

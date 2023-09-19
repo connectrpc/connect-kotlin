@@ -54,7 +54,7 @@ class GRPCWebInterceptorTest {
     fun requestHeaders() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -67,9 +67,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
@@ -82,7 +82,7 @@ class GRPCWebInterceptorTest {
     fun requestHeadersCustomUserAgent() {
         val config = ProtocolClientConfig(
             host = "https://buf.build",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -95,9 +95,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         // this will only work if we do a case-insensitive lookup of headers
         assertThat(request.headers[GRPC_WEB_USER_AGENT]).isNull()
@@ -108,7 +108,7 @@ class GRPCWebInterceptorTest {
     fun uncompressedRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -122,9 +122,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
         assertThat(message.readUtf8()).isEqualTo("message")
@@ -136,7 +136,7 @@ class GRPCWebInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -150,9 +150,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         val (_, decompressed) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!), GzipCompressionPool)
         assertThat(decompressed.readUtf8()).isEqualTo("message")
@@ -163,7 +163,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -175,8 +175,8 @@ class GRPCWebInterceptorTest {
                 headers = emptyMap(),
                 message = envelopedMessage,
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -186,7 +186,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -198,8 +198,8 @@ class GRPCWebInterceptorTest {
                 headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
                 message = envelopedMessage,
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
     }
@@ -209,7 +209,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -218,12 +218,12 @@ class GRPCWebInterceptorTest {
             HTTPResponse(
                 code = Code.OK,
                 headers = mapOf(
-                    GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}")
+                    GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}"),
                 ),
                 message = Buffer(),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
@@ -233,7 +233,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -249,8 +249,8 @@ class GRPCWebInterceptorTest {
                 message = trailers,
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
@@ -260,7 +260,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -281,8 +281,8 @@ class GRPCWebInterceptorTest {
                 message = responseBody,
                 headers = emptyMap(),
                 trailers = emptyMap(),
-                tracingInfo = null
-            )
+                tracingInfo = null,
+            ),
         )
         assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
@@ -291,7 +291,7 @@ class GRPCWebInterceptorTest {
     fun tracingInfoForwardedOnUnaryResponse() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
@@ -302,8 +302,8 @@ class GRPCWebInterceptorTest {
                 emptyMap(),
                 Buffer(),
                 emptyMap(),
-                TracingInfo(888)
-            )
+                TracingInfo(888),
+            ),
         )
         assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
     }
@@ -317,7 +317,7 @@ class GRPCWebInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -330,9 +330,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
         assertThat(request.headers.keys).containsExactlyInAnyOrder(GRPC_WEB_USER_AGENT, GRPC_ENCODING, "key")
@@ -347,7 +347,7 @@ class GRPCWebInterceptorTest {
             host = "https://buf.build",
             serializationStrategy = serializationStrategy,
             requestCompression = RequestCompression(1000, GzipCompressionPool),
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -360,9 +360,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         // this will only work if we do a case-insensitive lookup of headers
         assertThat(request.headers[GRPC_WEB_USER_AGENT]).isNull()
@@ -373,7 +373,7 @@ class GRPCWebInterceptorTest {
     fun streamingRequestHeadersNoCompression() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -386,9 +386,9 @@ class GRPCWebInterceptorTest {
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
-                    responseClass = Any::class
-                )
-            )
+                    responseClass = Any::class,
+                ),
+            ),
         )
         assertThat(request.headers[GRPC_ENCODING]).isNullOrEmpty()
         assertThat(request.headers["key"]).containsExactly("value")
@@ -398,7 +398,7 @@ class GRPCWebInterceptorTest {
     fun uncompressedStreamingRequestMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -413,7 +413,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -428,7 +428,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -438,9 +438,9 @@ class GRPCWebInterceptorTest {
                 headers = mapOf(
                     // Doesn't get passed as headers.
                     "trailer-x-some-key" to listOf("some_value"),
-                    GRPC_ENCODING to listOf("gzip")
-                )
-            )
+                    GRPC_ENCODING to listOf("gzip"),
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
@@ -454,7 +454,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -463,7 +463,7 @@ class GRPCWebInterceptorTest {
 
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()))
         val result = streamFunction.streamResultFunction(
-            StreamResult.Message(envelopedMessage)
+            StreamResult.Message(envelopedMessage),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -476,7 +476,7 @@ class GRPCWebInterceptorTest {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
-            compressionPools = listOf(GzipCompressionPool)
+            compressionPools = listOf(GzipCompressionPool),
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -484,14 +484,14 @@ class GRPCWebInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
-                    GRPC_ENCODING to listOf("gzip")
-                )
-            )
+                    GRPC_ENCODING to listOf("gzip"),
+                ),
+            ),
         )
 
         val envelopedMessage = Envelope.pack(Buffer().write("hello".encodeUtf8()), GzipCompressionPool, 1)
         val result = streamFunction.streamResultFunction(
-            StreamResult.Message(envelopedMessage)
+            StreamResult.Message(envelopedMessage),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
@@ -503,7 +503,7 @@ class GRPCWebInterceptorTest {
     fun endStreamOnResponseMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -515,7 +515,7 @@ class GRPCWebInterceptorTest {
             .write(trailersPayload)
 
         val result = streamFunction.streamResultFunction(
-            StreamResult.Message(trailers)
+            StreamResult.Message(trailers),
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
@@ -528,7 +528,7 @@ class GRPCWebInterceptorTest {
     fun endStreamOnTrailers() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -537,9 +537,9 @@ class GRPCWebInterceptorTest {
             StreamResult.Complete(
                 code = Code.OK,
                 trailers = mapOf(
-                    "key" to listOf("value")
-                )
-            )
+                    "key" to listOf("value"),
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
@@ -552,7 +552,7 @@ class GRPCWebInterceptorTest {
     fun endStreamForwardsErrors() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
-            serializationStrategy = serializationStrategy
+            serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
@@ -562,9 +562,9 @@ class GRPCWebInterceptorTest {
                 code = Code.UNKNOWN,
                 error = ConnectError(
                     Code.UNKNOWN,
-                    message = "error_message"
-                )
-            )
+                    message = "error_message",
+                ),
+            ),
         )
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)

@@ -43,14 +43,14 @@ class ProtocolClient(
     // The client to use for performing requests.
     private val httpClient: HTTPClientInterface,
     // The configuration for the ProtocolClient.
-    private val config: ProtocolClientConfig
+    private val config: ProtocolClientConfig,
 ) : ProtocolClientInterface {
 
     override fun <Input : Any, Output : Any> unary(
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
-        onResult: (ResponseMessage<Output>) -> Unit
+        onResult: (ResponseMessage<Output>) -> Unit,
     ): Cancelable {
         val serializationStrategy = config.serializationStrategy
         val requestCodec = serializationStrategy.codec(methodSpec.requestClass)
@@ -66,7 +66,7 @@ class ProtocolClient(
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
                 message = requestMessage.readByteArray(),
-                methodSpec = methodSpec
+                methodSpec = methodSpec,
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
@@ -80,21 +80,21 @@ class ProtocolClient(
                             connectError,
                             code,
                             finalResponse.headers,
-                            finalResponse.trailers
-                        )
+                            finalResponse.trailers,
+                        ),
                     )
                 } else {
                     val responseCodec = serializationStrategy.codec(methodSpec.responseClass)
                     val responseMessage = responseCodec.deserialize(
-                        finalResponse.message
+                        finalResponse.message,
                     )
                     onResult(
                         ResponseMessage.Success(
                             responseMessage,
                             code,
                             finalResponse.headers,
-                            finalResponse.trailers
-                        )
+                            finalResponse.trailers,
+                        ),
                     )
                 }
             }
@@ -107,7 +107,7 @@ class ProtocolClient(
     override suspend fun <Input : Any, Output : Any> unary(
         request: Input,
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output> {
         return suspendCancellableCoroutine { continuation ->
             val cancelable = unary(request, headers, methodSpec) { responseMessage ->
@@ -122,7 +122,7 @@ class ProtocolClient(
     override fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): UnaryBlockingCall<Output> {
         val countDownLatch = CountDownLatch(1)
         val call = UnaryBlockingCall<Output>()
@@ -140,14 +140,14 @@ class ProtocolClient(
 
     override suspend fun <Input : Any, Output : Any> stream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): BidirectionalStreamInterface<Input, Output> {
         return bidirectionalStream(methodSpec, headers)
     }
 
     override suspend fun <Input : Any, Output : Any> serverStream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output> {
         val stream = stream(headers, methodSpec)
         return ServerOnlyStream(stream)
@@ -155,7 +155,7 @@ class ProtocolClient(
 
     override suspend fun <Input : Any, Output : Any> clientStream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ClientOnlyStreamInterface<Input, Output> {
         val stream = stream(headers, methodSpec)
         return ClientOnlyStream(stream)
@@ -163,7 +163,7 @@ class ProtocolClient(
 
     private suspend fun <Input : Any, Output : Any> bidirectionalStream(
         methodSpec: MethodSpec<Input, Output>,
-        headers: Headers
+        headers: Headers,
     ): BidirectionalStreamInterface<Input, Output> = suspendCancellableCoroutine { continuation ->
         val channel = Channel<StreamResult<Output>>(1)
         val requestCodec = config.serializationStrategy.codec(methodSpec.requestClass)
@@ -172,7 +172,7 @@ class ProtocolClient(
             url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
             headers = headers,
-            methodSpec = methodSpec
+            methodSpec = methodSpec,
         )
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
@@ -192,7 +192,7 @@ class ProtocolClient(
                 is StreamResult.Message -> {
                     try {
                         val message = responseCodec.deserialize(
-                            streamResult.message
+                            streamResult.message,
                         )
                         StreamResult.Message(message)
                     } catch (e: Throwable) {
@@ -206,7 +206,7 @@ class ProtocolClient(
                     StreamResult.Complete(
                         streamResult.connectError()?.code ?: Code.OK,
                         error = streamResult.error,
-                        trailers = streamResult.trailers
+                        trailers = streamResult.trailers,
                     )
                 }
             }
@@ -225,7 +225,7 @@ class ProtocolClient(
             },
             onSendClose = {
                 httpStream.sendClose()
-            }
+            },
         )
         channel.invokeOnClose {
             // Receive channel is closed so the stream's receive will be closed.
@@ -235,8 +235,8 @@ class ProtocolClient(
             BidirectionalStream(
                 stream,
                 requestCodec,
-                channel
-            )
+                channel,
+            ),
         )
     }
 

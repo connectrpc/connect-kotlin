@@ -21,17 +21,17 @@ import com.squareup.moshi.JsonClass
 internal class ErrorPayloadJSON(
     @Json(name = "code") val code: String?,
     @Json(name = "message") val message: String?,
-    @Json(name = "details") val details: List<ErrorDetailPayloadJSON>?
+    @Json(name = "details") val details: List<ErrorDetailPayloadJSON>?,
 )
 
 @JsonClass(generateAdapter = true)
 internal class ErrorDetailPayloadJSON(
     @Json(name = "type") val type: String?,
-    @Json(name = "value") val value: String?
+    @Json(name = "value") val value: String?,
 )
 
 @JsonClass(generateAdapter = true)
 internal class EndStreamResponseJSON(
     @Json(name = "error") val error: ErrorPayloadJSON?,
-    @Json(name = "metadata") val metadata: Map<String, List<String>>?
+    @Json(name = "metadata") val metadata: Map<String, List<String>>?,
 )
