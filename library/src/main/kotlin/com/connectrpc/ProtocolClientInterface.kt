@@ -38,7 +38,7 @@ interface ProtocolClientInterface {
         request: Input,
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
-        onResult: (ResponseMessage<Output>) -> Unit
+        onResult: (ResponseMessage<Output>) -> Unit,
     ): Cancelable
 
     /**
@@ -53,7 +53,7 @@ interface ProtocolClientInterface {
     suspend fun <Input : Any, Output : Any> unary(
         request: Input,
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output>
 
     /**
@@ -68,7 +68,7 @@ interface ProtocolClientInterface {
     fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): UnaryBlockingCall<Output>
 
     /**
@@ -81,7 +81,7 @@ interface ProtocolClientInterface {
      */
     suspend fun <Input : Any, Output : Any> stream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): BidirectionalStreamInterface<Input, Output>
 
     /**
@@ -94,7 +94,7 @@ interface ProtocolClientInterface {
      */
     suspend fun <Input : Any, Output : Any> serverStream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output>
 
     /**
@@ -107,6 +107,6 @@ interface ProtocolClientInterface {
      */
     suspend fun <Input : Any, Output : Any> clientStream(
         headers: Headers,
-        methodSpec: MethodSpec<Input, Output>
+        methodSpec: MethodSpec<Input, Output>,
     ): ClientOnlyStreamInterface<Input, Output>
 }

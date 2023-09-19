@@ -47,8 +47,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         client.unary(
             "input",
@@ -56,8 +56,8 @@ class ProtocolClientTest {
             MethodSpec(
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
-                String::class
-            )
+                String::class,
+            ),
         ) { _ -> }
     }
 
@@ -71,8 +71,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         client.unary(
             "input",
@@ -80,8 +80,8 @@ class ProtocolClientTest {
             MethodSpec(
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
-                String::class
-            )
+                String::class,
+            ),
         ) { _ -> }
     }
 
@@ -95,8 +95,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
@@ -104,8 +104,8 @@ class ProtocolClientTest {
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
-                    String::class
-                )
+                    String::class,
+                ),
             )
         }
     }
@@ -120,8 +120,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
@@ -129,8 +129,8 @@ class ProtocolClientTest {
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
-                    String::class
-                )
+                    String::class,
+                ),
             )
         }
     }
@@ -144,8 +144,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         client.unary(
             "",
@@ -153,8 +153,8 @@ class ProtocolClientTest {
             MethodSpec(
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
-                String::class
-            )
+                String::class,
+            ),
         ) {}
 
         // Use HTTP client to determine and verify the final URL.
@@ -172,8 +172,8 @@ class ProtocolClientTest {
             httpClient = httpClient,
             config = ProtocolClientConfig(
                 host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy
-            )
+                serializationStrategy = serializationStrategy,
+            ),
         )
         client.unary(
             "",
@@ -181,8 +181,8 @@ class ProtocolClientTest {
             MethodSpec(
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
-                String::class
-            )
+                String::class,
+            ),
         ) {}
 
         // Use HTTP client to determine and verify the final URL.

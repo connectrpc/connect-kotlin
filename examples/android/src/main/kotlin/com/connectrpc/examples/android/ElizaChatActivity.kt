@@ -84,8 +84,8 @@ class ElizaChatActivity : AppCompatActivity() {
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaLiteProtobufStrategy(),
-                networkProtocol = selectedNetworkProtocolOption
-            )
+                networkProtocol = selectedNetworkProtocolOption,
+            ),
         )
         // Create the Eliza service client.
         val elizaServiceClient = ElizaServiceClient(client)
@@ -153,10 +153,10 @@ class ElizaChatActivity : AppCompatActivity() {
                         adapter.add(
                             MessageData(
                                 "Session has ended.",
-                                true
-                            )
+                                true,
+                            ),
                         )
-                    }
+                    },
                 )
             }
             lifecycleScope.launch(Dispatchers.Main) {

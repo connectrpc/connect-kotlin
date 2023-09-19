@@ -1,4 +1,3 @@
-import com.diffplug.gradle.spotless.SpotlessExtension
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.dokka.gradle.DokkaTask
@@ -6,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.git)
+    alias(libs.plugins.spotless)
 }
 
 apply(plugin = "com.vanniktech.maven.publish.base")
@@ -20,7 +20,7 @@ var snapshotVersion = "0.0.0-SNAPSHOT"
 val matchResult = """^v(\d+)\.(\d+)\.(\d+)$""".toRegex().matchEntire(details.lastTag)
 if (matchResult != null) {
     val (major, minor, patch) = matchResult.destructured
-    snapshotVersion = "${major}.${minor}.${patch.toInt()+1}-SNAPSHOT"
+    snapshotVersion = "$major.$minor.${patch.toInt() + 1}-SNAPSHOT"
 }
 val releaseVersion = project.findProperty("releaseVersion") as String? ?: snapshotVersion
 
@@ -43,8 +43,21 @@ buildscript {
 allprojects {
     version = releaseVersion
     repositories {
+        gradlePluginPortal()
         mavenCentral()
         google()
+    }
+    apply(plugin = "com.diffplug.spotless")
+    spotless {
+        isEnforceCheck = false // Disables lint on gradle builds.
+        kotlin {
+            ktlint().editorConfigOverride(mapOf("ktlint_experimental" to "enabled"))
+            target("**/*.kt")
+        }
+        kotlinGradle {
+            ktlint().editorConfigOverride(mapOf("ktlint_experimental" to "enabled"))
+            target("**/*.kts")
+        }
     }
     tasks.withType<Jar>().configureEach {
         if (name == "jar") {
@@ -111,30 +124,6 @@ allprojects {
 }
 
 subprojects {
-    /*
-     * By default, the plugin will execute for all subdirectories as an independent project.
-     * This means that /examples will be considered one project and /examples/kotlin-protoc-gen-java will
-     * be considered another project. The linter ends up executing both independently which
-     * circumvents the exclusion rules specified on the actual project.
-     *
-     * The workaround here is to check if the project has subprojects and only execute
-     * when it's a node.
-     */
-    if (project.childProjects.isEmpty()) {
-        apply(plugin = "com.diffplug.spotless")
-        configure<SpotlessExtension> {
-            setEnforceCheck(false) // Disables lint on gradle builds.
-            kotlin {
-                ktlint(libs.versions.ktlint.get())
-                    .setUseExperimental(true)
-                target("**/*.kt")
-            }
-            kotlinGradle {
-                ktlint(libs.versions.ktlint.get())
-                target("**/*.kts")
-            }
-        }
-    }
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "1.8"
@@ -144,8 +133,10 @@ subprojects {
     }
     tasks.withType<JavaCompile> {
         val defaultArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
-        if (JavaVersion.current().isJava9Compatible) doFirst {
-            options.compilerArgs = listOf("--release", "8") + defaultArgs
+        if (JavaVersion.current().isJava9Compatible) {
+            doFirst {
+                options.compilerArgs = listOf("--release", "8") + defaultArgs
+            }
         } else {
             options.compilerArgs = defaultArgs
         }

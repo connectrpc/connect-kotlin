@@ -68,7 +68,7 @@ class Generator : CodeGenerator {
     override fun generate(
         request: PluginProtos.CodeGeneratorRequest,
         descriptorSource: Plugin.DescriptorSource,
-        response: Plugin.Response
+        response: Plugin.Response,
     ) {
         this.descriptorSource = descriptorSource
         configuration = parse(request.parameter)
@@ -99,7 +99,7 @@ class Generator : CodeGenerator {
         val packageName = getFileJavaPackage(file)
         for ((sourceInfo, service) in file.services.withSourceInfo(
             baseSourceInfo,
-            FileDescriptorProto.SERVICE_FIELD_NUMBER
+            FileDescriptorProto.SERVICE_FIELD_NUMBER,
         )) {
             val interfaceFileSpec = FileSpec.builder(packageName, file.name)
                 // Manually import `method()` since it is a method and not a class.
@@ -133,7 +133,7 @@ class Generator : CodeGenerator {
     private fun serviceClientInterface(
         packageName: String,
         service: Descriptors.ServiceDescriptor,
-        sourceInfo: SourceInfo
+        sourceInfo: SourceInfo,
     ): TypeSpec {
         val interfaceBuilder = TypeSpec.interfaceBuilder(serviceClientInterfaceClassName(packageName, service))
         val functionSpecs = interfaceMethods(service.methods, sourceInfo)
@@ -145,7 +145,7 @@ class Generator : CodeGenerator {
 
     private fun interfaceMethods(
         methods: List<Descriptors.MethodDescriptor>,
-        baseSourceInfo: SourceInfo
+        baseSourceInfo: SourceInfo,
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         val headerParameterSpec = ParameterSpec.builder("headers", HEADERS_CLASS_NAME)
@@ -153,7 +153,7 @@ class Generator : CodeGenerator {
             .build()
         for ((sourceInfo, method) in methods.withSourceInfo(
             baseSourceInfo,
-            DescriptorProtos.ServiceDescriptorProto.METHOD_FIELD_NUMBER
+            DescriptorProtos.ServiceDescriptorProto.METHOD_FIELD_NUMBER,
         )) {
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
@@ -165,7 +165,7 @@ class Generator : CodeGenerator {
                     .addParameter(headerParameterSpec)
                     .returns(
                         BidirectionalStreamInterface::class.asClassName()
-                            .parameterizedBy(inputClassName, outputClassName)
+                            .parameterizedBy(inputClassName, outputClassName),
                     )
                 functions.add(streamingBuilder.build())
             } else if (method.isServerStreaming) {
@@ -175,7 +175,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
                     .returns(
-                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
+                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
                     .build()
                 functions.add(serverStreamingFunction)
@@ -186,7 +186,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter(headerParameterSpec)
                     .returns(
-                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
+                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
                     .build()
                 functions.add(clientStreamingFunction)
@@ -207,10 +207,10 @@ class Generator : CodeGenerator {
                         parameters = listOf(
                             ParameterSpec(
                                 "",
-                                ResponseMessage::class.asTypeName().parameterizedBy(outputClassName)
-                            )
+                                ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
+                            ),
                         ),
-                        returnType = Unit::class.java.asTypeName()
+                        returnType = Unit::class.java.asTypeName(),
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
@@ -240,7 +240,7 @@ class Generator : CodeGenerator {
     private fun serviceClientImplementation(
         javaPackageName: String,
         service: Descriptors.ServiceDescriptor,
-        sourceInfo: SourceInfo
+        sourceInfo: SourceInfo,
     ): TypeSpec {
         // The javaPackageName is used instead of the package name for imports and code references.
         val classBuilder = TypeSpec.classBuilder(serviceClientImplementationClassName(javaPackageName, service))
@@ -248,12 +248,12 @@ class Generator : CodeGenerator {
             .primaryConstructor(
                 FunSpec.constructorBuilder()
                     .addParameter("client", ProtocolClientInterface::class)
-                    .build()
+                    .build(),
             )
             .addProperty(
                 PropertySpec.builder("client", ProtocolClientInterface::class, KModifier.PRIVATE)
                     .initializer("client")
-                    .build()
+                    .build(),
             )
         val functionSpecs = implementationMethods(service.methods, sourceInfo)
         return classBuilder
@@ -264,12 +264,12 @@ class Generator : CodeGenerator {
 
     private fun implementationMethods(
         methods: List<Descriptors.MethodDescriptor>,
-        baseSourceInfo: SourceInfo
+        baseSourceInfo: SourceInfo,
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
         for ((sourceInfo, method) in methods.withSourceInfo(
             baseSourceInfo,
-            DescriptorProtos.ServiceDescriptorProto.METHOD_FIELD_NUMBER
+            DescriptorProtos.ServiceDescriptorProto.METHOD_FIELD_NUMBER,
         )) {
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
@@ -298,8 +298,8 @@ class Generator : CodeGenerator {
                         BidirectionalStreamInterface::class.asClassName()
                             .parameterizedBy(
                                 inputClassName,
-                                outputClassName
-                            )
+                                outputClassName,
+                            ),
                     )
                     .addStatement(
                         "return %L",
@@ -310,7 +310,7 @@ class Generator : CodeGenerator {
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build()
+                            .build(),
                     )
                     .build()
                 functions.add(streamingFunction)
@@ -321,7 +321,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
                     .returns(
-                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
+                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
                     .addStatement(
                         "return %L",
@@ -332,7 +332,7 @@ class Generator : CodeGenerator {
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build()
+                            .build(),
                     )
                     .build()
                 functions.add(serverStreamingFunction)
@@ -343,7 +343,7 @@ class Generator : CodeGenerator {
                     .addModifiers(KModifier.SUSPEND)
                     .addParameter("headers", HEADERS_CLASS_NAME)
                     .returns(
-                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName)
+                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
                     .addStatement(
                         "return %L",
@@ -354,7 +354,7 @@ class Generator : CodeGenerator {
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
-                            .build()
+                            .build(),
                     )
                     .build()
                 functions.add(clientStreamingFunction)
@@ -377,7 +377,7 @@ class Generator : CodeGenerator {
                                 .add(methodSpecCallBlock)
                                 .unindent()
                                 .addStatement(")")
-                                .build()
+                                .build(),
                         )
                         .build()
                     functions.add(unarySuspendFunction)
@@ -387,10 +387,10 @@ class Generator : CodeGenerator {
                         parameters = listOf(
                             ParameterSpec(
                                 "",
-                                ResponseMessage::class.asTypeName().parameterizedBy(outputClassName)
-                            )
+                                ResponseMessage::class.asTypeName().parameterizedBy(outputClassName),
+                            ),
                         ),
-                        returnType = Unit::class.java.asTypeName()
+                        returnType = Unit::class.java.asTypeName(),
                     )
                     val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
@@ -410,7 +410,7 @@ class Generator : CodeGenerator {
                                 .addStatement("onResult")
                                 .unindent()
                                 .addStatement(")")
-                                .build()
+                                .build(),
                         )
                         .build()
                     functions.add(unaryCallbackFunction)
@@ -432,7 +432,7 @@ class Generator : CodeGenerator {
                                 .add(methodSpecCallBlock)
                                 .unindent()
                                 .addStatement(")")
-                                .build()
+                                .build(),
                         )
                         .build()
                     functions.add(unarySuspendFunction)
@@ -481,7 +481,7 @@ private fun serviceClientInterfaceClassName(packageName: String, service: Descri
 
 private fun serviceClientImplementationClassName(
     packageName: String,
-    service: Descriptors.ServiceDescriptor
+    service: Descriptors.ServiceDescriptor,
 ): ClassName {
     return ClassName(packageName, "${service.name}Client")
 }

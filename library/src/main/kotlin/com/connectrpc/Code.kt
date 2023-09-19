@@ -36,7 +36,8 @@ enum class Code(val codeName: String, val value: Int) {
     INTERNAL_ERROR("internal", 13),
     UNAVAILABLE("unavailable", 14),
     DATA_LOSS("data_loss", 15),
-    UNAUTHENTICATED("unauthenticated", 16);
+    UNAUTHENTICATED("unauthenticated", 16),
+    ;
 
     companion object {
         // https://connectrpc.com/docs/protocol#http-to-error-code

@@ -58,7 +58,7 @@ import java.util.concurrent.TimeUnit
 @RunWith(Parameterized::class)
 class Conformance(
     private val protocol: NetworkProtocol,
-    private val serverType: ServerType
+    private val serverType: ServerType,
 ) {
     private lateinit var connectClient: ProtocolClient
     private lateinit var shortTimeoutConnectClient: ProtocolClient
@@ -75,7 +75,7 @@ class Conformance(
                 arrayOf(NetworkProtocol.CONNECT, ServerType.CONNECT_GO),
                 arrayOf(NetworkProtocol.GRPC, ServerType.CONNECT_GO),
                 arrayOf(NetworkProtocol.GRPC_WEB, ServerType.CONNECT_GO),
-                arrayOf(NetworkProtocol.GRPC, ServerType.GRPC_GO)
+                arrayOf(NetworkProtocol.GRPC, ServerType.GRPC_GO),
             )
         }
 
@@ -92,7 +92,7 @@ class Conformance(
                 "--cert",
                 "cert/localhost.crt",
                 "--key",
-                "cert/localhost.key"
+                "cert/localhost.key",
             )
             .waitingFor(HostPortWaitStrategy().forPorts(8081))
 
@@ -107,7 +107,7 @@ class Conformance(
                 "--cert",
                 "cert/localhost.crt",
                 "--key",
-                "cert/localhost.key"
+                "cert/localhost.key",
             )
             .waitingFor(HostPortWaitStrategy().forPorts(8081))
     }
@@ -132,15 +132,15 @@ class Conformance(
                     .readTimeout(Duration.ofMillis(1))
                     .writeTimeout(Duration.ofMillis(1))
                     .callTimeout(Duration.ofMillis(1))
-                    .build()
+                    .build(),
             ),
             ProtocolClientConfig(
                 host = host,
                 serializationStrategy = GoogleJavaProtobufStrategy(),
                 networkProtocol = protocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
-                compressionPools = listOf(GzipCompressionPool)
-            )
+                compressionPools = listOf(GzipCompressionPool),
+            ),
         )
         connectClient = ProtocolClient(
             httpClient = ConnectOkHttpClient(client),
@@ -149,8 +149,8 @@ class Conformance(
                 serializationStrategy = GoogleJavaProtobufStrategy(),
                 networkProtocol = protocol,
                 requestCompression = RequestCompression(10, GzipCompressionPool),
-                compressionPools = listOf(GzipCompressionPool)
-            )
+                compressionPools = listOf(GzipCompressionPool),
+            ),
         )
         testServiceConnectClient = TestServiceClient(connectClient)
         unimplementedServiceClient = UnimplementedServiceClient(connectClient)
@@ -168,7 +168,7 @@ class Conformance(
             31415,
             9,
             2653,
-            58979
+            58979,
         )
         val parameters = sizes.mapIndexed { index, value ->
             responseParameters {
@@ -180,7 +180,7 @@ class Conformance(
         stream.send(
             streamingOutputCallRequest {
                 responseParameters.addAll(parameters)
-            }
+            },
         )
         withContext(Dispatchers.IO) {
             val job = async {
@@ -193,12 +193,12 @@ class Conformance(
                                 assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                                 assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
                                 assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
-                                    expectedErrorDetail
+                                    expectedErrorDetail,
                                 )
                             } finally {
                                 countDownLatch.countDown()
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -258,7 +258,7 @@ class Conformance(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(b64Encode(trailingValue))
+                trailingKey to listOf(b64Encode(trailingValue)),
             )
         val message = simpleRequest {
             responseSize = size
@@ -319,7 +319,7 @@ class Conformance(
                 responseParameters {
                     size = 31415
                     intervalUs = 50_000
-                }
+                },
             )
         }
         val stream = client.streamingOutputCall()
@@ -335,7 +335,7 @@ class Conformance(
                             } finally {
                                 countDownLatch.countDown()
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -358,7 +358,7 @@ class Conformance(
                     code = 2
                     message = statusMessage
                 }
-            }
+            },
         ) { response ->
             response.failure { errorResponse ->
                 val error = errorResponse.error
@@ -413,7 +413,7 @@ class Conformance(
                             } finally {
                                 countDownLatch.countDown()
                             }
-                        }
+                        },
                     )
                 }
             }
@@ -488,7 +488,7 @@ class Conformance(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(b64Encode(trailingValue))
+                trailingKey to listOf(b64Encode(trailingValue)),
             )
         val message = simpleRequest {
             responseSize = size
@@ -536,7 +536,7 @@ class Conformance(
                     code = 2
                     message = statusMessage
                 }
-            }
+            },
         ).execute()
         response.failure { errorResponse ->
             val error = errorResponse.error
@@ -630,7 +630,7 @@ class Conformance(
         val headers =
             mapOf(
                 leadingKey to listOf(leadingValue),
-                trailingKey to listOf(b64Encode(trailingValue))
+                trailingKey to listOf(b64Encode(trailingValue)),
             )
         val message = simpleRequest {
             responseSize = size
@@ -690,7 +690,7 @@ class Conformance(
                     code = 2
                     message = statusMessage
                 }
-            }
+            },
         ) { response ->
             response.failure { errorResponse ->
                 val error = errorResponse.error

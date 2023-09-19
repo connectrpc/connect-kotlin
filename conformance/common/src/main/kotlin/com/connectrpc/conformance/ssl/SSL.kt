@@ -29,14 +29,14 @@ import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 
 fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
-    val certificate = clientCert.byteInputStream(Charsets.UTF_8).use { stream ->
+    val certificate = CLIENT_CERT.byteInputStream(Charsets.UTF_8).use { stream ->
         CertificateFactory.getInstance("X.509").generateCertificate(stream) as X509Certificate
     }
-    val certificateAuthority = conformanceCACert.byteInputStream(Charsets.UTF_8).use { stream ->
+    val certificateAuthority = CONFORMANCE_CA_CERT.byteInputStream(Charsets.UTF_8).use { stream ->
         CertificateFactory.getInstance("X.509").generateCertificate(stream) as X509Certificate
     }
     val publicKey = certificate.getPublicKey() as RSAPublicKey
-    val clientKeyBytes = clientKey
+    val clientKeyBytes = CLIENT_KEY
         .replace("-----(BEGIN|END) PRIVATE KEY-----".toRegex(), "")
         .replace("\r?\n".toRegex(), "")
         .encodeUtf8()
@@ -58,7 +58,7 @@ fun sslContext(): Pair<SSLSocketFactory, X509TrustManager> {
 
 // https://github.com/connectrpc/conformance/blob/main/cert/client.crt
 // cert issues: https://stackoverflow.com/questions/9210514/unable-to-find-valid-certification-path-to-requested-target-error-even-after-c
-private const val clientCert = """-----BEGIN CERTIFICATE-----
+private const val CLIENT_CERT = """-----BEGIN CERTIFICATE-----
 MIIEODCCAiCgAwIBAgIRAJTCeo42f8lts3VeDnN7CVwwDQYJKoZIhvcNAQELBQAw
 FjEUMBIGA1UEAxMLQ3Jvc3N0ZXN0Q0EwHhcNMjIwNTAzMTcxMDQwWhcNMjMxMTAz
 MTcxOTU2WjARMQ8wDQYDVQQDEwZjbGllbnQwggEiMA0GCSqGSIb3DQEBAQUAA4IB
@@ -86,7 +86,7 @@ g+mJcflVCfjEqJzfEy4wPq5SJzOIzXva6DyBpA==
 
 // https://github.com/connectrpc/conformance/blob/main/cert/ConformanceCA.crt
 // Certificate authority for the trusted cert.
-private const val conformanceCACert = """-----BEGIN CERTIFICATE-----
+private const val CONFORMANCE_CA_CERT = """-----BEGIN CERTIFICATE-----
 MIIE7DCCAtSgAwIBAgIBATANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDEwtDcm9z
 c3Rlc3RDQTAeFw0yMjA1MDMxNzA5NTlaFw0yMzExMDMxNzE5NTZaMBYxFDASBgNV
 BAMTC0Nyb3NzdGVzdENBMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA
@@ -120,7 +120,7 @@ iQ8d6tGEgzeekht617JMvQ==
 // openssl pkey -in key.pem -out outkey.pem
 // (alt: openssl pkcs8 -topk8 -nocrypt -in key.pem -out output)
 // https://stackoverflow.com/questions/68926722/how-to-read-a-certificate-chain-for-okhttpclient
-private const val clientKey = """-----BEGIN PRIVATE KEY-----
+private const val CLIENT_KEY = """-----BEGIN PRIVATE KEY-----
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCoJI6BDesWPERm
 7zjLGA9Pp0XSR3rnpecXTKIBwamr35gr/It4jAZMMBUBHhdvLB0pAj1/hlWLvDQS
 uQBvfsr2KrqOvtVOP0c5KCzwHjvLmyhhvjOV5iEdtv5mUDwILcQH8mvK4XTyWqID
@@ -148,32 +148,3 @@ TssOSwdX1A27uW63CjrGQ3eVC6qaeWjTJ8XrmIxdayD6gDMNp4p4tnuB5Nw03dNa
 YfnVHhS0VV49dKIqrsP8o1qZJRhjcq/J/Rrm2ZFHfdLCOOnd9VG4W2I1WB9MDc4t
 raq4CptHPEywZgBR95C0Jv3y
 -----END PRIVATE KEY-----"""
-
-// https://github.com/connectrpc/conformance/blob/main/cert/client.key
-const val rsaClientKey = """-----BEGIN RSA PRIVATE KEY-----
-MIIEpAIBAAKCAQEAqCSOgQ3rFjxEZu84yxgPT6dF0kd656XnF0yiAcGpq9+YK/yL
-eIwGTDAVAR4XbywdKQI9f4ZVi7w0ErkAb37K9iq6jr7VTj9HOSgs8B47y5soYb4z
-leYhHbb+ZlA8CC3EB/JryuF08lqiA77JVLNysVn7sKzx2RPqqbVQBPfNqW2IsUE0
-xsp0SovrZRam9GtO9JKCruY4/sdk1eioIeEhZnsR3QUmFohJVBgJLNjCdPQk+fg7
-2s+JXjxpQOlZQyI8In/5c4hwEgb1vuieGaS8gHgnPtfw4CO+BpqctqDRpm9iwTMK
-zDmS+SrHYjMmGPWYz5ilnMcm44Bj34p23LTpXQIDAQABAoIBAFaTpDC9SuwDEjFy
-QesJM3EPLztsBNPcL9ZmZhDDeCsAkWksu1/RsbhvFZGivexHaahg9+t+7vNpb+Ko
-EZpXTghczfyMNGb63CCJGEJ3PtDCzpMtjYBEo46aV/m0nISVlBeHcotfdYkIs917
-0kzjrU22iItbMZhV0gGaU16LfgEbiJpMS7nmVKnmLEs02g4G3H+xKXRfRhQA7RId
-OIa/iHkJsNQ+o4MiJ7s4G1hp3zqZBSnHuPM3qqj+MAUHobeJKdB7WCW5UWXI9OmA
-ryRSk+R6KDDoXxyWZc0FQ5BJ0OhwMzBsxgqs54CDWND/PLjmsvOjvdhMqpKRy2Am
-oMXk0J0CgYEA0Mkbhh/M7nEeGwKM8MxovSEE0u0j2ksbgt9Wx2aCfiP6GWxLZZuj
-o1aV7TgEn7M70qyeTs9B/fWVzk+tO0yN0S07VxlaY5RMV44LdHnQ85TeTEIxQIAa
-ZYq3kFdfim9ZVzouZHK4mCqYoKpKQyx0sEjbfm9+tdPbs/x5xzVa5EcCgYEAziqU
-zmopsZM4CnCnqvuKK8GH7WwDZXd7SrMOm2qBuvZxNQZsNNsTLR9SV23YA9yYrkmk
-dqdVRS9WX1HjFgbSrQ19b4nk7GZ3d1pjCIZ0BW+WVI6ZkINRCniCsK/2fakCRyas
-HTF+eZIre7SIjM2SKxQU7EbG1J1Mt3Vh3ilSyzsCgYEAuw1iDmERPhK0ESjQ0q+f
-qsoZQ0vYEiu2IyMq4QyzHoXm/L3sMsUk7yKUwemtItL2ZsHmNt8y1W8f3q29muH0
-MJKglmENfSeQ2eRV2O2GSaR3IMUw0QO0IoMMAFJ3M1SdKyviAnZRcWrAQTkvvUzn
-4kPz+iuzzv1W2cL564KewuMCgYEAuNDXQQtOgQ+Wh1ViGRcRUBRXw/C2QrmPXvGR
-QKWD0pSl+4Dcc62ITUTszc98fEm+3U7LDksHV9QNu7lutwo6xkN3lQuqmnlo0yfF
-65iMXWsg+oAzDaeKeLZ7geTcNN3TWvFCDZGW7WipbmXymzaVt+RytTTlfSfd5ABo
-UX396I0CgYASYF3TgzFVGkQK/lVlTOFaWAf0IZ3qwVfCWlezi4GVDHc+eZ27n8rE
-UPFHgEHm9ID0jun/4FQsUkkWQpvfl2H51R4UtFVePXSiKq7D/KNamSUYY3Kvyf0a
-5tmRR33Swjjp3fVRuFtiNVgfTA3OLa2quAqbRzxMsGYAUfeQtCb98g==
------END RSA PRIVATE KEY-----"""

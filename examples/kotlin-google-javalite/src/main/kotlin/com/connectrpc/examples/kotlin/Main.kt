@@ -40,12 +40,12 @@ class Main {
                             .readTimeout(Duration.ofMinutes(10))
                             .writeTimeout(Duration.ofMinutes(10))
                             .callTimeout(Duration.ofMinutes(10))
-                            .build()
+                            .build(),
                     ),
                     ProtocolClientConfig(
                         host = host,
-                        serializationStrategy = GoogleJavaLiteProtobufStrategy()
-                    )
+                        serializationStrategy = GoogleJavaLiteProtobufStrategy(),
+                    ),
                 )
                 val elizaServiceClient = ElizaServiceClient(client)
                 connectStreaming(elizaServiceClient)
@@ -63,7 +63,7 @@ class Main {
                             // Update the view with the response.
                             val elizaResponse = result.message
                             println(elizaResponse.sentence)
-                        }
+                        },
                     )
                 }
             }

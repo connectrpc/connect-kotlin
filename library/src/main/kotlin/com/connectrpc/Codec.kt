@@ -17,8 +17,16 @@ package com.connectrpc
 import okio.Buffer
 import okio.BufferedSource
 
-const val codecNameProto = "proto"
-const val codecNameJSON = "json"
+const val CODEC_NAME_PROTO = "proto"
+const val CODEC_NAME_JSON = "json"
+
+@Deprecated("replaced with CODEC_NAME_PROTO", ReplaceWith("CODEC_NAME_PROTO"))
+@Suppress("ktlint:standard:property-naming")
+const val codecNameProto = CODEC_NAME_PROTO
+
+@Deprecated("replaced with CODEC_NAME_JSON", ReplaceWith("CODEC_NAME_JSON"))
+@Suppress("ktlint:standard:property-naming")
+const val codecNameJSON = CODEC_NAME_JSON
 
 /**
  * Defines a type that is capable of encoding and decoding messages using a specific format.

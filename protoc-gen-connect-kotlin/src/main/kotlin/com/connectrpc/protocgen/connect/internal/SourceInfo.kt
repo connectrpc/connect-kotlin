@@ -19,12 +19,12 @@ import com.google.protobuf.DescriptorProtos
 internal class SourceInfo(
     private val helper: SourceCodeHelper,
     private val descriptorSource: Plugin.DescriptorSource,
-    path: List<Int> = emptyList()
+    path: List<Int> = emptyList(),
 ) {
     constructor(
         fileDescriptor: DescriptorProtos.FileDescriptorProto,
         descriptorSource: Plugin.DescriptorSource,
-        path: List<Int> = emptyList()
+        path: List<Int> = emptyList(),
     ) : this(SourceCodeHelper(fileDescriptor), descriptorSource, path)
 
     private val path = listOf(*path.toTypedArray())
@@ -42,7 +42,7 @@ internal class SourceInfo(
  * Creates an index for the source locations.
  */
 internal class SourceCodeHelper(
-    fileDescriptorProto: DescriptorProtos.FileDescriptorProto
+    fileDescriptorProto: DescriptorProtos.FileDescriptorProto,
 ) {
     private val locations: Map<List<Int>, List<DescriptorProtos.SourceCodeInfo.Location>> = makeLocationMap(fileDescriptorProto.sourceCodeInfo.locationList)
 

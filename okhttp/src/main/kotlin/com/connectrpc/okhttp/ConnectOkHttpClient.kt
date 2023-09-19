@@ -38,7 +38,7 @@ import java.io.IOException
  * The OkHttp implementation of HTTPClientInterface.
  */
 class ConnectOkHttpClient @JvmOverloads constructor(
-    val client: OkHttpClient = OkHttpClient()
+    val client: OkHttpClient = OkHttpClient(),
 ) : HTTPClientInterface {
 
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
@@ -77,10 +77,10 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 error = ConnectError(
                                     code,
                                     message = e.message,
-                                    exception = e
+                                    exception = e,
                                 ),
-                                tracingInfo = null
-                            )
+                                tracingInfo = null,
+                            ),
                         )
                     }
 
@@ -97,11 +97,11 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 headers = response.headers.toLowerCaseKeysMultiMap(),
                                 message = responseBuffer ?: Buffer(),
                                 trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                                tracingInfo = TracingInfo(response.code)
-                            )
+                                tracingInfo = TracingInfo(response.code),
+                            ),
                         )
                     }
-                }
+                },
             )
         } catch (e: Throwable) {
             onResult(
@@ -113,10 +113,10 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     error = ConnectError(
                         Code.UNKNOWN,
                         message = e.message,
-                        exception = e
+                        exception = e,
                     ),
-                    tracingInfo = null
-                )
+                    tracingInfo = null,
+                ),
             )
         }
         return cancelable
@@ -124,7 +124,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
 
     override fun stream(
         request: HTTPRequest,
-        onResult: suspend (StreamResult<Buffer>) -> Unit
+        onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
         return client.initializeStream(request.methodSpec.method, request, onResult)
     }

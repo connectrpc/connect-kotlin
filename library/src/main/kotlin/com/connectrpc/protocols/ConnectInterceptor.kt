@@ -43,7 +43,7 @@ import java.net.URL
  * https://connectrpc.com/docs
  */
 internal class ConnectInterceptor(
-    private val clientConfig: ProtocolClientConfig
+    private val clientConfig: ProtocolClientConfig,
 ) : Interceptor {
     private val moshi = Moshi.Builder().build()
     private val serializationStrategy = clientConfig.serializationStrategy
@@ -59,7 +59,7 @@ internal class ConnectInterceptor(
                     requestHeaders.put(
                         ACCEPT_ENCODING,
                         clientConfig.compressionPools()
-                            .map { compressionPool -> compressionPool.name() }
+                            .map { compressionPool -> compressionPool.name() },
                     )
                 }
                 if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
@@ -84,7 +84,7 @@ internal class ConnectInterceptor(
                         contentType = request.contentType,
                         headers = requestHeaders,
                         message = finalRequestBody.readByteArray(),
-                        methodSpec = request.methodSpec
+                        methodSpec = request.methodSpec,
                     )
                 }
             },
@@ -108,9 +108,9 @@ internal class ConnectInterceptor(
                     headers = responseHeaders,
                     trailers = trailers,
                     error = response.error ?: connectError,
-                    tracingInfo = response.tracingInfo
+                    tracingInfo = response.tracingInfo,
                 )
-            }
+            },
         )
     }
 
@@ -124,7 +124,7 @@ internal class ConnectInterceptor(
                 if (requestCompression != null) {
                     requestHeaders.put(
                         CONNECT_STREAMING_CONTENT_ENCODING,
-                        listOf(requestCompression.compressionPool.name())
+                        listOf(requestCompression.compressionPool.name()),
                     )
                 }
                 if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
@@ -132,14 +132,14 @@ internal class ConnectInterceptor(
                 }
                 requestHeaders.put(
                     CONNECT_STREAMING_ACCEPT_ENCODING,
-                    clientConfig.compressionPools().map { entry -> entry.name() }
+                    clientConfig.compressionPools().map { entry -> entry.name() },
                 )
                 request.clone(
                     url = request.url,
                     contentType = request.contentType,
                     headers = requestHeaders,
                     message = request.message,
-                    methodSpec = request.methodSpec
+                    methodSpec = request.methodSpec,
                 )
             },
             requestBodyFunction = { buffer ->
@@ -158,7 +158,7 @@ internal class ConnectInterceptor(
                     onMessage = { result ->
                         val (headerByte, unpackedMessage) = Envelope.unpackWithHeaderByte(
                             result.message,
-                            responseCompressionPool
+                            responseCompressionPool,
                         )
                         val isEndStream = headerByte.shr(1).and(1) == 1
                         if (isEndStream) {
@@ -171,10 +171,10 @@ internal class ConnectInterceptor(
                         val streamTrailers = result.trailers
                         val error = result.connectError()
                         StreamResult.Complete(error?.code ?: Code.OK, error = error, streamTrailers)
-                    }
+                    },
                 )
                 streamResult
-            }
+            },
         )
     }
 
@@ -186,7 +186,7 @@ internal class ConnectInterceptor(
     private fun constructGETRequest(
         request: HTTPRequest,
         finalRequestBody: Buffer,
-        requestCompression: RequestCompression?
+        requestCompression: RequestCompression?,
     ): HTTPRequest {
         val serializationStrategy = clientConfig.serializationStrategy
         val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
@@ -194,7 +194,7 @@ internal class ConnectInterceptor(
             request,
             requestCodec,
             finalRequestBody,
-            requestCompression
+            requestCompression,
         )
         return request.clone(
             url = url,
@@ -205,8 +205,8 @@ internal class ConnectInterceptor(
                 requestClass = request.methodSpec.requestClass,
                 responseClass = request.methodSpec.responseClass,
                 idempotency = request.methodSpec.idempotency,
-                method = GET_METHOD
-            )
+                method = GET_METHOD,
+            ),
         )
     }
 
@@ -231,8 +231,8 @@ internal class ConnectInterceptor(
                     errorDetailParser = serializationStrategy.errorDetailParser(),
                     message = endStreamResponseJSON.error.message,
                     details = parseErrorDetails(endStreamResponseJSON.error),
-                    metadata = metadata ?: emptyMap()
-                )
+                    metadata = metadata ?: emptyMap(),
+                ),
             )
         }
     }
@@ -248,7 +248,7 @@ internal class ConnectInterceptor(
                 adapter.fromJson(errorJSON) ?: return ConnectError(
                     code,
                     serializationStrategy.errorDetailParser(),
-                    errorJSON
+                    errorJSON,
                 )
             } catch (e: Throwable) {
                 return ConnectError(code, serializationStrategy.errorDetailParser(), errorJSON)
@@ -259,13 +259,13 @@ internal class ConnectInterceptor(
                 errorDetailParser = serializationStrategy.errorDetailParser(),
                 message = errorPayloadJSON.message,
                 details = errorDetails,
-                metadata = headers
+                metadata = headers,
             )
         }
     }
 
     private fun parseErrorDetails(
-        jsonClass: ErrorPayloadJSON?
+        jsonClass: ErrorPayloadJSON?,
     ): List<ConnectErrorDetail> {
         val errorDetails = mutableListOf<ConnectErrorDetail>()
         for (detail in jsonClass?.details.orEmpty()) {
@@ -280,8 +280,8 @@ internal class ConnectInterceptor(
             errorDetails.add(
                 ConnectErrorDetail(
                     detail.type,
-                    payload.encodeUtf8()
-                )
+                    payload.encodeUtf8(),
+                ),
             )
         }
         return errorDetails
@@ -305,7 +305,7 @@ private fun getUrlFromMethodSpec(
     httpRequest: HTTPRequest,
     codec: Codec<*>,
     payload: Buffer,
-    requestCompression: RequestCompression?
+    requestCompression: RequestCompression?,
 ): URL {
     val baseURL = httpRequest.url
     val methodSpec = httpRequest.methodSpec

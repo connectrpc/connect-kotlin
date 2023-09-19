@@ -14,8 +14,8 @@
 
 package com.connectrpc.extensions
 
+import com.connectrpc.CODEC_NAME_PROTO
 import com.connectrpc.Codec
-import com.connectrpc.codecNameProto
 import com.google.protobuf.CodedOutputStream
 import com.google.protobuf.GeneratedMessageLite
 import com.google.protobuf.Internal
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
  * deserializing and serializing data types.
  */
 internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
-    clazz: KClass<E>
+    clazz: KClass<E>,
 ) : Codec<E> {
     /**
      * Casting assumes the user is using Google's MessageLite type.
@@ -41,7 +41,7 @@ internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
     }
 
     override fun encodingName(): String {
-        return codecNameProto
+        return CODEC_NAME_PROTO
     }
 
     override fun deserialize(source: BufferedSource): E {

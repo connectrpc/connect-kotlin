@@ -34,7 +34,7 @@ internal data class GRPCCompletion(
     // List of error details.
     val errorDetails: List<ConnectErrorDetail>,
     // Set to either message headers (or trailers) where the gRPC status was found.
-    val metadata: Headers
+    val metadata: Headers,
 )
 
 internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectError? {
@@ -49,7 +49,7 @@ internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializa
             message = completion?.message?.utf8(),
             exception = error,
             details = completion?.errorDetails ?: emptyList(),
-            metadata = completion?.metadata ?: emptyMap()
+            metadata = completion?.metadata ?: emptyMap(),
         )
     }
     // Successful call.

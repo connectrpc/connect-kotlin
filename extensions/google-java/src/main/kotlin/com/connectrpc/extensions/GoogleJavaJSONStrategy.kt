@@ -14,10 +14,10 @@
 
 package com.connectrpc.extensions
 
+import com.connectrpc.CODEC_NAME_JSON
 import com.connectrpc.Codec
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.SerializationStrategy
-import com.connectrpc.codecNameJSON
 import com.google.protobuf.GeneratedMessageV3
 import kotlin.reflect.KClass
 
@@ -26,7 +26,7 @@ import kotlin.reflect.KClass
  */
 class GoogleJavaJSONStrategy : SerializationStrategy {
     override fun serializationName(): String {
-        return codecNameJSON
+        return CODEC_NAME_JSON
     }
 
     /**
