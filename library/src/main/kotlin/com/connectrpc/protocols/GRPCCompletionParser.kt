@@ -30,10 +30,6 @@ class GRPCCompletionParser(
     /**
      * Parses the completion of a GRPC response from the Headers (for trailers-only responses) or Trailers.
      *
-     * For GRPCWeb, the caller will have to transform the final message into trailers to parse a completion.
-     *
-     * For GRPC H2, the caller can just take the trailers from the completed stream to parse a completion.
-     *
      * Returns null when a completion is unable to be parsed.
      */
     internal fun parse(headers: Headers, trailers: Trailers): GRPCCompletion? {

@@ -38,10 +38,10 @@ internal data class GRPCCompletion(
 )
 
 internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectError? {
-    val code = completion?.code ?: Code.UNKNOWN
     if (error is ConnectError) {
         return error
     }
+    val code = completion?.code ?: Code.UNKNOWN
     if (error != null || code != Code.OK) {
         return ConnectError(
             code = code,
