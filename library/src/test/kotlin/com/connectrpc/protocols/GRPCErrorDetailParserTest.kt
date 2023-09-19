@@ -31,7 +31,8 @@ class GRPCErrorDetailParserTest {
     fun trailers() {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
-            mapOf(
+            headers = emptyMap(),
+            trailers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_MESSAGE_TRAILER to listOf("str"),
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64())
@@ -46,7 +47,8 @@ class GRPCErrorDetailParserTest {
     fun trailersWithoutStatus() {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
-            mapOf(
+            headers = emptyMap(),
+            trailers = mapOf(
                 GRPC_MESSAGE_TRAILER to listOf("str"),
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64())
             )
@@ -58,10 +60,11 @@ class GRPCErrorDetailParserTest {
     fun trailersWithoutMessage() {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
-            mapOf(
+            headers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64())
-            )
+            ),
+            trailers = emptyMap()
         )
         assertThat(completion!!.code).isEqualTo(Code.UNAUTHENTICATED)
     }
@@ -70,7 +73,8 @@ class GRPCErrorDetailParserTest {
     fun trailersWithoutErrorDetails() {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
-            mapOf(
+            headers = emptyMap(),
+            trailers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_MESSAGE_TRAILER to listOf("str")
             )

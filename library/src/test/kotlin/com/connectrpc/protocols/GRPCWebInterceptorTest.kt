@@ -335,8 +335,8 @@ class GRPCWebInterceptorTest {
             )
         )
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
+        assertThat(request.headers.keys).containsExactlyInAnyOrder(GRPC_WEB_USER_AGENT, GRPC_ENCODING, "key")
         assertThat(request.headers[GRPC_WEB_USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
-        assertThat(request.headers[GRPC_TE_HEADER]).containsExactly("trailers")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers["key"]).containsExactly("value")
     }
@@ -446,7 +446,7 @@ class GRPCWebInterceptorTest {
         assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
         val headerResult = result as StreamResult.Headers
         assertThat(headerResult.headers[GRPC_ENCODING]).containsExactly("gzip")
-        assertThat(headerResult.headers.containsKey("trailer-x-some-key")).isFalse()
+        assertThat(headerResult.headers["trailer-x-some-key"]).containsExactly("some_value")
     }
 
     @Test

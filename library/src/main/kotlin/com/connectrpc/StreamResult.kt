@@ -19,7 +19,7 @@ package com.connectrpc
  *
  * A typical stream receives [Headers] > [Message] > [Message] > [Message] ... > [Complete]
  */
-sealed class StreamResult<Output> constructor(
+sealed class StreamResult<Output>(
     val error: Throwable? = null
 ) {
     // Headers have been received over the stream.

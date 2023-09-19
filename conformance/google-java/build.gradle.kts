@@ -35,6 +35,7 @@ dependencies {
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
     testImplementation(libs.testcontainers)
+    testImplementation(libs.slf4j.simple)
 }
 
 configure<SpotlessExtension> {

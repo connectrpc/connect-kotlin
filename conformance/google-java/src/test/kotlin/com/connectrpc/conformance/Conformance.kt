@@ -33,7 +33,6 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.ByteString
-import com.google.protobuf.Empty
 import com.google.protobuf.empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -50,15 +49,16 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 import java.time.Duration
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-
 @RunWith(Parameterized::class)
 class Conformance(
-    private val protocol: NetworkProtocol
+    private val protocol: NetworkProtocol,
+    private val serverType: ServerType
 ) {
     private lateinit var connectClient: ProtocolClient
     private lateinit var shortTimeoutConnectClient: ProtocolClient
@@ -66,20 +66,22 @@ class Conformance(
     private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
-        const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
+        private const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
 
         @JvmStatic
-        @Parameters(name = "protocol")
-        fun data(): Iterable<NetworkProtocol> {
+        @Parameters(name = "client={0},server={1}")
+        fun data(): Iterable<Array<Any>> {
             return arrayListOf(
-                NetworkProtocol.CONNECT,
-                NetworkProtocol.GRPC
+                arrayOf(NetworkProtocol.CONNECT, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC_WEB, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC, ServerType.GRPC_GO)
             )
         }
 
         @JvmField
         @ClassRule
-        val CONFORMANCE_CONTAINER = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
+        val CONFORMANCE_CONTAINER_CONNECT = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
             .withExposedPorts(8080, 8081)
             .withCommand(
                 "/usr/local/bin/serverconnect",
@@ -92,11 +94,28 @@ class Conformance(
                 "--key",
                 "cert/localhost.key"
             )
+            .waitingFor(HostPortWaitStrategy().forPorts(8081))
+
+        @JvmField
+        @ClassRule
+        val CONFORMANCE_CONTAINER_GRPC = GenericContainer("connectrpc/conformance:$CONFORMANCE_VERSION")
+            .withExposedPorts(8081)
+            .withCommand(
+                "/usr/local/bin/servergrpc",
+                "--port",
+                "8081",
+                "--cert",
+                "cert/localhost.crt",
+                "--key",
+                "cert/localhost.key"
+            )
+            .waitingFor(HostPortWaitStrategy().forPorts(8081))
     }
 
     @Before
     fun before() {
-        val host = "https://localhost:${CONFORMANCE_CONTAINER.getMappedPort(8081)}"
+        val serverPort = if (serverType == ServerType.CONNECT_GO) CONFORMANCE_CONTAINER_CONNECT.getMappedPort(8081) else CONFORMANCE_CONTAINER_GRPC.getMappedPort(8081)
+        val host = "https://localhost:$serverPort"
         val (sslSocketFactory, trustManager) = sslContext()
         val client = OkHttpClient.Builder()
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
@@ -168,14 +187,17 @@ class Conformance(
                 for (res in stream.resultChannel()) {
                     res.maybeFold(
                         onCompletion = { result ->
-                            // For some reason we keep timing out on these calls and not actually getting a real response like with grpc?
-                            assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                            assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                            assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
-                            assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
-                                expectedErrorDetail
-                            )
-                            countDownLatch.countDown()
+                            try {
+                                // For some reason we keep timing out on these calls and not actually getting a real response like with grpc?
+                                assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                                assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
+                                assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
+                                    expectedErrorDetail
+                                )
+                            } finally {
+                                countDownLatch.countDown()
+                            }
                         }
                     )
                 }
@@ -190,12 +212,12 @@ class Conformance(
     @Test
     fun emptyUnary(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.emptyCall(Empty.newBuilder().build()) { response ->
+        testServiceConnectClient.emptyCall(empty {}) { response ->
             response.failure {
                 fail<Unit>("expected error to be null")
             }
             response.success { success ->
-                assertThat(success.message).isEqualTo(Empty.newBuilder().build())
+                assertThat(success.message).isEqualTo(empty {})
                 countDownLatch.countDown()
             }
         }
@@ -306,10 +328,13 @@ class Conformance(
                 for (res in stream.resultChannel()) {
                     res.maybeFold(
                         onCompletion = { result ->
-                            assertThat(result.error).isNotNull()
-                            assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                            assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                            countDownLatch.countDown()
+                            try {
+                                assertThat(result.error).isNotNull()
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                                assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                            } finally {
+                                countDownLatch.countDown()
+                            }
                         }
                     )
                 }
@@ -353,7 +378,7 @@ class Conformance(
     @Test
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        testServiceConnectClient.unimplementedCall(Empty.newBuilder().build()) { response ->
+        testServiceConnectClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
@@ -364,12 +389,39 @@ class Conformance(
     @Test
     fun unimplementedService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
-        unimplementedServiceClient.unimplementedCall(Empty.newBuilder().build()) { response ->
+        unimplementedServiceClient.unimplementedCall(empty {}) { response ->
             assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
             countDownLatch.countDown()
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    @Test
+    fun unimplementedServerStreamingService(): Unit = runBlocking {
+        val countDownLatch = CountDownLatch(1)
+        val stream = unimplementedServiceClient.unimplementedStreamingOutputCall()
+        stream.send(empty { })
+        withContext(Dispatchers.IO) {
+            val job = async {
+                for (res in stream.resultChannel()) {
+                    res.maybeFold(
+                        onCompletion = { result ->
+                            try {
+                                assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.UNIMPLEMENTED)
+                            } finally {
+                                countDownLatch.countDown()
+                            }
+                        }
+                    )
+                }
+            }
+            countDownLatch.await(5, TimeUnit.SECONDS)
+            job.cancel()
+            assertThat(countDownLatch.count).isZero()
+            stream.close()
+        }
     }
 
     @Test
@@ -399,12 +451,12 @@ class Conformance(
 
     @Test
     fun emptyUnaryBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.emptyCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceConnectClient.emptyCallBlocking(empty {}).execute()
         response.failure {
             fail<Unit>("expected error to be null")
         }
         response.success { success ->
-            assertThat(success.message).isEqualTo(Empty.newBuilder().build())
+            assertThat(success.message).isEqualTo(empty {})
         }
     }
 
@@ -499,13 +551,13 @@ class Conformance(
 
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
-        val response = testServiceConnectClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
+        val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 
     @Test
     fun unimplementedServiceBlocking(): Unit = runBlocking {
-        val response = unimplementedServiceClient.unimplementedCallBlocking(Empty.newBuilder().build()).execute()
+        val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
         assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
     }
 

@@ -15,7 +15,10 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
+import com.connectrpc.ConnectError
 import com.connectrpc.ConnectErrorDetail
+import com.connectrpc.Headers
+import com.connectrpc.SerializationStrategy
 import okio.ByteString
 
 /**
@@ -29,5 +32,26 @@ internal data class GRPCCompletion(
     // Message data.
     val message: ByteString,
     // List of error details.
-    val errorDetails: List<ConnectErrorDetail>
+    val errorDetails: List<ConnectErrorDetail>,
+    // Set to either message headers (or trailers) where the gRPC status was found.
+    val metadata: Headers
 )
+
+internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectError? {
+    if (error is ConnectError) {
+        return error
+    }
+    val code = completion?.code ?: Code.UNKNOWN
+    if (error != null || code != Code.OK) {
+        return ConnectError(
+            code = code,
+            errorDetailParser = serializationStrategy.errorDetailParser(),
+            message = completion?.message?.utf8(),
+            exception = error,
+            details = completion?.errorDetails ?: emptyList(),
+            metadata = completion?.metadata ?: emptyMap()
+        )
+    }
+    // Successful call.
+    return null
+}
