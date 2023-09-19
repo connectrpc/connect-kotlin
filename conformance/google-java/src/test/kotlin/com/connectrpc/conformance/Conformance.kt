@@ -74,6 +74,7 @@ class Conformance(
             return arrayListOf(
                 arrayOf(NetworkProtocol.CONNECT, ServerType.CONNECT_GO),
                 arrayOf(NetworkProtocol.GRPC, ServerType.CONNECT_GO),
+                arrayOf(NetworkProtocol.GRPC_WEB, ServerType.CONNECT_GO),
                 arrayOf(NetworkProtocol.GRPC, ServerType.GRPC_GO)
             )
         }
@@ -186,14 +187,17 @@ class Conformance(
                 for (res in stream.resultChannel()) {
                     res.maybeFold(
                         onCompletion = { result ->
-                            // For some reason we keep timing out on these calls and not actually getting a real response like with grpc?
-                            assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                            assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                            assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
-                            assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
-                                expectedErrorDetail
-                            )
-                            countDownLatch.countDown()
+                            try {
+                                // For some reason we keep timing out on these calls and not actually getting a real response like with grpc?
+                                assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                                assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
+                                assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
+                                    expectedErrorDetail
+                                )
+                            } finally {
+                                countDownLatch.countDown()
+                            }
                         }
                     )
                 }
@@ -388,6 +392,33 @@ class Conformance(
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    @Test
+    fun unimplementedServerStreamingService(): Unit = runBlocking {
+        val countDownLatch = CountDownLatch(1)
+        val stream = unimplementedServiceClient.unimplementedStreamingOutputCall()
+        stream.send(empty { })
+        withContext(Dispatchers.IO) {
+            val job = async {
+                for (res in stream.resultChannel()) {
+                    res.maybeFold(
+                        onCompletion = { result ->
+                            try {
+                                assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.UNIMPLEMENTED)
+                            } finally {
+                                countDownLatch.countDown()
+                            }
+                        }
+                    )
+                }
+            }
+            countDownLatch.await(5, TimeUnit.SECONDS)
+            job.cancel()
+            assertThat(countDownLatch.count).isZero()
+            stream.close()
+        }
     }
 
     @Test

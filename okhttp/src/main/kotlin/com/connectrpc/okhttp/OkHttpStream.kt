@@ -98,11 +98,13 @@ private class ResponseCallback(
     override fun onResponse(call: Call, response: Response) {
         val code = Code.fromHTTPStatus(response.code)
         runBlocking {
-            onResult(StreamResult.Headers(headers = response.headers.toLowerCaseKeysMultiMap()))
+            val headers = response.headers.toLowerCaseKeysMultiMap()
+            onResult(StreamResult.Headers(headers = headers))
             if (code != Code.OK) {
                 // TODO: This is not quite exercised yet. Validate if this is exercised in another test case.
                 val finalResult = StreamResult.Complete<Buffer>(
                     code = code,
+                    headers = headers,
                     trailers = response.safeTrailers() ?: emptyMap(),
                     error = ConnectError(code = code)
                 )
@@ -127,6 +129,7 @@ private class ResponseCallback(
                         // This is the final chance to notify trailers to the consumer.
                         val finalResult = StreamResult.Complete<Buffer>(
                             code = code,
+                            headers = headers,
                             trailers = response.safeTrailers() ?: emptyMap(),
                             error = exception
                         )

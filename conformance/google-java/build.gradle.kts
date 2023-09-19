@@ -30,6 +30,7 @@ dependencies {
     implementation(project(":okhttp"))
 
     testImplementation(libs.okhttp.core)
+    testImplementation(libs.okhttp.logging.interceptor)
     testImplementation(libs.junit)
     testImplementation(libs.assertj)
     testImplementation(libs.mockito)

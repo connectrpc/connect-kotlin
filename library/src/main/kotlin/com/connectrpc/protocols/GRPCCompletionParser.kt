@@ -17,6 +17,7 @@ package com.connectrpc.protocols
 import com.connectrpc.Code
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.ErrorDetailParser
+import com.connectrpc.Headers
 import com.connectrpc.Trailers
 import okio.Buffer
 import okio.ByteString
@@ -27,7 +28,7 @@ class GRPCCompletionParser(
     private val errorDetailParser: ErrorDetailParser
 ) {
     /**
-     * Parses the completion of a GRPC response from the Trailers.
+     * Parses the completion of a GRPC response from the Headers (for trailers-only responses) or Trailers.
      *
      * For GRPCWeb, the caller will have to transform the final message into trailers to parse a completion.
      *
@@ -35,11 +36,20 @@ class GRPCCompletionParser(
      *
      * Returns null when a completion is unable to be parsed.
      */
-    internal fun parse(trailers: Trailers): GRPCCompletion? {
-        val status = parseStatus(trailers) ?: return null
+    internal fun parse(headers: Headers, trailers: Trailers): GRPCCompletion? {
+        val status: Int
+        val metadata: Map<String, List<String>>
+        val statusFromHeaders = parseStatus(headers)
+        if (statusFromHeaders == null) {
+            status = parseStatus(trailers) ?: return null
+            metadata = trailers
+        } else {
+            status = statusFromHeaders
+            metadata = headers
+        }
         val code = Code.fromValue(status)
-        val message = parseMessage(trailers)
-        val details = connectErrorDetails(trailers)
+        val message = parseMessage(metadata)
+        val details = connectErrorDetails(metadata)
         return GRPCCompletion(
             code,
             status,

@@ -74,8 +74,7 @@ internal class GRPCInterceptor(
             responseFunction = { response ->
                 val headers = response.headers
                 val trailers = response.trailers
-                // Handle Trailers-Only response: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#responses
-                val completion = completionParser.parse(trailers.ifEmpty { headers })
+                val completion = completionParser.parse(headers, trailers)
                 val code = completion?.code ?: Code.UNKNOWN
                 if (response.code != Code.OK) {
                     return@UnaryFunction HTTPResponse(
@@ -143,7 +142,8 @@ internal class GRPCInterceptor(
             streamResultFunction = { res ->
                 val streamResult = res.fold(
                     onHeaders = { result ->
-                        val responseHeaders = result.headers.filter { entry -> !entry.key.startsWith("trailer") }
+                        val responseHeaders = result.headers
+
                         responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
                         StreamResult.Headers(responseHeaders)
                     },
@@ -155,8 +155,9 @@ internal class GRPCInterceptor(
                         StreamResult.Message(unpackedMessage)
                     },
                     onCompletion = { result ->
-                        val streamTrailers: Trailers = result.trailers
-                        val completion = completionParser.parse(streamTrailers)
+                        val headers = result.headers
+                        val trailers: Trailers = result.trailers
+                        val completion = completionParser.parse(headers, trailers)
                         val code = completion?.code ?: Code.UNKNOWN
                         val message = completion?.message
                         val details = completion?.errorDetails
@@ -169,7 +170,7 @@ internal class GRPCInterceptor(
                                 message = message?.utf8(),
                                 exception = result.error,
                                 details = details ?: emptyList(),
-                                metadata = streamTrailers
+                                metadata = trailers
                             )
                         } else {
                             // Successful call.
@@ -178,7 +179,8 @@ internal class GRPCInterceptor(
                         StreamResult.Complete(
                             code = connectError?.code ?: Code.OK,
                             error = connectError,
-                            trailers = streamTrailers
+                            headers = headers,
+                            trailers = trailers
                         )
                     }
                 )
