@@ -26,6 +26,7 @@ import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPResponse
 import okio.Buffer
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The gRPC HTTP implementation
@@ -142,10 +143,18 @@ internal class GRPCInterceptor(
             streamResultFunction = { res ->
                 val streamResult = res.fold(
                     onHeaders = { result ->
-                        val responseHeaders = result.headers
-
-                        responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
-                        StreamResult.Headers(responseHeaders)
+                        val headers = result.headers
+                        val completion = completionParser.parse(headers, emptyMap())
+                        if (completion != null) {
+                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
+                            return@fold StreamResult.Complete(
+                                code = connectError?.code ?: Code.OK,
+                                error = connectError,
+                                trailers = headers
+                            )
+                        }
+                        responseCompressionPool = clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
+                        StreamResult.Headers(headers)
                     },
                     onMessage = { result ->
                         val (_, unpackedMessage) = Envelope.unpackWithHeaderByte(
@@ -155,31 +164,12 @@ internal class GRPCInterceptor(
                         StreamResult.Message(unpackedMessage)
                     },
                     onCompletion = { result ->
-                        val headers = result.headers
-                        val trailers: Trailers = result.trailers
-                        val completion = completionParser.parse(headers, trailers)
-                        val code = completion?.code ?: Code.UNKNOWN
-                        val message = completion?.message
-                        val details = completion?.errorDetails
-                        val connectError = if (result.connectError() != null) {
-                            result.connectError()
-                        } else if (result.error != null || code != Code.OK) {
-                            ConnectError(
-                                code = code,
-                                errorDetailParser = serializationStrategy.errorDetailParser(),
-                                message = message?.utf8(),
-                                exception = result.error,
-                                details = details ?: emptyList(),
-                                metadata = trailers
-                            )
-                        } else {
-                            // Successful call.
-                            null
-                        }
+                        val trailers = result.trailers
+                        val completion = completionParser.parse(emptyMap(), trailers)
+                        val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
                         StreamResult.Complete(
                             code = connectError?.code ?: Code.OK,
                             error = connectError,
-                            headers = headers,
                             trailers = trailers
                         )
                     }

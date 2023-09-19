@@ -54,7 +54,8 @@ class GRPCCompletionParser(
             code,
             status,
             message,
-            details
+            details,
+            metadata
         )
     }
 

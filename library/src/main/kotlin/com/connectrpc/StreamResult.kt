@@ -29,7 +29,7 @@ sealed class StreamResult<Output>(
     class Message<Output>(val message: Output) : StreamResult<Output>()
 
     // Stream is complete. Provides the end status code and optionally an error and trailers.
-    class Complete<Output>(val code: Code, error: Throwable? = null, val trailers: Trailers = emptyMap(), val headers: com.connectrpc.Headers = emptyMap()) : StreamResult<Output>(error = error)
+    class Complete<Output>(val code: Code, error: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>(error = error)
 
     /**
      * Get the ConnectError from the result.

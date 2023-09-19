@@ -30,12 +30,12 @@ dependencies {
     implementation(project(":okhttp"))
 
     testImplementation(libs.okhttp.core)
-    testImplementation(libs.okhttp.logging.interceptor)
     testImplementation(libs.junit)
     testImplementation(libs.assertj)
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
     testImplementation(libs.testcontainers)
+    testImplementation(libs.slf4j.simple)
 }
 
 configure<SpotlessExtension> {

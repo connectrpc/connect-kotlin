@@ -328,10 +328,13 @@ class Conformance(
                 for (res in stream.resultChannel()) {
                     res.maybeFold(
                         onCompletion = { result ->
-                            assertThat(result.error).isNotNull()
-                            assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                            assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                            countDownLatch.countDown()
+                            try {
+                                assertThat(result.error).isNotNull()
+                                assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                                assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                            } finally {
+                                countDownLatch.countDown()
+                            }
                         }
                     )
                 }

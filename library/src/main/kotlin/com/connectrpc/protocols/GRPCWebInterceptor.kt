@@ -187,24 +187,12 @@ internal class GRPCWebInterceptor(
                     onHeaders = { result ->
                         val responseHeaders = result.headers
                         responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
-                        // Trailers are passed in the headers for GRPC.
-                        val streamTrailers: Trailers = responseHeaders
-                        val completion = completionParser.parse(result.headers, streamTrailers)
+                        val completion = completionParser.parse(responseHeaders, emptyMap())
                         if (completion != null) {
-                            val error = if (completion.code != Code.OK) {
-                                ConnectError(
-                                    code = completion.code,
-                                    errorDetailParser = serializationStrategy.errorDetailParser(),
-                                    message = completion.message.utf8(),
-                                    details = completion.errorDetails,
-                                    metadata = streamTrailers
-                                )
-                            } else {
-                                null
-                            }
+                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
                             return@fold StreamResult.Complete(
                                 code = completion.code,
-                                error = error,
+                                error = connectError,
                                 trailers = responseHeaders
                             )
                         }
@@ -219,21 +207,7 @@ internal class GRPCWebInterceptor(
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val completion = completionParser.parse(emptyMap(), streamTrailers)
                             val code = completion!!.code
-                            val connectError = if (result.connectError() != null) {
-                                result.connectError()
-                            } else if (result.error != null || code != Code.OK) {
-                                ConnectError(
-                                    code = code,
-                                    errorDetailParser = serializationStrategy.errorDetailParser(),
-                                    message = completion.message.utf8(),
-                                    exception = result.error,
-                                    details = completion.errorDetails,
-                                    metadata = streamTrailers
-                                )
-                            } else {
-                                // Successful call.
-                                null
-                            }
+                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
                             return@fold StreamResult.Complete(
                                 code = code,
                                 error = connectError,

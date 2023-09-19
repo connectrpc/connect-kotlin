@@ -206,7 +206,6 @@ class ProtocolClient(
                     StreamResult.Complete(
                         streamResult.connectError()?.code ?: Code.OK,
                         error = streamResult.error,
-                        headers = streamResult.headers,
                         trailers = streamResult.trailers
                     )
                 }
