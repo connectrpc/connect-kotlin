@@ -60,5 +60,5 @@ We're much more likely to approve your changes if you:
 
 [fork]: https://github.com/connectrpc/connect-kotlin/fork
 [open-issue]: https://github.com/connectrpc/connect-kotlin/issues/new
-[cla]: https://cla-assistant.io/bufbuild/connect-kotlin
+[cla]: https://cla-assistant.io/connectrpc/connect-kotlin
 [commit-message]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html

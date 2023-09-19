@@ -163,7 +163,7 @@ Offered under the [Apache 2 license][license].
 [conformance]: https://github.com/connectrpc/conformance
 [connect-go]: https://github.com/connectrpc/connect-go
 [connect-protocol]: https://connectrpc.com/docs/protocol
-[connect-swift]: https://github.com/bufbuild/connect-swift
+[connect-swift]: https://github.com/connectrpc/connect-swift
 [connect-es]: https://www.npmjs.com/package/@connectrpc/connect
 [error-handling]: https://connectrpc.com/docs/kotlin/errors
 [getting-started]: https://connectrpc.com/docs/kotlin/getting-started
