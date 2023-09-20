@@ -55,16 +55,16 @@ internal class ClientOnlyStream<Input, Output>(
                         message = it.message
                     },
                     onCompletion = {
-                        val connectError = it.connectError()
-                        if (connectError != null) {
-                            if (error != null) {
-                                error!!.addSuppressed(connectError)
-                            } else {
-                                error = connectError
-                            }
-                        }
                         code = it.code
                         trailers = it.trailers
+                        val resultErr = it.error
+                        if (resultErr != null) {
+                            error = if (resultErr is ConnectError) {
+                                resultErr
+                            } else {
+                                ConnectError(code ?: Code.UNKNOWN, message = error?.message, exception = error, metadata = trailers)
+                            }
+                        }
                     },
                 )
             }
