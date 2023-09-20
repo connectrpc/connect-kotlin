@@ -821,14 +821,7 @@ class Conformance(
                     }
                     code = it.code
                     trailers = it.trailers
-                    val completionErr = it.error
-                    if (completionErr != null) {
-                        if (error != null) {
-                            error!!.addSuppressed(completionErr)
-                        } else {
-                            error = completionErr
-                        }
-                    }
+                    error = it.error
                 },
             )
         }
