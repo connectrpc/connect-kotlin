@@ -34,7 +34,11 @@ sealed class ResponseMessage<Output>(
         override val headers: Headers,
         // Trailers provided by the server.
         override val trailers: Trailers,
-    ) : ResponseMessage<Output>(code, headers, trailers)
+    ) : ResponseMessage<Output>(code, headers, trailers) {
+        override fun toString(): String {
+            return "Success{message=$message,code=$code,headers=$headers,trailers=$trailers}"
+        }
+    }
 
     class Failure<Output>(
         // The error.
@@ -45,7 +49,11 @@ sealed class ResponseMessage<Output>(
         override val headers: Headers,
         // Trailers provided by the server.
         override val trailers: Trailers,
-    ) : ResponseMessage<Output>(code, headers, trailers)
+    ) : ResponseMessage<Output>(code, headers, trailers) {
+        override fun toString(): String {
+            return "Failure{error=$error,code=$code,headers=$headers,trailers=$trailers}"
+        }
+    }
 
     fun <E> failure(function: (Failure<Output>) -> E?): E? {
         if (this is Failure) {

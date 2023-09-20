@@ -29,14 +29,22 @@ interface ClientOnlyStreamInterface<Input, Output> {
     /**
      * Receive a single response and close the stream.
      *
-     * @return the single response [StreamResult].
+     * @return the single response [ResponseMessage].
      */
-    suspend fun receiveAndClose(): StreamResult<Output>
+    suspend fun receiveAndClose(): ResponseMessage<Output>
 
     /**
-     * Close the stream. No calls to [send] are valid after calling [close].
+     * Close the stream. No calls to [send] are valid after calling [sendClose].
      */
-    fun close()
+    fun sendClose()
+
+    /**
+     * Determine if the underlying client send stream is closed.
+     *
+     * @return true if the underlying client receive stream is closed. If the stream is still open,
+     *         this will return false.
+     */
+    fun isSendClosed(): Boolean
 
     /**
      * Determine if the underlying stream is closed.

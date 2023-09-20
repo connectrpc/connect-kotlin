@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
  * Typed error provided by Connect RPCs that may optionally wrap additional typed custom errors
  * using [details].
  */
-data class ConnectError constructor(
+data class ConnectError(
     // The resulting status code.
     val code: Code,
     private val errorDetailParser: ErrorDetailParser? = null,

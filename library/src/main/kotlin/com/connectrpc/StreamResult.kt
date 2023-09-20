@@ -19,28 +19,38 @@ package com.connectrpc
  *
  * A typical stream receives [Headers] > [Message] > [Message] > [Message] ... > [Complete]
  */
-sealed class StreamResult<Output>(
-    val error: Throwable? = null,
-) {
+sealed class StreamResult<Output> {
     // Headers have been received over the stream.
-    class Headers<Output>(val headers: com.connectrpc.Headers) : StreamResult<Output>()
+    class Headers<Output>(val headers: com.connectrpc.Headers) : StreamResult<Output>() {
+        override fun toString(): String {
+            return "Headers{headers=$headers}"
+        }
+    }
 
     // A response message has been received over the stream.
-    class Message<Output>(val message: Output) : StreamResult<Output>()
+    class Message<Output>(val message: Output) : StreamResult<Output>() {
+        override fun toString(): String {
+            return "Message{message=$message}"
+        }
+    }
 
     // Stream is complete. Provides the end status code and optionally an error and trailers.
-    class Complete<Output>(val code: Code, error: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>(error = error)
-
-    /**
-     * Get the ConnectError from the result.
-     *
-     * @return The [ConnectError] if present, null otherwise.
-     */
-    fun connectError(): ConnectError? {
-        if (error is ConnectError) {
-            return error
+    class Complete<Output>(val code: Code, val error: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
+        /**
+         * Get the ConnectError from the result.
+         *
+         * @return The [ConnectError] if present, null otherwise.
+         */
+        fun connectError(): ConnectError? {
+            if (error is ConnectError) {
+                return error
+            }
+            return null
         }
-        return null
+
+        override fun toString(): String {
+            return "Complete{code=$code,error=$error,trailers=$trailers}"
+        }
     }
 
     /**

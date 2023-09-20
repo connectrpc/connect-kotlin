@@ -15,11 +15,16 @@
 package com.connectrpc.conformance
 
 import com.connectrpc.Code
+import com.connectrpc.ConnectError
+import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
+import com.connectrpc.StreamResult
+import com.connectrpc.Trailers
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.conformance.ssl.sslContext
 import com.connectrpc.conformance.v1.ErrorDetail
+import com.connectrpc.conformance.v1.PayloadType
 import com.connectrpc.conformance.v1.TestServiceClient
 import com.connectrpc.conformance.v1.UnimplementedServiceClient
 import com.connectrpc.conformance.v1.echoStatus
@@ -27,8 +32,10 @@ import com.connectrpc.conformance.v1.errorDetail
 import com.connectrpc.conformance.v1.payload
 import com.connectrpc.conformance.v1.responseParameters
 import com.connectrpc.conformance.v1.simpleRequest
+import com.connectrpc.conformance.v1.streamingInputCallRequest
 import com.connectrpc.conformance.v1.streamingOutputCallRequest
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
+import com.connectrpc.getOrThrow
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.NetworkProtocol
@@ -36,6 +43,7 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -54,6 +62,7 @@ import java.time.Duration
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(Parameterized::class)
 class Conformance(
@@ -157,8 +166,7 @@ class Conformance(
     }
 
     @Test
-    fun failServerStreaming() = runBlocking {
-        val countDownLatch = CountDownLatch(1)
+    fun failServerStreaming(): Unit = runBlocking {
         val expectedErrorDetail = errorDetail {
             reason = "soirée 🎉"
             domain = "connect-conformance"
@@ -177,35 +185,32 @@ class Conformance(
             }
         }
 
-        stream.send(
+        stream.sendAndClose(
             streamingOutputCallRequest {
                 responseParameters.addAll(parameters)
             },
         )
+        val countDownLatch = CountDownLatch(1)
         withContext(Dispatchers.IO) {
             val job = async {
-                for (res in stream.resultChannel()) {
-                    res.maybeFold(
-                        onCompletion = { result ->
-                            try {
-                                // For some reason we keep timing out on these calls and not actually getting a real response like with grpc?
-                                assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                                assertThat(result.connectError()!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                                assertThat(result.connectError()!!.message).isEqualTo("soirée 🎉")
-                                assertThat(result.connectError()!!.unpackedDetails(ErrorDetail::class)).containsExactly(
-                                    expectedErrorDetail,
-                                )
-                            } finally {
-                                countDownLatch.countDown()
-                            }
-                        },
+                try {
+                    val result = streamResults(stream.resultChannel())
+                    assertThat(result.messages.map { it.payload.body.size() }).isEqualTo(sizes)
+                    assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                    assertThat(result.error).isInstanceOf(ConnectError::class.java)
+                    val connectError = result.error as ConnectError
+                    assertThat(connectError.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                    assertThat(connectError.message).isEqualTo("soirée 🎉")
+                    assertThat(connectError.unpackedDetails(ErrorDetail::class)).containsExactly(
+                        expectedErrorDetail,
                     )
+                } finally {
+                    countDownLatch.countDown()
                 }
             }
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
             assertThat(countDownLatch.count).isZero()
-            stream.close()
         }
     }
 
@@ -308,7 +313,7 @@ class Conformance(
     }
 
     @Test
-    fun timeoutOnSleepingServer() = runBlocking {
+    fun timeoutOnSleepingServer(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         val client = TestServiceClient(shortTimeoutConnectClient)
         val request = streamingOutputCallRequest {
@@ -325,25 +330,20 @@ class Conformance(
         val stream = client.streamingOutputCall()
         withContext(Dispatchers.IO) {
             val job = async {
-                for (res in stream.resultChannel()) {
-                    res.maybeFold(
-                        onCompletion = { result ->
-                            try {
-                                assertThat(result.error).isNotNull()
-                                assertThat(result.connectError()!!.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                                assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                            } finally {
-                                countDownLatch.countDown()
-                            }
-                        },
-                    )
+                try {
+                    val result = streamResults(stream.resultChannel())
+                    assertThat(result.error).isInstanceOf(ConnectError::class.java)
+                    val connectErr = result.error as ConnectError
+                    assertThat(connectErr.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                    assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                } finally {
+                    countDownLatch.countDown()
                 }
             }
-            stream.send(request)
+            stream.sendAndClose(request)
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
             assertThat(countDownLatch.count).isZero()
-            stream.close()
         }
     }
 
@@ -401,26 +401,22 @@ class Conformance(
     fun unimplementedServerStreamingService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         val stream = unimplementedServiceClient.unimplementedStreamingOutputCall()
-        stream.send(empty { })
+        stream.sendAndClose(empty { })
         withContext(Dispatchers.IO) {
             val job = async {
-                for (res in stream.resultChannel()) {
-                    res.maybeFold(
-                        onCompletion = { result ->
-                            try {
-                                assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
-                                assertThat(result.connectError()!!.code).isEqualTo(Code.UNIMPLEMENTED)
-                            } finally {
-                                countDownLatch.countDown()
-                            }
-                        },
-                    )
+                try {
+                    val result = streamResults(stream.resultChannel())
+                    assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
+                    assertThat(result.error).isInstanceOf(ConnectError::class.java)
+                    val connectErr = result.error as ConnectError
+                    assertThat(connectErr.code).isEqualTo(Code.UNIMPLEMENTED)
+                } finally {
+                    countDownLatch.countDown()
                 }
             }
             countDownLatch.await(5, TimeUnit.SECONDS)
             job.cancel()
             assertThat(countDownLatch.count).isZero()
-            stream.close()
         }
     }
 
@@ -752,6 +748,94 @@ class Conformance(
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
         assertThat(countDownLatch.count).isZero()
+    }
+
+    @Test
+    fun clientStreaming(): Unit = runBlocking {
+        val stream = testServiceConnectClient.streamingInputCall(emptyMap())
+        var sum = 0
+        listOf(256000, 8, 1024, 32768).forEach { size ->
+            stream.send(
+                streamingInputCallRequest {
+                    payload = payload {
+                        type = PayloadType.COMPRESSABLE
+                        body = ByteString.copyFrom(ByteArray(size))
+                    }
+                },
+            ).getOrThrow()
+            sum += size
+        }
+        val countDownLatch = CountDownLatch(1)
+        withContext(Dispatchers.IO) {
+            val job = async {
+                try {
+                    val result = stream.receiveAndClose().getOrThrow()
+                    assertThat(result.aggregatedPayloadSize).isEqualTo(sum)
+                } finally {
+                    countDownLatch.countDown()
+                }
+            }
+            countDownLatch.await(5, TimeUnit.MINUTES)
+            job.cancel()
+            assertThat(countDownLatch.count).isZero()
+        }
+    }
+
+    data class ServerStreamingResult<Output>(
+        val headers: Headers,
+        val messages: List<Output>,
+        val code: Code,
+        val trailers: Trailers,
+        val error: Throwable?,
+    )
+
+    /*
+     * Convenience method to return all results (with sanity checking) for calls which stream results from the server
+     * (bidi and server streaming).
+     *
+     * This allows us to easily verify headers, messages, trailers, and errors without having to use fold/maybeFold
+     * manually in each location.
+     */
+    private suspend fun <Output> streamResults(channel: ReceiveChannel<StreamResult<Output>>): ServerStreamingResult<Output> {
+        val seenHeaders = AtomicBoolean(false)
+        var headers: Headers = emptyMap()
+        val messages: MutableList<Output> = mutableListOf()
+        val seenCompletion = AtomicBoolean(false)
+        var code: Code = Code.UNKNOWN
+        var trailers: Headers = emptyMap()
+        var error: Throwable? = null
+        for (response in channel) {
+            response.maybeFold(
+                onHeaders = {
+                    if (!seenHeaders.compareAndSet(false, true)) {
+                        throw IllegalStateException("multiple onHeaders callbacks")
+                    }
+                    headers = it.headers
+                },
+                onMessage = {
+                    messages.add(it.message)
+                },
+                onCompletion = {
+                    if (!seenCompletion.compareAndSet(false, true)) {
+                        throw IllegalStateException("multiple onCompletion callbacks")
+                    }
+                    code = it.code
+                    trailers = it.trailers
+                    val completionErr = it.error
+                    if (completionErr != null) {
+                        if (error != null) {
+                            error!!.addSuppressed(completionErr)
+                        } else {
+                            error = completionErr
+                        }
+                    }
+                },
+            )
+        }
+        if (!seenCompletion.get()) {
+            throw IllegalStateException("didn't get completion message")
+        }
+        return ServerStreamingResult(headers, messages, code, trailers, error)
     }
 
     private fun b64Encode(trailingValue: ByteArray): String {

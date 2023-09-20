@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":okhttp"))
     api(libs.okio.core)
     api(libs.protobuf.javalite)
+    api(libs.protobuf.kotlinlite)
     implementation(libs.kotlin.reflect)
 }
 

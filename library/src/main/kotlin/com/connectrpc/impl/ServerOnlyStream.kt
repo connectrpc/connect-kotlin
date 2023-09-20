@@ -30,19 +30,19 @@ internal class ServerOnlyStream<Input, Output>(
     }
 
     override suspend fun sendAndClose(input: Input): Result<Unit> {
-        return try {
-            messageStream.send(input)
+        try {
+            return messageStream.send(input)
         } finally {
-            messageStream.close()
+            messageStream.sendClose()
         }
     }
 
-    override suspend fun send(input: Input): Result<Unit> {
-        return messageStream.send(input)
+    override fun receiveClose() {
+        messageStream.receiveClose()
     }
 
-    override fun close() {
-        messageStream.close()
+    override fun isReceiveClosed(): Boolean {
+        return messageStream.isReceiveClosed()
     }
 
     override fun isClosed(): Boolean {

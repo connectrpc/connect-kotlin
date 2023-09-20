@@ -14,9 +14,11 @@
 
 package com.connectrpc.examples.kotlin
 
+import com.connectrpc.Code
+import com.connectrpc.ConnectError
 import com.connectrpc.ProtocolClientConfig
-import com.connectrpc.eliza.v1.ConverseRequest
 import com.connectrpc.eliza.v1.ElizaServiceClient
+import com.connectrpc.eliza.v1.converseRequest
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
@@ -33,22 +35,25 @@ class Main {
         fun main(args: Array<String>) {
             runBlocking {
                 val host = "https://demo.connectrpc.com"
+                val okHttpClient = OkHttpClient()
+                    .newBuilder()
+                    .readTimeout(Duration.ofMinutes(10))
+                    .writeTimeout(Duration.ofMinutes(10))
+                    .callTimeout(Duration.ofMinutes(10))
+                    .build()
                 val client = ProtocolClient(
-                    httpClient = ConnectOkHttpClient(
-                        OkHttpClient()
-                            .newBuilder()
-                            .readTimeout(Duration.ofMinutes(10))
-                            .writeTimeout(Duration.ofMinutes(10))
-                            .callTimeout(Duration.ofMinutes(10))
-                            .build(),
-                    ),
+                    httpClient = ConnectOkHttpClient(okHttpClient),
                     ProtocolClientConfig(
                         host = host,
                         serializationStrategy = GoogleJavaProtobufStrategy(),
                     ),
                 )
                 val elizaServiceClient = ElizaServiceClient(client)
-                connectStreaming(elizaServiceClient)
+                try {
+                    connectStreaming(elizaServiceClient)
+                } finally {
+                    okHttpClient.dispatcher.executorService.shutdown()
+                }
             }
         }
 
@@ -56,13 +61,23 @@ class Main {
             val stream = elizaServiceClient.converse()
             withContext(Dispatchers.IO) {
                 // Add the message the user is sending to the views.
-                stream.send(ConverseRequest.newBuilder().setSentence("hello").build())
+                stream.send(converseRequest { sentence = "hello" })
+                stream.sendClose()
                 for (streamResult in stream.resultChannel()) {
                     streamResult.maybeFold(
                         onMessage = { result ->
                             // Update the view with the response.
                             val elizaResponse = result.message
                             println(elizaResponse.sentence)
+                        },
+                        onCompletion = { result ->
+                            if (result.code != Code.OK) {
+                                val connectErr = result.connectError()
+                                if (connectErr != null) {
+                                    throw connectErr
+                                }
+                                throw ConnectError(code = result.code, metadata = result.trailers)
+                            }
                         },
                     )
                 }

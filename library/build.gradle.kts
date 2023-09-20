@@ -14,8 +14,11 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockito)
 
+    // Part of API contract
+    api(libs.kotlin.coroutines.core)
+    api(libs.okio.core)
+
     implementation(libs.moshiKotlin)
-    implementation(libs.kotlin.coroutines.core)
 
     ksp(libs.moshiKotlinCodegen)
 }

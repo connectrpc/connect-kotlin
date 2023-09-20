@@ -28,17 +28,6 @@ interface ServerOnlyStreamInterface<Input, Output> {
     fun resultChannel(): ReceiveChannel<StreamResult<Output>>
 
     /**
-     * Send a request to the server over the stream.
-     *
-     * Can only be called exactly one time when starting the stream.
-     *
-     * @param input The request message to send.
-     * @return [Result.success] on send success, [Result.failure] on
-     *         any sends which are not successful.
-     */
-    suspend fun send(input: Input): Result<Unit>
-
-    /**
      * Send a request to the server over the stream and closes the request.
      *
      * Can only be called exactly one time when starting the stream.
@@ -50,9 +39,17 @@ interface ServerOnlyStreamInterface<Input, Output> {
     suspend fun sendAndClose(input: Input): Result<Unit>
 
     /**
-     * Close the stream. No calls to [send] are valid after calling [close].
+     * Close the receive stream.
      */
-    fun close()
+    fun receiveClose()
+
+    /**
+     * Determine if the underlying client receive stream is closed.
+     *
+     * @return true if the underlying client receive stream is closed. If the stream is still open,
+     *         this will return false.
+     */
+    fun isReceiveClosed(): Boolean
 
     /**
      * Determine if the underlying stream is closed.

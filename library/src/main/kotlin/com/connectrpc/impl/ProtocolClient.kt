@@ -211,6 +211,9 @@ class ProtocolClient(
                 }
             }
             channel.send(result)
+            if (isComplete) {
+                channel.close()
+            }
         }
         continuation.invokeOnCancellation {
             httpStream.sendClose()
