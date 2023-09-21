@@ -781,7 +781,7 @@ class Conformance(
         }
     }
 
-    data class ServerStreamingResult<Output>(
+    private data class ServerStreamingResult<Output>(
         val headers: Headers,
         val messages: List<Output>,
         val code: Code,
@@ -803,7 +803,7 @@ class Conformance(
         val seenCompletion = AtomicBoolean(false)
         var code: Code = Code.UNKNOWN
         var trailers: Headers = emptyMap()
-        var error: Throwable? = null
+        var error: Throwable?
         for (response in channel) {
             response.maybeFold(
                 onHeaders = {
