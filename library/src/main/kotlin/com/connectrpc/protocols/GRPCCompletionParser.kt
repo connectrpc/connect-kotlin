@@ -24,7 +24,7 @@ import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import okio.ByteString.Companion.encodeUtf8
 
-class GRPCCompletionParser(
+internal class GRPCCompletionParser(
     private val errorDetailParser: ErrorDetailParser,
 ) {
     /**

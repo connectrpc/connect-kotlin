@@ -69,7 +69,7 @@ class ProtocolClientConfig @JvmOverloads constructor(
         // interceptor and would allow for modifying response after the protocol interceptor.
         internalInterceptorFactoryList.add(protocolInterceptor)
         for (compressionPool in compressionPools) {
-            this.compressionPools.put(compressionPool.name(), compressionPool)
+            this.compressionPools[compressionPool.name()] = compressionPool
         }
         baseUri = URI(host)
     }
@@ -80,10 +80,7 @@ class ProtocolClientConfig @JvmOverloads constructor(
      * @param name The name of the compression pool.
      */
     fun compressionPool(name: String?): CompressionPool? {
-        if (compressionPools.containsKey(name)) {
-            return compressionPools[name]!!
-        }
-        return null
+        return compressionPools[name]
     }
 
     /**
