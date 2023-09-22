@@ -43,11 +43,8 @@ internal class GRPCInterceptor(
                 val requestHeaders = mutableMapOf<String, List<String>>()
                 requestHeaders.putAll(request.headers)
                 if (clientConfig.compressionPools().isNotEmpty()) {
-                    requestHeaders.put(
-                        GRPC_ACCEPT_ENCODING,
-                        clientConfig.compressionPools()
-                            .map { compressionPool -> compressionPool.name() },
-                    )
+                    requestHeaders[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
+                        .map { compressionPool -> compressionPool.name() }
                 }
                 val requestMessage = Buffer().use { buffer ->
                     if (request.message != null) {
@@ -144,7 +141,7 @@ internal class GRPCInterceptor(
                         val headers = result.headers
                         val completion = completionParser.parse(headers, emptyMap())
                         if (completion != null) {
-                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
+                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, null)
                             return@fold StreamResult.Complete(
                                 code = connectError?.code ?: Code.OK,
                                 error = connectError,

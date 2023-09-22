@@ -56,8 +56,7 @@ class BiDirectionalStreamTest {
                     String::class,
                 ),
             )
-
-            stream.close()
+            stream.sendClose()
             val result = stream.send("input")
             assertThat(result.isFailure).isTrue()
         }
@@ -86,11 +85,10 @@ class BiDirectionalStreamTest {
                     String::class,
                 ),
             )
-
-            stream.close()
             val result = stream.send("input")
             assertThat(result.isFailure).isTrue()
             assertThat(result.exceptionOrNull()).isEqualTo(IllegalArgumentException("testing"))
+            stream.sendClose()
         }
     }
 }

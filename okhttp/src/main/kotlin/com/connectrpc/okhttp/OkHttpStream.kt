@@ -61,7 +61,7 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(onResult, isSendClosed))
+    call.enqueue(ResponseCallback(onResult, isReceiveClosed))
     return Stream(
         onSend = { buffer ->
             if (!isSendClosed.get()) {
@@ -72,10 +72,11 @@ internal fun OkHttpClient.initializeStream(
             isSendClosed.set(true)
             duplexRequestBody.close()
         },
-    ) {
-        isReceiveClosed.set(true)
-        call.cancel()
-    }
+        onReceiveClose = {
+            isReceiveClosed.set(true)
+            call.cancel()
+        },
+    )
 }
 
 private class ResponseCallback(

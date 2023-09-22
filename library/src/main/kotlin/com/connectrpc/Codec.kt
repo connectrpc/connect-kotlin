@@ -33,7 +33,7 @@ const val codecNameJSON = CODEC_NAME_JSON
  */
 interface Codec<E> {
     /**
-     * @return The name of the codec's format (e.g., "json", "protobuf"). Usually consumed
+     * @return The name of the codec's format (e.g., "json", "proto"). Usually consumed
      * in the form of adding the `content-type` header via "application/{name}".
      */
     fun encodingName(): String
