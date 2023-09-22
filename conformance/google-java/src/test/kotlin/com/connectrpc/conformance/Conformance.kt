@@ -803,7 +803,7 @@ class Conformance(
         val seenCompletion = AtomicBoolean(false)
         var code: Code = Code.UNKNOWN
         var trailers: Headers = emptyMap()
-        var error: Throwable?
+        var error: Throwable? = null
         for (response in channel) {
             response.maybeFold(
                 onHeaders = {
