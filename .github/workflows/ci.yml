@@ -14,12 +14,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
+          go-version: '1.21'
           cache: false
       - uses: actions/cache@v3
         with:
           path: |
+            ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-build-go-modules
+          key: ${{ runner.os }}-go-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
@@ -54,7 +58,16 @@ jobs:
           github_token: ${{ github.token }}
       - uses: actions/setup-go@v4
         with:
+          go-version: '1.21'
           cache: false
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: Run conformance tests
         run: make conformancerun
   license-headers:
@@ -63,12 +76,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
+          go-version: '1.21'
           cache: false
       - uses: actions/cache@v3
         with:
           path: |
+            ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-license-headers-go-modules
+          key: ${{ runner.os }}-go-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: Check license headers
         run: |
           make licenseheaders
@@ -80,12 +97,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
+          go-version: '1.21'
           cache: false
       - uses: actions/cache@v3
         with:
           path: |
+            ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-test-go-modules
+          key: ${{ runner.os }}-go-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
