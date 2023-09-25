@@ -11,7 +11,7 @@ moshi = "1.15.0"
 okhttp = "4.11.0"
 okio = "3.5.0"
 protobuf = "3.24.3"
-slf4j = "1.7.36"
+slf4j = "2.0.9"
 spotless = "6.21.0"
 
 [libraries]
