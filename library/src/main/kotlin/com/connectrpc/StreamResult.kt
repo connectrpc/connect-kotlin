@@ -37,7 +37,7 @@ sealed class StreamResult<Output> {
     // Stream is complete. Provides the end status code and optionally an error and trailers.
     class Complete<Output>(val code: Code, val error: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
         /**
-         * Get the ConnectError from the result.
+         * Get the ConnectException from the result.
          *
          * @return The [ConnectException] if present, null otherwise.
          */
