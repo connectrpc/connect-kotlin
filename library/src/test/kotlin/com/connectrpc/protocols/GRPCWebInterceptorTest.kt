@@ -520,7 +520,7 @@ class GRPCWebInterceptorTest {
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
         assertThat(completion.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        val connectError = completion.connectError()!!
+        val connectError = completion.connectException()!!
         assertThat(connectError.message).isEqualTo("no more resources!")
     }
 

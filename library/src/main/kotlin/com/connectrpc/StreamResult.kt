@@ -41,12 +41,7 @@ sealed class StreamResult<Output> {
          *
          * @return The [ConnectException] if present, null otherwise.
          */
-        fun connectError(): ConnectException? {
-            if (error is ConnectException) {
-                return error
-            }
-            return null
-        }
+        fun connectException() = error as? ConnectException
 
         override fun toString(): String {
             return "Complete{code=$code,error=$error,trailers=$trailers}"

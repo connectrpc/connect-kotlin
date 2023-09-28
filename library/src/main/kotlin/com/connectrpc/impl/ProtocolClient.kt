@@ -204,7 +204,7 @@ class ProtocolClient(
                 is StreamResult.Complete -> {
                     isComplete = true
                     StreamResult.Complete(
-                        streamResult.connectError()?.code ?: Code.OK,
+                        streamResult.connectException()?.code ?: Code.OK,
                         error = streamResult.error,
                         trailers = streamResult.trailers,
                     )

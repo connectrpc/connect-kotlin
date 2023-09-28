@@ -169,7 +169,7 @@ internal class ConnectInterceptor(
                     },
                     onCompletion = { result ->
                         val streamTrailers = result.trailers
-                        val error = result.connectError()
+                        val error = result.connectException()
                         StreamResult.Complete(error?.code ?: Code.OK, error = error, streamTrailers)
                     },
                 )

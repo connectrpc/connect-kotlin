@@ -72,7 +72,7 @@ class Main {
                         },
                         onCompletion = { result ->
                             if (result.code != Code.OK) {
-                                val connectErr = result.connectError()
+                                val connectErr = result.connectException()
                                 if (connectErr != null) {
                                     throw connectErr
                                 }
