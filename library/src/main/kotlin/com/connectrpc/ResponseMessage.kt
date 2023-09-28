@@ -42,7 +42,7 @@ sealed class ResponseMessage<Output>(
 
     class Failure<Output>(
         // The error.
-        val error: ConnectError,
+        val error: ConnectException,
         // The status code of the response.
         override val code: Code,
         // Response headers specified by the server.

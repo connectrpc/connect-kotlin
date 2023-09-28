@@ -15,7 +15,7 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.Interceptor
 import com.connectrpc.ProtocolClientConfig
@@ -108,7 +108,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = result,
                         trailers = trailers,
-                        error = ConnectError(
+                        error = ConnectException(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),

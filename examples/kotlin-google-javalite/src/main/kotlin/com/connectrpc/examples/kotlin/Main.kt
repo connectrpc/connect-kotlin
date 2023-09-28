@@ -15,7 +15,7 @@
 package com.connectrpc.examples.kotlin
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ElizaServiceClient
 import com.connectrpc.eliza.v1.converseRequest
@@ -76,7 +76,7 @@ class Main {
                                 if (connectErr != null) {
                                     throw connectErr
                                 }
-                                throw ConnectError(code = result.code, metadata = result.trailers)
+                                throw ConnectException(code = result.code, metadata = result.trailers)
                             }
                         },
                     )

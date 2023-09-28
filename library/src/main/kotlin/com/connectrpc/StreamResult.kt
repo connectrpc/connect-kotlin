@@ -39,10 +39,10 @@ sealed class StreamResult<Output> {
         /**
          * Get the ConnectError from the result.
          *
-         * @return The [ConnectError] if present, null otherwise.
+         * @return The [ConnectException] if present, null otherwise.
          */
-        fun connectError(): ConnectError? {
-            if (error is ConnectError) {
+        fun connectError(): ConnectException? {
+            if (error is ConnectException) {
                 return error
             }
             return null

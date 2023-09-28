@@ -16,7 +16,7 @@ package com.connectrpc.protocols
 
 import com.connectrpc.Code
 import com.connectrpc.Codec
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.Headers
 import com.connectrpc.Idempotency
@@ -226,7 +226,7 @@ internal class ConnectInterceptor(
             val code = Code.fromName(endStreamResponseJSON.error.code)
             StreamResult.Complete(
                 code = code,
-                error = ConnectError(
+                error = ConnectException(
                     code = code,
                     errorDetailParser = serializationStrategy.errorDetailParser(),
                     message = endStreamResponseJSON.error.message,
@@ -237,24 +237,24 @@ internal class ConnectInterceptor(
         }
     }
 
-    private fun parseConnectUnaryError(code: Code, headers: Headers, source: Buffer?): ConnectError {
+    private fun parseConnectUnaryError(code: Code, headers: Headers, source: Buffer?): ConnectException {
         if (source == null) {
-            return ConnectError(code, serializationStrategy.errorDetailParser(), "empty error message from source")
+            return ConnectException(code, serializationStrategy.errorDetailParser(), "empty error message from source")
         }
         return source.use { bufferedSource ->
             val adapter = moshi.adapter(ErrorPayloadJSON::class.java)
             val errorJSON = bufferedSource.readUtf8()
             val errorPayloadJSON = try {
-                adapter.fromJson(errorJSON) ?: return ConnectError(
+                adapter.fromJson(errorJSON) ?: return ConnectException(
                     code,
                     serializationStrategy.errorDetailParser(),
                     errorJSON,
                 )
             } catch (e: Throwable) {
-                return ConnectError(code, serializationStrategy.errorDetailParser(), errorJSON)
+                return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON)
             }
             val errorDetails = parseErrorDetails(errorPayloadJSON)
-            ConnectError(
+            ConnectException(
                 code = Code.fromName(errorPayloadJSON.code),
                 errorDetailParser = serializationStrategy.errorDetailParser(),
                 message = errorPayloadJSON.message,

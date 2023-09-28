@@ -15,7 +15,7 @@
 package com.connectrpc.okhttp
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
@@ -87,7 +87,7 @@ private class ResponseCallback(
         runBlocking {
             if (e is InterruptedIOException) {
                 if (e.message == "timeout") {
-                    val error = ConnectError(code = Code.DEADLINE_EXCEEDED)
+                    val error = ConnectException(code = Code.DEADLINE_EXCEEDED)
                     onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, error = error))
                     return@runBlocking
                 }
@@ -106,7 +106,7 @@ private class ResponseCallback(
                 val finalResult = StreamResult.Complete<Buffer>(
                     code = code,
                     trailers = response.safeTrailers() ?: emptyMap(),
-                    error = ConnectError(code = code),
+                    error = ConnectException(code = code),
                 )
                 onResult(finalResult)
                 return@runBlocking

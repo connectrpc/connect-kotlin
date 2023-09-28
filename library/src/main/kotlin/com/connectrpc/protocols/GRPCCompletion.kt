@@ -15,7 +15,7 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.Headers
 import com.connectrpc.SerializationStrategy
@@ -37,13 +37,13 @@ internal data class GRPCCompletion(
     val metadata: Headers,
 )
 
-internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectError? {
-    if (error is ConnectError) {
+internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectException? {
+    if (error is ConnectException) {
         return error
     }
     val code = completion?.code ?: Code.UNKNOWN
     if (error != null || code != Code.OK) {
-        return ConnectError(
+        return ConnectException(
             code = code,
             errorDetailParser = serializationStrategy.errorDetailParser(),
             message = completion?.message?.utf8(),

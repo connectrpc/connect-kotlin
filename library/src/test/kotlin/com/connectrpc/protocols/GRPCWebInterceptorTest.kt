@@ -15,7 +15,7 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
@@ -560,7 +560,7 @@ class GRPCWebInterceptorTest {
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
                 code = Code.UNKNOWN,
-                error = ConnectError(
+                error = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
                 ),

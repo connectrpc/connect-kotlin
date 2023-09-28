@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
  * Typed error provided by Connect RPCs that may optionally wrap additional typed custom errors
  * using [details].
  */
-data class ConnectError(
+data class ConnectException(
     // The resulting status code.
     val code: Code,
     private val errorDetailParser: ErrorDetailParser? = null,
@@ -32,7 +32,7 @@ data class ConnectError(
     val details: List<ConnectErrorDetail> = emptyList(),
     // Additional key-values that were provided by the server.
     val metadata: Headers = emptyMap(),
-) : Throwable(message, exception) {
+) : Exception(message, exception) {
 
     /**
      * Unpacks values from [details] and returns the first matching error, if any.
@@ -51,10 +51,10 @@ data class ConnectError(
     }
 
     /**
-     * Creates a new [ConnectError] with the specified [ErrorDetailParser].
+     * Creates a new [ConnectException] with the specified [ErrorDetailParser].
      */
-    fun setErrorParser(errorParser: ErrorDetailParser): ConnectError {
-        return ConnectError(
+    fun setErrorParser(errorParser: ErrorDetailParser): ConnectException {
+        return ConnectException(
             code,
             errorParser,
             message,
