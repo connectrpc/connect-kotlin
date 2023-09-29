@@ -177,7 +177,7 @@ class Conformance(
             },
         ).getOrThrow()
         val results = streamResults(stream.resultChannel())
-        assertThat(results.error).isNull()
+        assertThat(results.cause).isNull()
         assertThat(results.code).isEqualTo(Code.OK)
         assertThat(results.messages.map { it.payload.type }.toSet()).isEqualTo(setOf(PayloadType.COMPRESSABLE))
         assertThat(results.messages.map { it.payload.body.size() }).isEqualTo(sizes)
@@ -211,7 +211,7 @@ class Conformance(
         val results = streamResults(stream.resultChannel())
         // We've already read all the messages
         assertThat(results.messages).isEmpty()
-        assertThat(results.error).isNull()
+        assertThat(results.cause).isNull()
         assertThat(results.code).isEqualTo(Code.OK)
         stream.receiveClose()
     }
@@ -329,9 +329,9 @@ class Conformance(
         testServiceConnectClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
-                assertThat(errorResponse.error).isNotNull()
+                assertThat(errorResponse.cause).isNotNull()
                 assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
-                assertThat(errorResponse.error.message).isEqualTo("test status message")
+                assertThat(errorResponse.cause.message).isEqualTo("test status message")
                 countDownLatch.countDown()
             }
             response.success {
@@ -392,7 +392,7 @@ class Conformance(
             },
         ) { response ->
             response.failure { errorResponse ->
-                val error = errorResponse.error
+                val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.UNKNOWN)
                 assertThat(response.code).isEqualTo(Code.UNKNOWN)
                 assertThat(error.message).isEqualTo(statusMessage)
@@ -461,7 +461,7 @@ class Conformance(
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
-                val error = errorResponse.error
+                val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                 assertThat(error.message).isEqualTo("soirée 🎉")
                 val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
@@ -544,9 +544,9 @@ class Conformance(
         val response = testServiceConnectClient.unaryCallBlocking(message).execute()
         assertThat(response.code).isEqualTo(Code.UNKNOWN)
         response.failure { errorResponse ->
-            assertThat(errorResponse.error).isNotNull()
+            assertThat(errorResponse.cause).isNotNull()
             assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
-            assertThat(errorResponse.error.message).isEqualTo("test status message")
+            assertThat(errorResponse.cause.message).isEqualTo("test status message")
         }
         response.success {
             fail<Unit>("unexpected success")
@@ -566,7 +566,7 @@ class Conformance(
             },
         ).execute()
         response.failure { errorResponse ->
-            val error = errorResponse.error
+            val error = errorResponse.cause
             assertThat(error.code).isEqualTo(Code.UNKNOWN)
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             assertThat(error.message).isEqualTo(statusMessage)
@@ -597,7 +597,7 @@ class Conformance(
         val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
         assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         response.failure { errorResponse ->
-            val error = errorResponse.error
+            val error = errorResponse.cause
             assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             assertThat(error.message).isEqualTo("soirée 🎉")
             val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
@@ -692,9 +692,9 @@ class Conformance(
         testServiceConnectClient.unaryCall(message) { response ->
             assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
-                assertThat(errorResponse.error).isNotNull()
+                assertThat(errorResponse.cause).isNotNull()
                 assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
-                assertThat(errorResponse.error.message).isEqualTo("test status message")
+                assertThat(errorResponse.cause.message).isEqualTo("test status message")
                 countDownLatch.countDown()
             }
             response.success {
@@ -720,7 +720,7 @@ class Conformance(
             },
         ) { response ->
             response.failure { errorResponse ->
-                val error = errorResponse.error
+                val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.UNKNOWN)
                 assertThat(response.code).isEqualTo(Code.UNKNOWN)
                 assertThat(error.message).isEqualTo(statusMessage)
@@ -766,7 +766,7 @@ class Conformance(
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
             assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
-                val error = errorResponse.error
+                val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                 assertThat(error.message).isEqualTo("soirée 🎉")
                 val connectErrorDetails = error.unpackedDetails(ErrorDetail::class)
@@ -817,7 +817,7 @@ class Conformance(
         val messages: List<Output>,
         val code: Code,
         val trailers: Trailers,
-        val error: Throwable?,
+        val cause: Throwable?,
     )
 
     /*
