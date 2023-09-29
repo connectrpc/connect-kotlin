@@ -141,10 +141,10 @@ internal class GRPCInterceptor(
                         val headers = result.headers
                         val completion = completionParser.parse(headers, emptyMap())
                         if (completion != null) {
-                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, null)
+                            val exception = completion.toConnectExceptionOrNull(serializationStrategy)
                             return@fold StreamResult.Complete(
-                                code = connectError?.code ?: Code.OK,
-                                error = connectError,
+                                code = exception?.code ?: Code.OK,
+                                error = exception,
                                 trailers = headers,
                             )
                         }
@@ -161,12 +161,20 @@ internal class GRPCInterceptor(
                     onCompletion = { result ->
                         val trailers = result.trailers
                         val completion = completionParser.parse(emptyMap(), trailers)
-                        val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
-                        StreamResult.Complete(
-                            code = connectError?.code ?: Code.OK,
-                            error = connectError,
-                            trailers = trailers,
-                        )
+                        if (completion != null) {
+                            val exception = completion.toConnectExceptionOrNull(
+                                serializationStrategy,
+                                result.error
+                            )
+                            StreamResult.Complete(
+                                code = exception?.code ?: Code.OK,
+                                error = exception,
+                                trailers = trailers,
+                            )
+                        } else {
+                            val exception = ConnectException(Code.UNKNOWN)
+                            StreamResult.Complete(exception.code, exception, trailers)
+                        }
                     },
                 )
                 streamResult

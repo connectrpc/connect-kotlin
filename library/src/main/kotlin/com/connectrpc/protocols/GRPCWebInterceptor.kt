@@ -189,10 +189,9 @@ internal class GRPCWebInterceptor(
                         responseCompressionPool = clientConfig.compressionPool(responseHeaders[GRPC_ENCODING]?.first())
                         val completion = completionParser.parse(responseHeaders, emptyMap())
                         if (completion != null) {
-                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, null)
                             return@fold StreamResult.Complete(
                                 code = completion.code,
-                                error = connectError,
+                                error = completion.toConnectExceptionOrNull(serializationStrategy),
                                 trailers = responseHeaders,
                             )
                         }
@@ -207,10 +206,9 @@ internal class GRPCWebInterceptor(
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val completion = completionParser.parse(emptyMap(), streamTrailers)
                             val code = completion!!.code
-                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, null)
                             return@fold StreamResult.Complete(
                                 code = code,
-                                error = connectError,
+                                error = completion.toConnectExceptionOrNull(serializationStrategy),
                                 trailers = streamTrailers,
                             )
                         }
