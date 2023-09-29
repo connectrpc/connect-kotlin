@@ -245,9 +245,9 @@ class ConnectInterceptorTest {
                 tracingInfo = null,
             ),
         )
-        assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        assertThat(response.error!!.message).isEqualTo("no more resources!")
-        val connectErrorDetail = response.error!!.details.singleOrNull()!!
+        assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(response.cause!!.message).isEqualTo("no more resources!")
+        val connectErrorDetail = response.cause!!.details.singleOrNull()!!
         assertThat(connectErrorDetail.type).isEqualTo("type")
         assertThat(connectErrorDetail.payload).isEqualTo("value".encodeUtf8())
     }
@@ -271,7 +271,7 @@ class ConnectInterceptorTest {
                 tracingInfo = null,
             ),
         )
-        assertThat(response.error!!.code).isEqualTo(Code.UNAVAILABLE)
+        assertThat(response.cause!!.code).isEqualTo(Code.UNAVAILABLE)
     }
 
     @Test
@@ -533,9 +533,9 @@ class ConnectInterceptorTest {
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
         assertThat(completion.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        val connectError = completion.connectException()!!
-        assertThat(connectError.message).isEqualTo("no more resources!")
-        val errorDetail = connectError.details.single()
+        val exception = completion.connectException()!!
+        assertThat(exception.message).isEqualTo("no more resources!")
+        val errorDetail = exception.details.single()
         assertThat(errorDetail.type).isEqualTo("type")
         assertThat(errorDetail.payload).isEqualTo("value".encodeUtf8())
     }
@@ -595,7 +595,7 @@ class ConnectInterceptorTest {
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
                 code = Code.UNKNOWN,
-                error = ConnectException(
+                cause = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
                 ),

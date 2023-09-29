@@ -40,7 +40,7 @@ internal class ClientOnlyStream<Input, Output>(
             // in the channel (headers, 1* messages, completion) and have to resort to fold()/maybeFold() to interpret
             // the overall results.
             // Additionally, ResponseMessage.Success and ResponseMessage.Failure shouldn't be necessary for client use.
-            // We should throw ConnectError for failure and only have users have to deal with success messages.
+            // We should throw ConnectException for failure and only have users have to deal with success messages.
             var headers: Headers = emptyMap()
             var message: Output? = null
             var trailers: Headers = emptyMap()
@@ -57,7 +57,7 @@ internal class ClientOnlyStream<Input, Output>(
                     onCompletion = {
                         code = it.code
                         trailers = it.trailers
-                        val resultErr = it.error
+                        val resultErr = it.cause
                         if (resultErr != null) {
                             error = if (resultErr is ConnectException) {
                                 resultErr

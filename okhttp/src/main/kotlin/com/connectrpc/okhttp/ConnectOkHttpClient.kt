@@ -74,7 +74,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 headers = emptyMap(),
                                 message = Buffer(),
                                 trailers = emptyMap(),
-                                error = ConnectException(
+                                cause = ConnectException(
                                     code,
                                     message = e.message,
                                     exception = e,
@@ -110,7 +110,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     headers = emptyMap(),
                     message = Buffer(),
                     trailers = emptyMap(),
-                    error = ConnectException(
+                    cause = ConnectException(
                         Code.UNKNOWN,
                         message = e.message,
                         exception = e,

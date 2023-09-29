@@ -95,8 +95,8 @@ internal class ConnectInterceptor(
                 val responseHeaders =
                     response.headers.filter { entry -> !entry.key.startsWith("trailer-") }
                 val compressionPool = clientConfig.compressionPool(responseHeaders[CONTENT_ENCODING]?.first())
-                val (code, connectError) = if (response.code != Code.OK) {
-                    val error = parseConnectUnaryError(code = response.code, response.headers, response.message.buffer)
+                val (code, exception) = if (response.code != Code.OK) {
+                    val error = parseConnectUnaryException(code = response.code, response.headers, response.message.buffer)
                     error.code to error
                 } else {
                     response.code to null
@@ -107,7 +107,7 @@ internal class ConnectInterceptor(
                     message = message,
                     headers = responseHeaders,
                     trailers = trailers,
-                    error = response.error ?: connectError,
+                    cause = response.cause ?: exception,
                     tracingInfo = response.tracingInfo,
                 )
             },
@@ -170,7 +170,7 @@ internal class ConnectInterceptor(
                     onCompletion = { result ->
                         val streamTrailers = result.trailers
                         val error = result.connectException()
-                        StreamResult.Complete(error?.code ?: Code.OK, error = error, streamTrailers)
+                        StreamResult.Complete(error?.code ?: Code.OK, cause = error, streamTrailers)
                     },
                 )
                 streamResult
@@ -226,7 +226,7 @@ internal class ConnectInterceptor(
             val code = Code.fromName(endStreamResponseJSON.error.code)
             StreamResult.Complete(
                 code = code,
-                error = ConnectException(
+                cause = ConnectException(
                     code = code,
                     errorDetailParser = serializationStrategy.errorDetailParser(),
                     message = endStreamResponseJSON.error.message,
@@ -237,7 +237,7 @@ internal class ConnectInterceptor(
         }
     }
 
-    private fun parseConnectUnaryError(code: Code, headers: Headers, source: Buffer?): ConnectException {
+    private fun parseConnectUnaryException(code: Code, headers: Headers, source: Buffer?): ConnectException {
         if (source == null) {
             return ConnectException(code, serializationStrategy.errorDetailParser(), "empty error message from source")
         }

@@ -247,8 +247,8 @@ class Conformance(
                     val result = streamResults(stream.resultChannel())
                     assertThat(result.messages.map { it.payload.body.size() }).isEqualTo(sizes)
                     assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                    assertThat(result.error).isInstanceOf(ConnectException::class.java)
-                    val connectException = result.error as ConnectException
+                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
+                    val connectException = result.cause as ConnectException
                     assertThat(connectException.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                     assertThat(connectException.message).isEqualTo("soirée 🎉")
                     assertThat(connectException.unpackedDetails(ErrorDetail::class)).containsExactly(
@@ -363,9 +363,9 @@ class Conformance(
             val job = async {
                 try {
                     val result = streamResults(stream.resultChannel())
-                    assertThat(result.error).isInstanceOf(ConnectException::class.java)
-                    val connectErr = result.error as ConnectException
-                    assertThat(connectErr.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
+                    val exception = result.cause as ConnectException
+                    assertThat(exception.code).isEqualTo(Code.DEADLINE_EXCEEDED)
                     assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
                 } finally {
                     countDownLatch.countDown()
@@ -438,9 +438,9 @@ class Conformance(
                 try {
                     val result = streamResults(stream.resultChannel())
                     assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
-                    assertThat(result.error).isInstanceOf(ConnectException::class.java)
-                    val connectErr = result.error as ConnectException
-                    assertThat(connectErr.code).isEqualTo(Code.UNIMPLEMENTED)
+                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
+                    val exception = result.cause as ConnectException
+                    assertThat(exception.code).isEqualTo(Code.UNIMPLEMENTED)
                 } finally {
                     countDownLatch.countDown()
                 }
@@ -852,7 +852,7 @@ class Conformance(
                     }
                     code = it.code
                     trailers = it.trailers
-                    error = it.error
+                    error = it.cause
                 },
             )
         }

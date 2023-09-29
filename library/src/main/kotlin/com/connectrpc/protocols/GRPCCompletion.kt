@@ -40,17 +40,17 @@ internal data class GRPCCompletion(
      * Converts a completion into a [ConnectException] if the completion failed or if a throwable is passed
      * @return a ConnectException on failure, null otherwise
      */
-    fun toConnectExceptionOrNull(serializationStrategy: SerializationStrategy, t: Throwable? = null): ConnectException? {
-        if (t is ConnectException) {
-            return t
+    fun toConnectExceptionOrNull(serializationStrategy: SerializationStrategy, cause: Throwable? = null): ConnectException? {
+        if (cause is ConnectException) {
+            return cause
         }
 
-        if (t != null || code != Code.OK) {
+        if (cause != null || code != Code.OK) {
             return ConnectException(
                 code = code,
                 errorDetailParser = serializationStrategy.errorDetailParser(),
                 message = message.utf8(),
-                exception = t,
+                exception = cause,
                 details = errorDetails,
                 metadata = metadata,
             )

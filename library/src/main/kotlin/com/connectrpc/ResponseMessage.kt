@@ -41,8 +41,8 @@ sealed class ResponseMessage<Output>(
     }
 
     class Failure<Output>(
-        // The error.
-        val error: ConnectException,
+        // The problem.
+        val cause: ConnectException,
         // The status code of the response.
         override val code: Code,
         // Response headers specified by the server.
@@ -51,7 +51,7 @@ sealed class ResponseMessage<Output>(
         override val trailers: Trailers,
     ) : ResponseMessage<Output>(code, headers, trailers) {
         override fun toString(): String {
-            return "Failure{error=$error,code=$code,headers=$headers,trailers=$trailers}"
+            return "Failure{cause=$cause,code=$code,headers=$headers,trailers=$trailers}"
         }
     }
 
@@ -77,7 +77,7 @@ sealed class ResponseMessage<Output>(
 fun ResponseMessage<*>.exceptionOrNull(): Throwable? {
     return when (this) {
         is ResponseMessage.Success -> null
-        is ResponseMessage.Failure -> this.error
+        is ResponseMessage.Failure -> this.cause
     }
 }
 
@@ -93,7 +93,7 @@ inline fun <R, T> ResponseMessage<T>.fold(
 ): R {
     return when (this) {
         is ResponseMessage.Success -> onSuccess(this.message)
-        is ResponseMessage.Failure -> onFailure(this.error)
+        is ResponseMessage.Failure -> onFailure(this.cause)
     }
 }
 
@@ -117,7 +117,7 @@ fun <T> ResponseMessage<T>.getOrDefault(defaultValue: T): T {
 inline fun <R, T : R> ResponseMessage<T>.getOrElse(onFailure: (exception: Throwable) -> R): R {
     return when (this) {
         is ResponseMessage.Success -> this.message
-        is ResponseMessage.Failure -> onFailure(this.error)
+        is ResponseMessage.Failure -> onFailure(this.cause)
     }
 }
 
@@ -139,6 +139,6 @@ fun <T> ResponseMessage<T>.getOrNull(): T? {
 fun <T> ResponseMessage<T>.getOrThrow(): T {
     return when (this) {
         is ResponseMessage.Success -> this.message
-        is ResponseMessage.Failure -> throw this.error
+        is ResponseMessage.Failure -> throw this.cause
     }
 }

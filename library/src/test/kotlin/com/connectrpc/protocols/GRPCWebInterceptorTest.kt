@@ -225,7 +225,7 @@ class GRPCWebInterceptorTest {
                 tracingInfo = null,
             ),
         )
-        assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
 
     @Test
@@ -284,7 +284,7 @@ class GRPCWebInterceptorTest {
                 tracingInfo = null,
             ),
         )
-        assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
 
     @Test
@@ -520,8 +520,8 @@ class GRPCWebInterceptorTest {
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
         assertThat(completion.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        val connectError = completion.connectException()!!
-        assertThat(connectError.message).isEqualTo("no more resources!")
+        val exception = completion.connectException()!!
+        assertThat(exception.message).isEqualTo("no more resources!")
     }
 
     @Test
@@ -560,7 +560,7 @@ class GRPCWebInterceptorTest {
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
                 code = Code.UNKNOWN,
-                error = ConnectException(
+                cause = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
                 ),

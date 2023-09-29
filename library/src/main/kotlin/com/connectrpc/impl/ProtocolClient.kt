@@ -73,11 +73,11 @@ class ProtocolClient(
             val cancelable = httpClient.unary(finalRequest) { httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
-                val connectError = finalResponse.error?.setErrorParser(serializationStrategy.errorDetailParser())
-                if (connectError != null) {
+                val exception = finalResponse.cause?.setErrorParser(serializationStrategy.errorDetailParser())
+                if (exception != null) {
                     onResult(
                         ResponseMessage.Failure(
-                            connectError,
+                            exception,
                             code,
                             finalResponse.headers,
                             finalResponse.trailers,
@@ -205,7 +205,7 @@ class ProtocolClient(
                     isComplete = true
                     StreamResult.Complete(
                         streamResult.connectException()?.code ?: Code.OK,
-                        error = streamResult.error,
+                        cause = streamResult.cause,
                         trailers = streamResult.trailers,
                     )
                 }

@@ -35,16 +35,16 @@ sealed class StreamResult<Output> {
     }
 
     // Stream is complete. Provides the end status code and optionally an error and trailers.
-    class Complete<Output>(val code: Code, val error: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
+    class Complete<Output>(val code: Code, val cause: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
         /**
          * Get the ConnectException from the result.
          *
          * @return The [ConnectException] if present, null otherwise.
          */
-        fun connectException() = error as? ConnectException
+        fun connectException() = cause as? ConnectException
 
         override fun toString(): String {
-            return "Complete{code=$code,error=$error,trailers=$trailers}"
+            return "Complete{code=$code,cause=$cause,trailers=$trailers}"
         }
     }
 

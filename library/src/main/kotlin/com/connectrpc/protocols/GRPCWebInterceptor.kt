@@ -79,7 +79,7 @@ internal class GRPCWebInterceptor(
                         headers = headers,
                         message = Buffer(),
                         trailers = emptyMap(),
-                        error = response.error,
+                        cause = response.cause,
                         tracingInfo = response.tracingInfo,
                     )
                 }
@@ -106,7 +106,7 @@ internal class GRPCWebInterceptor(
                         headers = headers,
                         message = result,
                         trailers = trailers,
-                        error = ConnectException(
+                        cause = ConnectException(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),
@@ -160,7 +160,7 @@ internal class GRPCWebInterceptor(
                         headers = headers,
                         message = unpacked,
                         trailers = finalTrailers,
-                        error = error,
+                        cause = error,
                         tracingInfo = response.tracingInfo,
                     )
                 }
@@ -191,7 +191,7 @@ internal class GRPCWebInterceptor(
                         if (completion != null) {
                             return@fold StreamResult.Complete(
                                 code = completion.code,
-                                error = completion.toConnectExceptionOrNull(serializationStrategy),
+                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
                                 trailers = responseHeaders,
                             )
                         }
@@ -208,7 +208,7 @@ internal class GRPCWebInterceptor(
                             val code = completion!!.code
                             return@fold StreamResult.Complete(
                                 code = code,
-                                error = completion.toConnectExceptionOrNull(serializationStrategy),
+                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
                                 trailers = streamTrailers,
                             )
                         }

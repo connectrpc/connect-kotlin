@@ -78,7 +78,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = Buffer(),
                         trailers = trailers,
-                        error = response.error,
+                        cause = response.cause,
                         tracingInfo = response.tracingInfo,
                     )
                 }
@@ -94,7 +94,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = message,
                         trailers = trailers,
-                        error = response.error,
+                        cause = response.cause,
                         tracingInfo = response.tracingInfo,
                     )
                 } else {
@@ -108,7 +108,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = result,
                         trailers = trailers,
-                        error = ConnectException(
+                        cause = ConnectException(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),
@@ -144,7 +144,7 @@ internal class GRPCInterceptor(
                             val exception = completion.toConnectExceptionOrNull(serializationStrategy)
                             return@fold StreamResult.Complete(
                                 code = exception?.code ?: Code.OK,
-                                error = exception,
+                                cause = exception,
                                 trailers = headers,
                             )
                         }
@@ -164,11 +164,11 @@ internal class GRPCInterceptor(
                         if (completion != null) {
                             val exception = completion.toConnectExceptionOrNull(
                                 serializationStrategy,
-                                result.error
+                                result.cause
                             )
                             StreamResult.Complete(
                                 code = exception?.code ?: Code.OK,
-                                error = exception,
+                                cause = exception,
                                 trailers = trailers,
                             )
                         } else {

@@ -72,9 +72,9 @@ class Main {
                         },
                         onCompletion = { result ->
                             if (result.code != Code.OK) {
-                                val connectErr = result.connectException()
-                                if (connectErr != null) {
-                                    throw connectErr
+                                val exception = result.connectException()
+                                if (exception != null) {
+                                    throw exception
                                 }
                                 throw ConnectException(code = result.code, metadata = result.trailers)
                             }

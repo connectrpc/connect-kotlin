@@ -88,11 +88,11 @@ private class ResponseCallback(
             if (e is InterruptedIOException) {
                 if (e.message == "timeout") {
                     val error = ConnectException(code = Code.DEADLINE_EXCEEDED)
-                    onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, error = error))
+                    onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, cause = error))
                     return@runBlocking
                 }
             }
-            onResult(StreamResult.Complete(Code.UNKNOWN, error = e))
+            onResult(StreamResult.Complete(Code.UNKNOWN, cause = e))
         }
     }
 
@@ -106,7 +106,7 @@ private class ResponseCallback(
                 val finalResult = StreamResult.Complete<Buffer>(
                     code = code,
                     trailers = response.safeTrailers() ?: emptyMap(),
-                    error = ConnectException(code = code),
+                    cause = ConnectException(code = code),
                 )
                 onResult(finalResult)
                 return@runBlocking
@@ -130,7 +130,7 @@ private class ResponseCallback(
                         val finalResult = StreamResult.Complete<Buffer>(
                             code = code,
                             trailers = response.safeTrailers() ?: emptyMap(),
-                            error = exception,
+                            cause = exception,
                         )
                         onResult(finalResult)
                     }

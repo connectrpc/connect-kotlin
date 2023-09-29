@@ -126,7 +126,7 @@ class InterceptorChainTest {
                         it.message,
                         it.trailers,
                         it.tracingInfo,
-                        it.error,
+                        it.cause,
                     )
                 },
             )
