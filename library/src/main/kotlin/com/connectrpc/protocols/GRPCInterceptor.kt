@@ -142,14 +142,16 @@ internal class GRPCInterceptor(
                         val completion = completionParser.parse(headers, emptyMap())
                         if (completion != null) {
                             val exception = completion.toConnectExceptionOrNull(serializationStrategy)
-                            return@fold StreamResult.Complete(
+                            StreamResult.Complete(
                                 code = exception?.code ?: Code.OK,
                                 cause = exception,
                                 trailers = headers,
                             )
+                        } else {
+                            responseCompressionPool = clientConfig
+                                .compressionPool(headers[GRPC_ENCODING]?.first())
+                            StreamResult.Headers(headers)
                         }
-                        responseCompressionPool = clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
-                        StreamResult.Headers(headers)
                     },
                     onMessage = { result ->
                         val (_, unpackedMessage) = Envelope.unpackWithHeaderByte(
