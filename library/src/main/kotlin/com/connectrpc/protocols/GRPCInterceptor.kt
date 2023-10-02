@@ -136,7 +136,7 @@ internal class GRPCInterceptor(
                 Envelope.pack(buffer, requestCompression?.compressionPool, requestCompression?.minBytes)
             },
             streamResultFunction = { res ->
-                val streamResult = res.fold(
+                res.fold(
                     onHeaders = { result ->
                         val headers = result.headers
                         val completion = completionParser.parse(headers, emptyMap())
@@ -172,12 +172,11 @@ internal class GRPCInterceptor(
                                 trailers = trailers,
                             )
                         } else {
-                            val exception = ConnectException(Code.UNKNOWN)
+                            val exception = ConnectException(result.code)
                             StreamResult.Complete(exception.code, exception, trailers)
                         }
                     },
                 )
-                streamResult
             },
         )
     }
