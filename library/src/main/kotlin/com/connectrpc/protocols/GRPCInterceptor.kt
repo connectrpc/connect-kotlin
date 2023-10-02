@@ -164,7 +164,7 @@ internal class GRPCInterceptor(
                         if (completion != null) {
                             val exception = completion.toConnectExceptionOrNull(
                                 serializationStrategy,
-                                result.cause
+                                result.cause,
                             )
                             StreamResult.Complete(
                                 code = exception?.code ?: Code.OK,
