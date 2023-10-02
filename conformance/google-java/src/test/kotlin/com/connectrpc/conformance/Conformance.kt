@@ -44,6 +44,7 @@ import com.google.protobuf.empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -360,13 +361,13 @@ class Conformance(
         }
         val stream = client.streamingOutputCall()
         withContext(Dispatchers.IO) {
-            val job = async {
+            val job = launch {
                 try {
                     val result = streamResults(stream.resultChannel())
                     assertThat(result.cause).isInstanceOf(ConnectException::class.java)
-                    val exception = result.cause as ConnectException
-                    assertThat(exception.code).isEqualTo(Code.DEADLINE_EXCEEDED)
-                    assertThat(result.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+                    assertThat(result.code)
+                        .withFailMessage { "Expected Code.DEADLINE_EXCEEDED but got ${result.code}" }
+                        .isEqualTo(Code.DEADLINE_EXCEEDED)
                 } finally {
                     countDownLatch.countDown()
                 }
