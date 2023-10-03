@@ -174,8 +174,7 @@ internal class GRPCInterceptor(
                                 trailers = trailers,
                             )
                         } else {
-                            val exception = ConnectException(result.code)
-                            StreamResult.Complete(exception.code, exception, trailers)
+                            result
                         }
                     },
                 )
