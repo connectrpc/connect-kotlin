@@ -15,7 +15,7 @@
 package com.connectrpc.okhttp
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
@@ -74,7 +74,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 headers = emptyMap(),
                                 message = Buffer(),
                                 trailers = emptyMap(),
-                                error = ConnectError(
+                                cause = ConnectException(
                                     code,
                                     message = e.message,
                                     exception = e,
@@ -110,7 +110,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     headers = emptyMap(),
                     message = Buffer(),
                     trailers = emptyMap(),
-                    error = ConnectError(
+                    cause = ConnectException(
                         Code.UNKNOWN,
                         message = e.message,
                         exception = e,

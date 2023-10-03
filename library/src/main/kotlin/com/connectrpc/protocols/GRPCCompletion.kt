@@ -15,8 +15,8 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
 import com.connectrpc.ConnectErrorDetail
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.SerializationStrategy
 import okio.ByteString
@@ -35,23 +35,27 @@ internal data class GRPCCompletion(
     val errorDetails: List<ConnectErrorDetail>,
     // Set to either message headers (or trailers) where the gRPC status was found.
     val metadata: Headers,
-)
+) {
+    /**
+     * Converts a completion into a [ConnectException] if the completion failed or if a throwable is passed
+     * @return a ConnectException on failure, null otherwise
+     */
+    fun toConnectExceptionOrNull(serializationStrategy: SerializationStrategy, cause: Throwable? = null): ConnectException? {
+        if (cause is ConnectException) {
+            return cause
+        }
 
-internal fun grpcCompletionToConnectError(completion: GRPCCompletion?, serializationStrategy: SerializationStrategy, error: Throwable?): ConnectError? {
-    if (error is ConnectError) {
-        return error
+        if (cause != null || code != Code.OK) {
+            return ConnectException(
+                code = code,
+                errorDetailParser = serializationStrategy.errorDetailParser(),
+                message = message.utf8(),
+                exception = cause,
+                details = errorDetails,
+                metadata = metadata,
+            )
+        }
+        // Successful call.
+        return null
     }
-    val code = completion?.code ?: Code.UNKNOWN
-    if (error != null || code != Code.OK) {
-        return ConnectError(
-            code = code,
-            errorDetailParser = serializationStrategy.errorDetailParser(),
-            message = completion?.message?.utf8(),
-            exception = error,
-            details = completion?.errorDetails ?: emptyList(),
-            metadata = completion?.metadata ?: emptyMap(),
-        )
-    }
-    // Successful call.
-    return null
 }

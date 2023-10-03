@@ -17,7 +17,7 @@ package com.connectrpc.impl
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 
@@ -40,12 +40,12 @@ internal class ClientOnlyStream<Input, Output>(
             // in the channel (headers, 1* messages, completion) and have to resort to fold()/maybeFold() to interpret
             // the overall results.
             // Additionally, ResponseMessage.Success and ResponseMessage.Failure shouldn't be necessary for client use.
-            // We should throw ConnectError for failure and only have users have to deal with success messages.
+            // We should throw ConnectException for failure and only have users have to deal with success messages.
             var headers: Headers = emptyMap()
             var message: Output? = null
             var trailers: Headers = emptyMap()
             var code: Code? = null
-            var error: ConnectError? = null
+            var error: ConnectException? = null
             for (result in resultChannel) {
                 result.maybeFold(
                     onHeaders = {
@@ -57,12 +57,12 @@ internal class ClientOnlyStream<Input, Output>(
                     onCompletion = {
                         code = it.code
                         trailers = it.trailers
-                        val resultErr = it.error
+                        val resultErr = it.cause
                         if (resultErr != null) {
-                            error = if (resultErr is ConnectError) {
+                            error = if (resultErr is ConnectException) {
                                 resultErr
                             } else {
-                                ConnectError(code ?: Code.UNKNOWN, message = error?.message, exception = error, metadata = trailers)
+                                ConnectException(code ?: Code.UNKNOWN, message = error?.message, exception = error, metadata = trailers)
                             }
                         }
                     },
@@ -72,14 +72,14 @@ internal class ClientOnlyStream<Input, Output>(
                 return ResponseMessage.Failure(error!!, code ?: Code.UNKNOWN, headers, trailers)
             }
             if (code == null) {
-                return ResponseMessage.Failure(ConnectError(Code.UNKNOWN, message = "unknown status code"), Code.UNKNOWN, headers, trailers)
+                return ResponseMessage.Failure(ConnectException(Code.UNKNOWN, message = "unknown status code"), Code.UNKNOWN, headers, trailers)
             }
             if (message != null) {
                 return ResponseMessage.Success(message!!, code!!, headers, trailers)
             }
             // We didn't receive an error at any point, however we didn't get a response message either.
             return ResponseMessage.Failure(
-                ConnectError(Code.UNKNOWN, message = "missing response message"),
+                ConnectException(Code.UNKNOWN, message = "missing response message"),
                 code!!,
                 headers,
                 trailers,

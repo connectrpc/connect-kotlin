@@ -15,7 +15,7 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.Interceptor
 import com.connectrpc.ProtocolClientConfig
@@ -78,7 +78,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = Buffer(),
                         trailers = trailers,
-                        error = response.error,
+                        cause = response.cause,
                         tracingInfo = response.tracingInfo,
                     )
                 }
@@ -94,7 +94,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = message,
                         trailers = trailers,
-                        error = response.error,
+                        cause = response.cause,
                         tracingInfo = response.tracingInfo,
                     )
                 } else {
@@ -108,7 +108,7 @@ internal class GRPCInterceptor(
                         headers = headers,
                         message = result,
                         trailers = trailers,
-                        error = ConnectError(
+                        cause = ConnectException(
                             code = code,
                             errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = completion?.message?.utf8(),
@@ -136,20 +136,22 @@ internal class GRPCInterceptor(
                 Envelope.pack(buffer, requestCompression?.compressionPool, requestCompression?.minBytes)
             },
             streamResultFunction = { res ->
-                val streamResult = res.fold(
+                res.fold(
                     onHeaders = { result ->
                         val headers = result.headers
                         val completion = completionParser.parse(headers, emptyMap())
                         if (completion != null) {
-                            val connectError = grpcCompletionToConnectError(completion, serializationStrategy, null)
-                            return@fold StreamResult.Complete(
-                                code = connectError?.code ?: Code.OK,
-                                error = connectError,
+                            val exception = completion.toConnectExceptionOrNull(serializationStrategy)
+                            StreamResult.Complete(
+                                code = exception?.code ?: Code.OK,
+                                cause = exception,
                                 trailers = headers,
                             )
+                        } else {
+                            responseCompressionPool = clientConfig
+                                .compressionPool(headers[GRPC_ENCODING]?.first())
+                            StreamResult.Headers(headers)
                         }
-                        responseCompressionPool = clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
-                        StreamResult.Headers(headers)
                     },
                     onMessage = { result ->
                         val (_, unpackedMessage) = Envelope.unpackWithHeaderByte(
@@ -161,15 +163,21 @@ internal class GRPCInterceptor(
                     onCompletion = { result ->
                         val trailers = result.trailers
                         val completion = completionParser.parse(emptyMap(), trailers)
-                        val connectError = grpcCompletionToConnectError(completion, serializationStrategy, result.error)
-                        StreamResult.Complete(
-                            code = connectError?.code ?: Code.OK,
-                            error = connectError,
-                            trailers = trailers,
-                        )
+                        if (completion != null) {
+                            val exception = completion.toConnectExceptionOrNull(
+                                serializationStrategy,
+                                result.cause,
+                            )
+                            StreamResult.Complete(
+                                code = exception?.code ?: Code.OK,
+                                cause = exception,
+                                trailers = trailers,
+                            )
+                        } else {
+                            result
+                        }
                     },
                 )
-                streamResult
             },
         )
     }

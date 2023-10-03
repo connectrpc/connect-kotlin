@@ -15,7 +15,7 @@
 package com.connectrpc.http
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.Trailers
 import okio.BufferedSource
@@ -38,5 +38,5 @@ class HTTPResponse(
     // null in cases where no response was received from the server.
     val tracingInfo: TracingInfo?,
     // The accompanying error, if the request failed.
-    val error: ConnectError? = null,
+    val cause: ConnectException? = null,
 )

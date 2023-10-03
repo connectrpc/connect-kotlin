@@ -20,7 +20,7 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
-class ConnectErrorTest {
+class ConnectExceptionTest {
     private val errorDetailParser: ErrorDetailParser = mock { }
 
     @Test
@@ -30,7 +30,7 @@ class ConnectErrorTest {
             "value".encodeUtf8(),
         )
         whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
-        val connectError = ConnectError(
+        val connectException = ConnectException(
             code = Code.UNKNOWN,
             details = listOf(
                 errorDetail,
@@ -38,7 +38,7 @@ class ConnectErrorTest {
             ),
             errorDetailParser = errorDetailParser,
         )
-        val parsedResult = connectError.unpackedDetails(String::class)
+        val parsedResult = connectException.unpackedDetails(String::class)
         assertThat(parsedResult).contains("unpacked_value", "unpacked_value")
     }
 
@@ -49,13 +49,13 @@ class ConnectErrorTest {
             "value".encodeUtf8(),
         )
         whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
-        val connectError = ConnectError(
+        val connectException = ConnectException(
             code = Code.UNKNOWN,
             details = listOf(
                 errorDetail,
             ),
         )
-        val parsedResult = connectError.unpackedDetails(String::class)
+        val parsedResult = connectException.unpackedDetails(String::class)
         assertThat(parsedResult).isEmpty()
     }
 }

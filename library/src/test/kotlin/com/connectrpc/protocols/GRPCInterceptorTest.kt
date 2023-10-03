@@ -15,8 +15,8 @@
 package com.connectrpc.protocols
 
 import com.connectrpc.Code
-import com.connectrpc.ConnectError
 import com.connectrpc.ConnectErrorDetail
+import com.connectrpc.ConnectException
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
@@ -259,9 +259,9 @@ class GRPCInterceptorTest {
                 tracingInfo = null,
             ),
         )
-        assertThat(response.error!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        assertThat(response.error!!.message).isEqualTo("no more resources!")
-        val connectErrorDetail = response.error!!.details.singleOrNull()!!
+        assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(response.cause!!.message).isEqualTo("no more resources!")
+        val connectErrorDetail = response.cause!!.details.singleOrNull()!!
         assertThat(connectErrorDetail.type).isEqualTo("type")
         assertThat(connectErrorDetail.payload).isEqualTo("value".encodeUtf8())
     }
@@ -519,7 +519,7 @@ class GRPCInterceptorTest {
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
                 code = Code.UNKNOWN,
-                error = ConnectError(
+                cause = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
                 ),
