@@ -56,7 +56,7 @@ allprojects {
                     "ktlint_experimental" to "enabled",
                     // Disabled until https://github.com/pinterest/ktlint/pull/2273 is released
                     "ktlint_standard_function-expression-body" to "disabled",
-                    ),
+                ),
             )
             target("**/*.kt")
         }
@@ -66,8 +66,8 @@ allprojects {
                     "ktlint_experimental" to "enabled",
                     // Disabled until https://github.com/pinterest/ktlint/pull/2273 is released
                     "ktlint_standard_function-expression-body" to "disabled",
-                    ),
-                )
+                ),
+            )
             target("**/*.kts")
         }
     }
