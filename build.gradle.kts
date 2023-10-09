@@ -51,11 +51,23 @@ allprojects {
     spotless {
         isEnforceCheck = false // Disables lint on gradle builds.
         kotlin {
-            ktlint().editorConfigOverride(mapOf("ktlint_experimental" to "enabled"))
+            ktlint().editorConfigOverride(
+                mapOf(
+                    "ktlint_experimental" to "enabled",
+                    // Disabled until https://github.com/pinterest/ktlint/pull/2273 is released
+                    "ktlint_standard_function-expression-body" to "disabled",
+                    ),
+            )
             target("**/*.kt")
         }
         kotlinGradle {
-            ktlint().editorConfigOverride(mapOf("ktlint_experimental" to "enabled"))
+            ktlint().editorConfigOverride(
+                mapOf(
+                    "ktlint_experimental" to "enabled",
+                    // Disabled until https://github.com/pinterest/ktlint/pull/2273 is released
+                    "ktlint_standard_function-expression-body" to "disabled",
+                    ),
+                )
             target("**/*.kts")
         }
     }
@@ -76,16 +88,8 @@ allprojects {
     }
     tasks.withType<DokkaTask>().configureEach {
         dokkaSourceSets.configureEach {
-            reportUndocumented.set(false)
             skipDeprecated.set(true)
             jdkVersion.set(8)
-            perPackageOption {
-                matchingRegex.set("build\\.buf.*")
-                suppress.set(true)
-            }
-        }
-        if (name == "dokkaGfm") {
-            outputDirectory.set(project.file("${project.rootDir}/docs/3.x"))
         }
     }
     plugins.withId("com.vanniktech.maven.publish.base") {

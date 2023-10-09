@@ -42,7 +42,8 @@ internal fun parse(input: String): Configuration {
     val parameters = parseGeneratorParameter(input)
     return Configuration(
         generateCallbackMethods = parameters[CALLBACK_SIGNATURE]?.toBoolean() ?: false,
-        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true, // Defaulted to true.
+        // Defaulted to true.
+        generateCoroutineMethods = parameters[COROUTINE_SIGNATURE]?.toBoolean() ?: true,
         generateBlockingUnaryMethods = parameters[BLOCKING_UNARY_SIGNATURE]?.toBoolean() ?: false,
     )
 }

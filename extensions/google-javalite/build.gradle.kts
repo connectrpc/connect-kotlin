@@ -28,9 +28,9 @@ sourceSets {
     }
 }
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
     configure(
-        KotlinJvm(javadocJar = Dokka("dokkaGfm")),
+        KotlinJvm(javadocJar = Dokka("dokkaHtml")),
     )
 }
 

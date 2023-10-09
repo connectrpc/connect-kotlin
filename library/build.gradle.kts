@@ -1,6 +1,5 @@
 import com.vanniktech.maven.publish.JavadocJar.Dokka
 import com.vanniktech.maven.publish.KotlinJvm
-import com.vanniktech.maven.publish.MavenPublishBaseExtension
 
 plugins {
     kotlin("jvm")
@@ -23,11 +22,12 @@ dependencies {
     ksp(libs.moshiKotlinCodegen)
 }
 
-configure<MavenPublishBaseExtension> {
+mavenPublishing {
     configure(
-        KotlinJvm(javadocJar = Dokka("dokkaGfm")),
+        KotlinJvm(javadocJar = Dokka("dokkaHtml")),
     )
 }
+
 // Workaround for overriding the published library name to "connect-kotlin".
 // Otherwise, the plugin will take the library name.
 extensions.getByType<PublishingExtension>().apply {
