@@ -38,7 +38,8 @@ import java.io.IOException
  * The OkHttp implementation of HTTPClientInterface.
  */
 class ConnectOkHttpClient @JvmOverloads constructor(
-    val client: OkHttpClient = OkHttpClient(),
+    private val unaryClient: OkHttpClient = OkHttpClient(),
+    private val streamClient: OkHttpClient = unaryClient,
 ) : HTTPClientInterface {
 
     override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
@@ -55,7 +56,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             .url(request.url)
             .method(method, requestBody)
             .build()
-        val newCall = client.newCall(callRequest)
+        val newCall = unaryClient.newCall(callRequest)
         val cancelable = {
             newCall.cancel()
         }
@@ -126,7 +127,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         request: HTTPRequest,
         onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
-        return client.initializeStream(request.methodSpec.method, request, onResult)
+        return streamClient.initializeStream(request.methodSpec.method, request, onResult)
     }
 }
 
