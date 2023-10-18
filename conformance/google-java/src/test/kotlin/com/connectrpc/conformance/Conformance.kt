@@ -240,9 +240,7 @@ class Conformance(
                     assertThat(responses.map { it.payload.body.size() }).isEqualTo(sizes)
                     assertThat(e.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
                     assertThat(e.message).isEqualTo("soirée 🎉")
-                    assertThat(e.unpackedDetails(ErrorDetail::class)).containsExactly(
-                        expectedErrorDetail,
-                    )
+                    assertThat(e.unpackedDetails(ErrorDetail::class)).containsExactly(expectedErrorDetail)
                 } finally {
                     countDownLatch.countDown()
                 }
