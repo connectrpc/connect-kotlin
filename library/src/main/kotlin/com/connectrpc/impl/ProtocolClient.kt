@@ -196,17 +196,17 @@ class ProtocolClient(
                         )
                         channel.send(message)
                     } catch (e: Throwable) {
-                        channel.close(ConnectException(Code.UNKNOWN, exception = e))
                         isComplete = true
+                        channel.close(ConnectException(Code.UNKNOWN, exception = e))
                     }
                 }
 
                 is StreamResult.Complete -> {
+                    isComplete = true
                     when (streamResult.code) {
                         Code.OK -> channel.close()
                         else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code))
                     }
-                    isComplete = true
                 }
             }
         }
