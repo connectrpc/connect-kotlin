@@ -14,7 +14,6 @@
 
 package com.connectrpc.examples.kotlin
 
-import com.connectrpc.ConnectException
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ElizaServiceClient
 import com.connectrpc.eliza.v1.converseRequest
