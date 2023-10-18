@@ -34,7 +34,7 @@ internal class ClientOnlyStream<Input, Output>(
         try {
             messageStream.sendClose()
             val message = resultChannel.receive()
-            val additionalMessage = resultChannel.tryReceive()
+            val additionalMessage = resultChannel.receiveCatching()
             if (additionalMessage.isSuccess) {
                 throw ConnectException(code = Code.UNKNOWN, message = "unary stream has multiple messages")
             }
