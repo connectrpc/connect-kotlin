@@ -147,7 +147,6 @@ class ElizaChatActivity : AppCompatActivity() {
                         adapter.add(MessageData("...No response from Eliza...", true))
                     }
                 }
-                // This should only be called once.
                 adapter.add(
                     MessageData(
                         "Session has ended.",

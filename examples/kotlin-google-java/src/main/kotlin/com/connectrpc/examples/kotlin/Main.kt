@@ -62,13 +62,8 @@ class Main {
                 // Add the message the user is sending to the views.
                 stream.send(converseRequest { sentence = "hello" })
                 stream.sendClose()
-                try {
-                    for (streamResult in stream.responseChannel()) {
-                        // Update the view with the response.
-                        val elizaResponse = streamResult
-                        println(elizaResponse.sentence)
-                    }
-                } catch (e: ConnectException) {
+                for (response in stream.responseChannel()) {
+                    println(response.sentence)
                 }
             }
         }
