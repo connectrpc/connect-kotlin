@@ -214,9 +214,7 @@ internal class GRPCWebInterceptor(
                         }
                         StreamResult.Message(unpackedMessage)
                     },
-                    onCompletion = { result ->
-                        result
-                    },
+                    onCompletion = { result -> result },
                 )
                 streamResult
             },

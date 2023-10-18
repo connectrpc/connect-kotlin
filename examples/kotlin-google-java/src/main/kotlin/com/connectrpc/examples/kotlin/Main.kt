@@ -14,7 +14,6 @@
 
 package com.connectrpc.examples.kotlin
 
-import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ElizaServiceClient
@@ -63,23 +62,13 @@ class Main {
                 // Add the message the user is sending to the views.
                 stream.send(converseRequest { sentence = "hello" })
                 stream.sendClose()
-                for (streamResult in stream.resultChannel()) {
-                    streamResult.maybeFold(
-                        onMessage = { result ->
-                            // Update the view with the response.
-                            val elizaResponse = result.message
-                            println(elizaResponse.sentence)
-                        },
-                        onCompletion = { result ->
-                            if (result.code != Code.OK) {
-                                val exception = result.connectException()
-                                if (exception != null) {
-                                    throw exception
-                                }
-                                throw ConnectException(code = result.code, metadata = result.trailers)
-                            }
-                        },
-                    )
+                try {
+                    for (streamResult in stream.responseChannel()) {
+                        // Update the view with the response.
+                        val elizaResponse = streamResult
+                        println(elizaResponse.sentence)
+                    }
+                } catch (e: ConnectException) {
                 }
             }
         }

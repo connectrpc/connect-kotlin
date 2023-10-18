@@ -16,15 +16,13 @@ package com.connectrpc.conformance
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
-import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
-import com.connectrpc.StreamResult
-import com.connectrpc.Trailers
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.conformance.ssl.sslContext
 import com.connectrpc.conformance.v1.ErrorDetail
 import com.connectrpc.conformance.v1.PayloadType
+import com.connectrpc.conformance.v1.StreamingOutputCallResponse
 import com.connectrpc.conformance.v1.TestServiceClient
 import com.connectrpc.conformance.v1.UnimplementedServiceClient
 import com.connectrpc.conformance.v1.echoStatus
@@ -43,7 +41,6 @@ import com.google.protobuf.ByteString
 import com.google.protobuf.empty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -63,7 +60,6 @@ import java.time.Duration
 import java.util.Base64
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(Parameterized::class)
 class Conformance(
@@ -177,17 +173,18 @@ class Conformance(
                 responseParameters += params
             },
         ).getOrThrow()
-        val results = streamResults(stream.resultChannel())
-        assertThat(results.cause).isNull()
-        assertThat(results.code).isEqualTo(Code.OK)
-        assertThat(results.messages.map { it.payload.type }.toSet()).isEqualTo(setOf(PayloadType.COMPRESSABLE))
-        assertThat(results.messages.map { it.payload.body.size() }).isEqualTo(sizes)
+        val responses = mutableListOf<StreamingOutputCallResponse>()
+        for (response in stream.responseChannel()) {
+            responses.add(response)
+        }
+        assertThat(responses.map { it.payload.type }.toSet()).isEqualTo(setOf(PayloadType.COMPRESSABLE))
+        assertThat(responses.map { it.payload.body.size() }).isEqualTo(sizes)
     }
 
     @Test
     fun pingPong(): Unit = runBlocking {
         val stream = testServiceConnectClient.fullDuplexCall()
-        var readHeaders = false
+        val responseChannel = stream.responseChannel()
         listOf(512_000, 16, 2_028, 65_536).forEach {
             val param = responseParameters { size = it }
             stream.send(
@@ -196,25 +193,14 @@ class Conformance(
                     responseParameters += param
                 },
             ).getOrThrow()
-            if (!readHeaders) {
-                val headersResult = stream.resultChannel().receive()
-                assertThat(headersResult).isInstanceOf(StreamResult.Headers::class.java)
-                readHeaders = true
-            }
-            val result = stream.resultChannel().receive()
-            assertThat(result).isInstanceOf(StreamResult.Message::class.java)
-            val messageResult = result as StreamResult.Message
-            val payload = messageResult.message.payload
+            val response = responseChannel.receive()
+            val payload = response.payload
             assertThat(payload.type).isEqualTo(PayloadType.COMPRESSABLE)
             assertThat(payload.body).hasSize(it)
         }
         stream.sendClose()
-        val results = streamResults(stream.resultChannel())
         // We've already read all the messages
-        assertThat(results.messages).isEmpty()
-        assertThat(results.cause).isNull()
-        assertThat(results.code).isEqualTo(Code.OK)
-        stream.receiveClose()
+        assertThat(responseChannel.receiveCatching().isClosed).isTrue()
     }
 
     @Test
@@ -244,15 +230,17 @@ class Conformance(
         val countDownLatch = CountDownLatch(1)
         withContext(Dispatchers.IO) {
             val job = async {
+                val responses = mutableListOf<StreamingOutputCallResponse>()
                 try {
-                    val result = streamResults(stream.resultChannel())
-                    assertThat(result.messages.map { it.payload.body.size() }).isEqualTo(sizes)
-                    assertThat(result.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
-                    val connectException = result.cause as ConnectException
-                    assertThat(connectException.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-                    assertThat(connectException.message).isEqualTo("soirée 🎉")
-                    assertThat(connectException.unpackedDetails(ErrorDetail::class)).containsExactly(
+                    for (response in stream.responseChannel()) {
+                        responses.add(response)
+                    }
+                    fail("expected call to fail with ConnectException")
+                } catch (e: ConnectException) {
+                    assertThat(responses.map { it.payload.body.size() }).isEqualTo(sizes)
+                    assertThat(e.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+                    assertThat(e.message).isEqualTo("soirée 🎉")
+                    assertThat(e.unpackedDetails(ErrorDetail::class)).containsExactly(
                         expectedErrorDetail,
                     )
                 } finally {
@@ -363,10 +351,11 @@ class Conformance(
         withContext(Dispatchers.IO) {
             val job = launch {
                 try {
-                    val result = streamResults(stream.resultChannel())
-                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
-                    assertThat(result.code)
-                        .withFailMessage { "Expected Code.DEADLINE_EXCEEDED but got ${result.code}" }
+                    stream.responseChannel().receive()
+                    fail("unexpected ConnectException to be thrown")
+                } catch (e: ConnectException) {
+                    assertThat(e.code)
+                        .withFailMessage { "Expected Code.DEADLINE_EXCEEDED but got ${e.code}" }
                         .isEqualTo(Code.DEADLINE_EXCEEDED)
                 } finally {
                     countDownLatch.countDown()
@@ -437,11 +426,10 @@ class Conformance(
         withContext(Dispatchers.IO) {
             val job = async {
                 try {
-                    val result = streamResults(stream.resultChannel())
-                    assertThat(result.code).isEqualTo(Code.UNIMPLEMENTED)
-                    assertThat(result.cause).isInstanceOf(ConnectException::class.java)
-                    val exception = result.cause as ConnectException
-                    assertThat(exception.code).isEqualTo(Code.UNIMPLEMENTED)
+                    stream.responseChannel().receive()
+                    fail("expected call to fail with a ConnectException")
+                } catch (e: ConnectException) {
+                    assertThat(e.code).isEqualTo(Code.UNIMPLEMENTED)
                 } finally {
                     countDownLatch.countDown()
                 }
@@ -801,8 +789,8 @@ class Conformance(
         withContext(Dispatchers.IO) {
             val job = async {
                 try {
-                    val result = stream.receiveAndClose().getOrThrow()
-                    assertThat(result.aggregatedPayloadSize).isEqualTo(sum)
+                    val response = stream.receiveAndClose()
+                    assertThat(response.aggregatedPayloadSize).isEqualTo(sum)
                 } finally {
                     countDownLatch.countDown()
                 }
@@ -811,56 +799,6 @@ class Conformance(
             job.cancel()
             assertThat(countDownLatch.count).isZero()
         }
-    }
-
-    private data class ServerStreamingResult<Output>(
-        val headers: Headers,
-        val messages: List<Output>,
-        val code: Code,
-        val trailers: Trailers,
-        val cause: Throwable?,
-    )
-
-    /*
-     * Convenience method to return all results (with sanity checking) for calls which stream results from the server
-     * (bidi and server streaming).
-     *
-     * This allows us to easily verify headers, messages, trailers, and errors without having to use fold/maybeFold
-     * manually in each location.
-     */
-    private suspend fun <Output> streamResults(channel: ReceiveChannel<StreamResult<Output>>): ServerStreamingResult<Output> {
-        val seenHeaders = AtomicBoolean(false)
-        var headers: Headers = emptyMap()
-        val messages: MutableList<Output> = mutableListOf()
-        val seenCompletion = AtomicBoolean(false)
-        var code: Code = Code.UNKNOWN
-        var trailers: Headers = emptyMap()
-        var error: Throwable? = null
-        for (response in channel) {
-            response.maybeFold(
-                onHeaders = {
-                    if (!seenHeaders.compareAndSet(false, true)) {
-                        throw IllegalStateException("multiple onHeaders callbacks")
-                    }
-                    headers = it.headers
-                },
-                onMessage = {
-                    messages.add(it.message)
-                },
-                onCompletion = {
-                    if (!seenCompletion.compareAndSet(false, true)) {
-                        throw IllegalStateException("multiple onCompletion callbacks")
-                    }
-                    code = it.code
-                    trailers = it.trailers
-                    error = it.cause
-                },
-            )
-        }
-        if (!seenCompletion.get()) {
-            throw IllegalStateException("didn't get completion message")
-        }
-        return ServerStreamingResult(headers, messages, code, trailers, error)
     }
 
     private fun b64Encode(trailingValue: ByteArray): String {
