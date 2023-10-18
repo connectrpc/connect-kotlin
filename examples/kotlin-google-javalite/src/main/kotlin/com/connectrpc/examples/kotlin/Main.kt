@@ -32,7 +32,7 @@ class Main {
         @JvmStatic
         fun main(args: Array<String>) {
             runBlocking {
-                val host = "https://demo.connectrpc.com:444"
+                val host = "https://demo.connectrpc.com"
                 val okHttpClient = OkHttpClient()
                     .newBuilder()
                     .readTimeout(Duration.ofMinutes(10))
