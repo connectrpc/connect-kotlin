@@ -14,6 +14,10 @@ application {
     mainClass.set("com.connectrpc.protocgen.connect.Main")
 }
 
+kotlin {
+    compilerOptions.allWarningsAsErrors.set(true)
+}
+
 tasks {
     jar {
         manifest {

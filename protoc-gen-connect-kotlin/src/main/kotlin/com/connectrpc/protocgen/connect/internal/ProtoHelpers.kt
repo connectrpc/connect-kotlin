@@ -76,14 +76,14 @@ internal fun parseGeneratorParameter(
  * `java_multiple_files` options specified in the .proto file.
  */
 internal fun getProtocJavaFileName(descriptor: Descriptors.Descriptor): String {
-    var descriptor = descriptor
     val fullName: String
     if (descriptor.file.options.javaMultipleFiles) {
         var containingType: Descriptors.Descriptor
-        while (descriptor.containingType.also { containingType = it } != null) {
-            descriptor = containingType
+        var currentDescriptor = descriptor
+        while (currentDescriptor.containingType.also { containingType = it } != null) {
+            currentDescriptor = containingType
         }
-        fullName = getClassName(descriptor)
+        fullName = getClassName(currentDescriptor)
     } else {
         fullName = getClassNameForFile(descriptor.file)
     }
@@ -214,14 +214,14 @@ internal fun getFileJavaPackage(file: FileDescriptor): String {
  * `java_multiple_files` options specified in the .proto file.
  */
 fun getJavaFileName(descriptor: Descriptors.Descriptor): String {
-    var descriptor: Descriptors.Descriptor = descriptor
     val fullName: String
     if (descriptor.file.options.javaMultipleFiles) {
+        var currentDescriptor = descriptor
         var containingType: Descriptors.Descriptor?
-        while (descriptor.containingType.also { containingType = it } != null) {
-            descriptor = containingType!!
+        while (currentDescriptor.containingType.also { containingType = it } != null) {
+            currentDescriptor = containingType!!
         }
-        fullName = getClassName(descriptor)
+        fullName = getClassName(currentDescriptor)
     } else {
         fullName = getClassNameForFile(descriptor.file)
     }
@@ -317,44 +317,44 @@ private fun getFieldName(field: Descriptors.FieldDescriptor): String {
  * letter should be upper-case or lower-case.
  *
  * @param input         string to be converted
- * @param capNextLetter `true` if the first letter should be turned to
+ * @param capFirstLetter `true` if the first letter should be turned to
  * upper-case.
  * @return the camel-cased string
  */
 private fun underscoresToCamelCaseImpl(
     input: String,
-    capNextLetter: Boolean,
-): String {
-    var capNextLetter = capNextLetter
-    val result = StringBuilder(input.length)
-    var i = 0
-    val l = input.length
-    while (i < l) {
-        val c = input[i]
-        capNextLetter = if ('a' <= c && c <= 'z') {
-            if (capNextLetter) {
-                result.append((c.code + ('A'.code - 'a'.code)).toChar())
-            } else {
-                result.append(c)
+    capFirstLetter: Boolean,
+): String = buildString(input.length) {
+    var capNextLetter = capFirstLetter
+    for ((i, c) in input.withIndex()) {
+        capNextLetter = when (c) {
+            in 'a'..'z' -> {
+                if (capNextLetter) {
+                    append(c.uppercaseChar())
+                } else {
+                    append(c)
+                }
+                false
             }
-            false
-        } else if ('A' <= c && c <= 'Z') {
-            if (i == 0 && !capNextLetter) {
-                // Force first letter to lower-case unless explicitly told
-                // to capitalize it.
-                result.append((c.code + ('a'.code - 'A'.code)).toChar())
-            } else {
-                // Capital letters after the first are left as-is.
-                result.append(c)
+
+            in 'A'..'Z' -> {
+                if (i == 0 && !capNextLetter) {
+                    // Force first letter to lower-case unless explicitly told
+                    // to capitalize it.
+                    append(c.lowercaseChar())
+                } else {
+                    // Capital letters after the first are left as-is.
+                    append(c)
+                }
+                false
             }
-            false
-        } else if ('0' <= c && c <= '9') {
-            result.append(c)
-            true
-        } else {
-            true
+
+            in '0'..'9' -> {
+                append(c)
+                true
+            }
+
+            else -> true
         }
-        i++
     }
-    return result.toString()
 }

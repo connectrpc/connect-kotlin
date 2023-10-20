@@ -8,6 +8,10 @@ plugins {
     id("com.vanniktech.maven.publish.base")
 }
 
+kotlin {
+    compilerOptions.allWarningsAsErrors.set(true)
+}
+
 sourceSets {
     main {
         java {

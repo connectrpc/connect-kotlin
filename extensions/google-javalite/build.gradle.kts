@@ -8,6 +8,10 @@ plugins {
     id("com.vanniktech.maven.publish.base")
 }
 
+kotlin {
+    compilerOptions.allWarningsAsErrors.set(true)
+}
+
 dependencies {
     testImplementation(libs.assertj)
     testImplementation(libs.junit)
