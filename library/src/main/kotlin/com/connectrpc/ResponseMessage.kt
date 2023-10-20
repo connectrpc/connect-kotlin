@@ -89,7 +89,7 @@ fun ResponseMessage<*>.exceptionOrNull(): Throwable? {
  */
 inline fun <R, T> ResponseMessage<T>.fold(
     onSuccess: (value: T) -> R,
-    onFailure: (exception: Throwable) -> R,
+    onFailure: (exception: ConnectException) -> R,
 ): R {
     return when (this) {
         is ResponseMessage.Success -> onSuccess(this.message)
@@ -114,7 +114,7 @@ fun <T> ResponseMessage<T>.getOrDefault(defaultValue: T): T {
  *
  * Note, that this function rethrows any [Throwable] exception thrown by [onFailure] function.
  */
-inline fun <R, T : R> ResponseMessage<T>.getOrElse(onFailure: (exception: Throwable) -> R): R {
+inline fun <R, T : R> ResponseMessage<T>.getOrElse(onFailure: (exception: ConnectException) -> R): R {
     return when (this) {
         is ResponseMessage.Success -> this.message
         is ResponseMessage.Failure -> onFailure(this.cause)
