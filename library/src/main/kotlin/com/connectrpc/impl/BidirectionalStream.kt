@@ -16,7 +16,6 @@ package com.connectrpc.impl
 
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.Codec
-import com.connectrpc.StreamResult
 import com.connectrpc.http.Stream
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -28,7 +27,7 @@ import java.lang.Exception
 internal class BidirectionalStream<Input, Output>(
     val stream: Stream,
     private val requestCodec: Codec<Input>,
-    private val receiveChannel: Channel<StreamResult<Output>>,
+    private val receiveChannel: Channel<Output>,
 ) : BidirectionalStreamInterface<Input, Output> {
 
     override suspend fun send(input: Input): Result<Unit> {
@@ -40,7 +39,7 @@ internal class BidirectionalStream<Input, Output>(
         return stream.send(msg)
     }
 
-    override fun resultChannel(): ReceiveChannel<StreamResult<Output>> {
+    override fun responseChannel(): ReceiveChannel<Output> {
         return receiveChannel
     }
 

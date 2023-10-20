@@ -21,6 +21,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.connectrpc.ConnectException
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ConverseRequest
 import com.connectrpc.eliza.v1.ElizaServiceClient
@@ -135,29 +136,25 @@ class ElizaChatActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             // Initialize a bidi stream with Eliza.
             val stream = elizaServiceClient.converse()
-
-            for (streamResult in stream.resultChannel()) {
-                streamResult.maybeFold(
-                    onMessage = { result ->
-                        // A stream message is received: Eliza has said something to us.
-                        val elizaResponse = result.message.sentence
-                        if (elizaResponse?.isNotBlank() == true) {
-                            adapter.add(MessageData(elizaResponse, true))
-                        } else {
-                            // Something odd occurred.
-                            adapter.add(MessageData("...No response from Eliza...", true))
-                        }
-                    },
-                    onCompletion = {
-                        // This should only be called once.
-                        adapter.add(
-                            MessageData(
-                                "Session has ended.",
-                                true,
-                            ),
-                        )
-                    },
+            try {
+                for (message in stream.responseChannel()) {
+                    // A stream message is received: Eliza has said something to us.
+                    val elizaResponse = message.sentence
+                    if (elizaResponse?.isNotBlank() == true) {
+                        adapter.add(MessageData(elizaResponse, true))
+                    } else {
+                        // Something odd occurred.
+                        adapter.add(MessageData("...No response from Eliza...", true))
+                    }
+                }
+                adapter.add(
+                    MessageData(
+                        "Session has ended.",
+                        true,
+                    ),
                 )
+            } catch (e: ConnectException) {
+                adapter.add(MessageData("Session failed with code ${e.code}", true))
             }
             lifecycleScope.launch(Dispatchers.Main) {
                 buttonView.setOnClickListener {

@@ -17,6 +17,7 @@ package com.connectrpc.impl
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Code
+import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
@@ -149,7 +150,7 @@ class ProtocolClient(
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output> {
-        val stream = stream(headers, methodSpec)
+        val stream = bidirectionalStream(methodSpec, headers)
         return ServerOnlyStream(stream)
     }
 
@@ -164,8 +165,8 @@ class ProtocolClient(
     private suspend fun <Input : Any, Output : Any> bidirectionalStream(
         methodSpec: MethodSpec<Input, Output>,
         headers: Headers,
-    ): BidirectionalStreamInterface<Input, Output> = suspendCancellableCoroutine { continuation ->
-        val channel = Channel<StreamResult<Output>>(1)
+    ): BidirectionalStream<Input, Output> = suspendCancellableCoroutine { continuation ->
+        val channel = Channel<Output>(1)
         val requestCodec = config.serializationStrategy.codec(methodSpec.requestClass)
         val responseCodec = config.serializationStrategy.codec(methodSpec.responseClass)
         val request = HTTPRequest(
@@ -183,10 +184,9 @@ class ProtocolClient(
                 return@stream
             }
             // Pass through the interceptor chain.
-            val streamResult = streamFunc.streamResultFunction(initialResult)
-            val result: StreamResult<Output> = when (streamResult) {
+            when (val streamResult = streamFunc.streamResultFunction(initialResult)) {
                 is StreamResult.Headers -> {
-                    StreamResult.Headers(streamResult.headers)
+                    // Not currently used except for interceptors.
                 }
 
                 is StreamResult.Message -> {
@@ -194,25 +194,20 @@ class ProtocolClient(
                         val message = responseCodec.deserialize(
                             streamResult.message,
                         )
-                        StreamResult.Message(message)
+                        channel.send(message)
                     } catch (e: Throwable) {
                         isComplete = true
-                        StreamResult.Complete(Code.UNKNOWN, e)
+                        channel.close(ConnectException(Code.UNKNOWN, exception = e))
                     }
                 }
 
                 is StreamResult.Complete -> {
                     isComplete = true
-                    StreamResult.Complete(
-                        streamResult.connectException()?.code ?: Code.OK,
-                        cause = streamResult.cause,
-                        trailers = streamResult.trailers,
-                    )
+                    when (streamResult.code) {
+                        Code.OK -> channel.close()
+                        else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code))
+                    }
                 }
-            }
-            channel.send(result)
-            if (isComplete) {
-                channel.close()
             }
         }
         continuation.invokeOnCancellation {

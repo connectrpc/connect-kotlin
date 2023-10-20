@@ -15,6 +15,7 @@
 package com.connectrpc
 
 import kotlinx.coroutines.channels.ReceiveChannel
+
 /**
  * Represents a server-only stream (a stream where the server streams data to the client after
  * receiving an initial request) that can send request messages.
@@ -25,7 +26,7 @@ interface ServerOnlyStreamInterface<Input, Output> {
      *
      * @return ReceiveChannel for iterating over the received results.
      */
-    fun resultChannel(): ReceiveChannel<StreamResult<Output>>
+    fun responseChannel(): ReceiveChannel<Output>
 
     /**
      * Send a request to the server over the stream and closes the request.

@@ -21,11 +21,11 @@ import kotlinx.coroutines.channels.ReceiveChannel
  */
 interface BidirectionalStreamInterface<Input, Output> {
     /**
-     * The Channel for received StreamResults.
+     * The Channel for responses.
      *
-     * @return ReceiveChannel for iterating over the received results.
+     * @return ReceiveChannel for iterating over the responses.
      */
-    fun resultChannel(): ReceiveChannel<StreamResult<Output>>
+    fun responseChannel(): ReceiveChannel<Output>
 
     /**
      * Send a request to the server over the stream.
