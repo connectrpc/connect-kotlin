@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class UnaryBlockingCall<Output> {
     private var executable: ((ResponseMessage<Output>) -> Unit) -> Unit = { }
-    private var cancel: () -> Unit = { }
+    private var cancelFn: () -> Unit = { }
 
     /**
      * Execute the underlying request.
@@ -43,7 +43,7 @@ class UnaryBlockingCall<Output> {
      * Cancel the underlying request.
      */
     fun cancel() {
-        cancel()
+        cancelFn()
     }
 
     /**
@@ -54,7 +54,7 @@ class UnaryBlockingCall<Output> {
      * underlying request.
      */
     internal fun setCancel(cancel: () -> Unit) {
-        this.cancel = cancel
+        this.cancelFn = cancel
     }
 
     /**

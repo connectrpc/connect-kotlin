@@ -16,7 +16,6 @@ package com.connectrpc.impl
 
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.ServerOnlyStreamInterface
-import com.connectrpc.StreamResult
 import kotlinx.coroutines.channels.ReceiveChannel
 
 /**
@@ -25,8 +24,8 @@ import kotlinx.coroutines.channels.ReceiveChannel
 internal class ServerOnlyStream<Input, Output>(
     private val messageStream: BidirectionalStreamInterface<Input, Output>,
 ) : ServerOnlyStreamInterface<Input, Output> {
-    override fun resultChannel(): ReceiveChannel<StreamResult<Output>> {
-        return messageStream.resultChannel()
+    override fun responseChannel(): ReceiveChannel<Output> {
+        return messageStream.responseChannel()
     }
 
     override suspend fun sendAndClose(input: Input): Result<Unit> {

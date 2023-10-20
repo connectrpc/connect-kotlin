@@ -36,6 +36,7 @@ import okio.Pipe
 import okio.buffer
 import java.io.IOException
 import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -87,10 +88,13 @@ private class ResponseCallback(
         runBlocking {
             if (e is InterruptedIOException) {
                 if (e.message == "timeout") {
-                    val error = ConnectException(code = Code.DEADLINE_EXCEEDED)
-                    onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, cause = error))
+                    onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, cause = e))
                     return@runBlocking
                 }
+            }
+            if (e is SocketTimeoutException) {
+                onResult(StreamResult.Complete(Code.DEADLINE_EXCEEDED, cause = e))
+                return@runBlocking
             }
             onResult(StreamResult.Complete(Code.UNKNOWN, cause = e))
         }

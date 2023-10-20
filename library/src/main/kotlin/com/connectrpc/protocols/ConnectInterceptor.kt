@@ -167,11 +167,7 @@ internal class ConnectInterceptor(
                             StreamResult.Message(unpackedMessage)
                         }
                     },
-                    onCompletion = { result ->
-                        val streamTrailers = result.trailers
-                        val error = result.connectException()
-                        StreamResult.Complete(error?.code ?: Code.OK, cause = error, streamTrailers)
-                    },
+                    onCompletion = { result -> result },
                 )
                 streamResult
             },

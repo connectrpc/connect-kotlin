@@ -70,13 +70,13 @@ $(PROTOC):
 
 .PHONY: generate
 generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.
-	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
+	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin protoc-gen-connect-kotlin/proto
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 
 .PHONY: generateconformance
 generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
-	buf generate --template conformance/buf.gen.yaml -o conformance
+	buf generate --template conformance/buf.gen.yaml -o conformance conformance/proto
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.

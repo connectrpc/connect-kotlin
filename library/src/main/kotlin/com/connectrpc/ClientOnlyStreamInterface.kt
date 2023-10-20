@@ -29,9 +29,10 @@ interface ClientOnlyStreamInterface<Input, Output> {
     /**
      * Receive a single response and close the stream.
      *
-     * @return the single response [ResponseMessage].
+     * @return the single response [Output].
+     * @throws ConnectException If an error occurs making the call or processing the response.
      */
-    suspend fun receiveAndClose(): ResponseMessage<Output>
+    suspend fun receiveAndClose(): Output
 
     /**
      * Close the stream. No calls to [send] are valid after calling [sendClose].
