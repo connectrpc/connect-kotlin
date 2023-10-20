@@ -111,6 +111,6 @@ class PluginGenerationTest {
 
     @Test
     fun evilCommentsCompiles() {
-        val client = EvilCommentsServiceClient(mock { })
+        EvilCommentsServiceClient(mock { })
     }
 }

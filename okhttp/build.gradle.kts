@@ -7,6 +7,10 @@ plugins {
     id("com.vanniktech.maven.publish.base")
 }
 
+kotlin {
+    compilerOptions.allWarningsAsErrors.set(true)
+}
+
 dependencies {
     api(libs.okhttp.core)
     implementation(libs.kotlin.coroutines.core)

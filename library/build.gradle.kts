@@ -8,6 +8,10 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+kotlin {
+    compilerOptions.allWarningsAsErrors.set(true)
+}
+
 dependencies {
     testImplementation(libs.assertj)
     testImplementation(libs.junit)
