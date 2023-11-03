@@ -52,7 +52,7 @@ class MockWebServerTests {
             ConnectOkHttpClient(
                 OkHttpClient.Builder()
                     .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                    .build()
+                    .build(),
             ),
             ProtocolClientConfig(
                 host = host.toString(),
