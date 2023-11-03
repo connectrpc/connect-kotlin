@@ -21,7 +21,7 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(project(":extensions:google-java"))
-    testImplementation(project(":conformance:google-java"))
+    testImplementation(project(":examples:generated-google-java"))
 }
 
 mavenPublishing {

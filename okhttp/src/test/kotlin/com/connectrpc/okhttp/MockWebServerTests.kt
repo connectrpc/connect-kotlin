@@ -14,11 +14,12 @@
 
 package com.connectrpc.okhttp
 
+import com.connectrpc.Code
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.compression.GzipCompressionPool
-import com.connectrpc.conformance.v1.TestServiceClient
-import com.connectrpc.conformance.v1.simpleRequest
+import com.connectrpc.eliza.v1.ElizaServiceClient
+import com.connectrpc.eliza.v1.sayRequest
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.protocols.NetworkProtocol
@@ -63,12 +64,13 @@ class MockWebServerTests {
             ),
         )
 
-        val request = simpleRequest {}
-        TestServiceClient(protocolClient).unaryCall(request)
+        val response = ElizaServiceClient(protocolClient).say(sayRequest { sentence = "hello" })
 
         mockWebServer.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.conformance.v1.TestService/UnaryCall")
+            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
+
+        assertThat(response.code).isEqualTo(Code.UNKNOWN)
 
         mockWebServer.shutdown()
     }
