@@ -27,18 +27,17 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Rule
 import org.junit.Test
 
 class MockWebServerTests {
 
+    @get:Rule val mockWebServerRule = MockWebServerRule()
+
     @Test
     fun `compressed empty failure response is parsed correctly`() = runTest {
-        val mockWebServer = MockWebServer()
-        mockWebServer.start()
-
-        mockWebServer.enqueue(
+        mockWebServerRule.server.enqueue(
             MockResponse().apply {
                 addHeader("accept-encoding", "gzip")
                 addHeader("content-encoding", "gzip")
@@ -47,7 +46,7 @@ class MockWebServerTests {
             },
         )
 
-        val host = mockWebServer.url("/")
+        val host = mockWebServerRule.server.url("/")
 
         val protocolClient = ProtocolClient(
             ConnectOkHttpClient(
@@ -66,12 +65,10 @@ class MockWebServerTests {
 
         val response = ElizaServiceClient(protocolClient).say(sayRequest { sentence = "hello" })
 
-        mockWebServer.takeRequest().apply {
+        mockWebServerRule.server.takeRequest().apply {
             assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
 
         assertThat(response.code).isEqualTo(Code.UNKNOWN)
-
-        mockWebServer.shutdown()
     }
 }
