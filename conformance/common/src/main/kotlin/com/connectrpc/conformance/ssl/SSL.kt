@@ -16,9 +16,6 @@ package com.connectrpc.conformance.ssl
 
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
-import okio.ByteString.Companion.encodeUtf8
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.cert.CertificateFactory
