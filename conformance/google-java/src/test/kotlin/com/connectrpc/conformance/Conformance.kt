@@ -72,7 +72,7 @@ class Conformance(
     private lateinit var testServiceConnectClient: TestServiceClient
 
     companion object {
-        private const val CONFORMANCE_VERSION = "0b07f579cb61ad89de24524d62f804a2b03b1acf"
+        private const val CONFORMANCE_VERSION = "88f85130640b46c0837e0d58c0484d83a110f418"
 
         @JvmStatic
         @Parameters(name = "client={0},server={1}")
