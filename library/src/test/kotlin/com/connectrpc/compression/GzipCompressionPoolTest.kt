@@ -43,4 +43,11 @@ class GzipCompressionPoolTest {
         val resultString = compressionPool.decompress(result).readUtf8()
         assertThat(resultString).isEqualTo("some_string")
     }
+
+    @Test
+    fun emptyBufferGzipDecompression() {
+        val compressionPool = GzipCompressionPool
+        val resultString = compressionPool.decompress(Buffer()).readUtf8()
+        assertThat(resultString).isEqualTo("")
+    }
 }

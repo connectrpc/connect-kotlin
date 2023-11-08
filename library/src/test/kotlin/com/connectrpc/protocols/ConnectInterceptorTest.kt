@@ -171,6 +171,34 @@ class ConnectInterceptorTest {
     }
 
     @Test
+    fun compressedEmptyRequestMessage() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com",
+            serializationStrategy = serializationStrategy,
+            requestCompression = RequestCompression(1, GzipCompressionPool),
+            compressionPools = listOf(GzipCompressionPool),
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val request = unaryFunction.requestFunction(
+            HTTPRequest(
+                url = URL(config.host),
+                contentType = "content_type",
+                headers = emptyMap(),
+                message = "".commonAsUtf8ToByteArray(),
+                methodSpec = MethodSpec(
+                    path = "",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                ),
+            ),
+        )
+        val decompressed = GzipCompressionPool.decompress(Buffer().write(request.message!!))
+        assertThat(decompressed.readUtf8()).isEqualTo("")
+    }
+
+    @Test
     fun uncompressedResponseMessage() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
@@ -212,6 +240,28 @@ class ConnectInterceptorTest {
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
+    }
+
+    @Test
+    fun compressedEmptyResponseMessage() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com",
+            serializationStrategy = serializationStrategy,
+            compressionPools = listOf(GzipCompressionPool),
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        val response = unaryFunction.responseFunction(
+            HTTPResponse(
+                code = Code.OK,
+                headers = mapOf(CONTENT_ENCODING to listOf(GzipCompressionPool.name())),
+                message = Buffer(),
+                trailers = emptyMap(),
+                tracingInfo = null,
+            ),
+        )
+        assertThat(response.message.readUtf8()).isEqualTo("")
     }
 
     @Test

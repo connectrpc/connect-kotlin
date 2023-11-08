@@ -38,6 +38,8 @@ object GzipCompressionPool : CompressionPool {
 
     override fun decompress(buffer: Buffer): Buffer {
         val result = Buffer()
+        if (buffer.size == 0L) return result
+
         GzipSource(buffer).use {
             while (it.read(result, Int.MAX_VALUE.toLong()) != -1L) {
                 // continue reading.
