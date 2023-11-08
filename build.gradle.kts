@@ -133,6 +133,9 @@ subprojects {
             jvmTarget = "1.8"
             languageVersion = "1.6"
             apiVersion = "1.6"
+            if (JavaVersion.current().isJava9Compatible && project.name != "android") {
+                freeCompilerArgs += "-Xjdk-release=1.8"
+            }
         }
     }
     tasks.withType<JavaCompile> {
