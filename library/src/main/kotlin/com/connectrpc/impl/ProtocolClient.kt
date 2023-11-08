@@ -71,7 +71,7 @@ class ProtocolClient(
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            val cancelable = httpClient.unary(finalRequest) { httpResponse ->
+            val cancelable = httpClient.unary(finalRequest) httpClientUnary@{ httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
                 val code = finalResponse.code
                 val exception = finalResponse.cause?.setErrorParser(serializationStrategy.errorDetailParser())
@@ -84,20 +84,31 @@ class ProtocolClient(
                             finalResponse.trailers,
                         ),
                     )
-                } else {
-                    val responseCodec = serializationStrategy.codec(methodSpec.responseClass)
-                    val responseMessage = responseCodec.deserialize(
-                        finalResponse.message,
-                    )
+                    return@httpClientUnary
+                }
+                val responseCodec = serializationStrategy.codec(methodSpec.responseClass)
+                val responseMessage: Output
+                try {
+                    responseMessage = responseCodec.deserialize(finalResponse.message)
+                } catch (e: Exception) {
                     onResult(
-                        ResponseMessage.Success(
-                            responseMessage,
-                            code,
+                        ResponseMessage.Failure(
+                            ConnectException(code = Code.INTERNAL_ERROR, exception = e),
+                            Code.INTERNAL_ERROR,
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),
                     )
+                    return@httpClientUnary
                 }
+                onResult(
+                    ResponseMessage.Success(
+                        responseMessage,
+                        code,
+                        finalResponse.headers,
+                        finalResponse.trailers,
+                    ),
+                )
             }
             return cancelable
         } catch (e: Exception) {

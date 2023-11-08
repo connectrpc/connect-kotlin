@@ -95,13 +95,33 @@ internal class ConnectInterceptor(
                 val responseHeaders =
                     response.headers.filter { entry -> !entry.key.startsWith("trailer-") }
                 val compressionPool = clientConfig.compressionPool(responseHeaders[CONTENT_ENCODING]?.first())
+                val responseBody = try {
+                    compressionPool?.decompress(response.message.buffer) ?: response.message.buffer
+                } catch (e: Exception) {
+                    return@UnaryFunction HTTPResponse(
+                        code = Code.INTERNAL_ERROR,
+                        message = Buffer(),
+                        headers = responseHeaders,
+                        trailers = trailers,
+                        cause = ConnectException(
+                            code = Code.INTERNAL_ERROR,
+                            errorDetailParser = serializationStrategy.errorDetailParser(),
+                            message = e.message,
+                            exception = e,
+                        ),
+                        tracingInfo = response.tracingInfo,
+                    )
+                }
+                val message: Buffer
                 val (code, exception) = if (response.code != Code.OK) {
-                    val error = parseConnectUnaryException(code = response.code, response.headers, response.message.buffer)
+                    val error = parseConnectUnaryException(code = response.code, response.headers, responseBody)
+                    // We've already read the response body to parse an error - don't read again.
+                    message = Buffer()
                     error.code to error
                 } else {
+                    message = responseBody
                     response.code to null
                 }
-                val message = compressionPool?.decompress(response.message.buffer) ?: response.message.buffer
                 HTTPResponse(
                     code = code,
                     message = message,
@@ -122,18 +142,12 @@ internal class ConnectInterceptor(
                     mutableMapOf(CONNECT_PROTOCOL_VERSION_KEY to listOf(CONNECT_PROTOCOL_VERSION_VALUE))
                 requestHeaders.putAll(request.headers)
                 if (requestCompression != null) {
-                    requestHeaders.put(
-                        CONNECT_STREAMING_CONTENT_ENCODING,
-                        listOf(requestCompression.compressionPool.name()),
-                    )
+                    requestHeaders[CONNECT_STREAMING_CONTENT_ENCODING] = listOf(requestCompression.compressionPool.name())
                 }
                 if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
                     requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
                 }
-                requestHeaders.put(
-                    CONNECT_STREAMING_ACCEPT_ENCODING,
-                    clientConfig.compressionPools().map { entry -> entry.name() },
-                )
+                requestHeaders[CONNECT_STREAMING_ACCEPT_ENCODING] = clientConfig.compressionPools().map { entry -> entry.name() }
                 request.clone(
                     url = request.url,
                     contentType = request.contentType,
@@ -246,7 +260,7 @@ internal class ConnectInterceptor(
                     serializationStrategy.errorDetailParser(),
                     errorJSON,
                 )
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON)
             }
             val errorDetails = parseErrorDetails(errorPayloadJSON)
