@@ -16,6 +16,12 @@ dependencies {
     implementation(libs.kotlin.coroutines.core)
 
     api(project(":library"))
+
+    testImplementation(libs.assertj)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(project(":extensions:google-java"))
+    testImplementation(project(":examples:generated-google-java"))
 }
 
 mavenPublishing {
