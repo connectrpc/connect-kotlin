@@ -17,9 +17,11 @@ package com.connectrpc.okhttp
 import com.connectrpc.Code
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
+import com.connectrpc.SerializationStrategy
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.eliza.v1.ElizaServiceClient
 import com.connectrpc.eliza.v1.sayRequest
+import com.connectrpc.extensions.GoogleJavaJSONStrategy
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.protocols.NetworkProtocol
@@ -31,12 +33,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
 
+/**
+ * Tests to exercise end to end failure cases not easily verified with conformance tests.
+ * Over time these may be moved to conformance tests.
+ */
 class MockWebServerTests {
 
     @get:Rule val mockWebServerRule = MockWebServerRule()
 
     @Test
-    fun `compressed empty failure response is parsed correctly`() = runTest {
+    fun `invalid compressed failure response is handled correctly`() = runTest {
         mockWebServerRule.server.enqueue(
             MockResponse().apply {
                 addHeader("accept-encoding", "gzip")
@@ -45,9 +51,66 @@ class MockWebServerTests {
                 setResponseCode(401)
             },
         )
+        val response = createClient().say(sayRequest { sentence = "hello" })
+        mockWebServerRule.server.takeRequest().apply {
+            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+        }
+        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+    }
 
+    @Test
+    fun `invalid compressed response data is handled correctly`() = runTest {
+        mockWebServerRule.server.enqueue(
+            MockResponse().apply {
+                addHeader("accept-encoding", "gzip")
+                addHeader("content-encoding", "gzip")
+                setBody("this isn't gzipped")
+                setResponseCode(200)
+            },
+        )
+        val response = createClient().say(sayRequest { sentence = "hello" })
+        mockWebServerRule.server.takeRequest().apply {
+            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+        }
+        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+    }
+
+    @Test
+    fun `invalid protobuf response data is handled correctly`() = runTest {
+        mockWebServerRule.server.enqueue(
+            MockResponse().apply {
+                addHeader("accept-encoding", "gzip")
+                addHeader("content-type", "application/proto")
+                setBody("this isn't valid protobuf")
+                setResponseCode(200)
+            },
+        )
+        val response = createClient().say(sayRequest { sentence = "hello" })
+        mockWebServerRule.server.takeRequest().apply {
+            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+        }
+        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+    }
+
+    @Test
+    fun `invalid json response data is handled correctly`() = runTest {
+        mockWebServerRule.server.enqueue(
+            MockResponse().apply {
+                addHeader("accept-encoding", "gzip")
+                addHeader("content-type", "application/json")
+                setBody("{ invalid json")
+                setResponseCode(200)
+            },
+        )
+        val response = createClient(serializationStrategy = GoogleJavaJSONStrategy()).say(sayRequest { sentence = "hello" })
+        mockWebServerRule.server.takeRequest().apply {
+            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+        }
+        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+    }
+
+    private fun createClient(serializationStrategy: SerializationStrategy = GoogleJavaProtobufStrategy()): ElizaServiceClient {
         val host = mockWebServerRule.server.url("/")
-
         val protocolClient = ProtocolClient(
             ConnectOkHttpClient(
                 OkHttpClient.Builder()
@@ -56,19 +119,11 @@ class MockWebServerTests {
             ),
             ProtocolClientConfig(
                 host = host.toString(),
-                serializationStrategy = GoogleJavaProtobufStrategy(),
+                serializationStrategy = serializationStrategy,
                 networkProtocol = NetworkProtocol.CONNECT,
                 requestCompression = RequestCompression(0, GzipCompressionPool),
-                compressionPools = listOf(GzipCompressionPool),
             ),
         )
-
-        val response = ElizaServiceClient(protocolClient).say(sayRequest { sentence = "hello" })
-
-        mockWebServerRule.server.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
-        }
-
-        assertThat(response.code).isEqualTo(Code.UNKNOWN)
+        return ElizaServiceClient(protocolClient)
     }
 }
