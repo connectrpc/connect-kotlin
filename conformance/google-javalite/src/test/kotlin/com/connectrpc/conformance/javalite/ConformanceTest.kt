@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit
 class ConformanceTest(
     protocol: NetworkProtocol,
     serverType: ServerType,
-): BaseConformanceTest(protocol, serverType) {
+) : BaseConformanceTest(protocol, serverType) {
 
     private lateinit var unimplementedServiceClient: UnimplementedServiceClient
     private lateinit var testServiceConnectClient: TestServiceClient
