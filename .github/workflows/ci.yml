@@ -70,6 +70,15 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run conformance tests
         run: make conformancerun
+      - name: Update test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: conformance-test-reports
+          path: |
+            conformance/google-java/build/reports/tests
+            conformance/google-javalite/build/reports/tests
+          retention-days: 7
   license-headers:
     runs-on: ubuntu-latest
     steps:
