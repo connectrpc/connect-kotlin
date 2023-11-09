@@ -70,7 +70,7 @@ jobs:
             ${{ runner.os }}-go-
       - name: Run conformance tests
         run: make conformancerun
-      - name: Update test reports
+      - name: Upload test reports
         uses: actions/upload-artifact@v3
         if: always()
         with:
