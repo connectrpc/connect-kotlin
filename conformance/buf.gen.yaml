@@ -20,6 +20,10 @@ plugins:
   - plugin: connect-kotlin
     out: google-javalite/build/generated/sources/bufgen
     path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
+    opt:
+      - generateCallbackMethods=true
+      - generateCoroutineMethods=true
+      - generateBlockingUnaryMethods=true
   - plugin: java
     out: google-javalite/build/generated/sources/bufgen
     protoc_path: .tmp/bin/protoc
