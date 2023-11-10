@@ -22,9 +22,9 @@ sourceSets {
 
 dependencies {
     implementation(libs.kotlin.coroutines.core)
-    implementation(libs.protobuf.kotlin)
+    implementation(libs.protobuf.kotlinlite)
     implementation(project(":conformance:common"))
-    implementation(project(":extensions:google-java"))
+    implementation(project(":extensions:google-javalite"))
     implementation(project(":okhttp"))
 
     testImplementation(libs.okhttp.core)
@@ -33,4 +33,5 @@ dependencies {
     testImplementation(libs.mockito)
     testImplementation(libs.kotlin.coroutines.core)
     testImplementation(libs.testcontainers)
+    testImplementation(libs.slf4j.simple)
 }

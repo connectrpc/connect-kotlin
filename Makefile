@@ -36,11 +36,8 @@ clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
 
 .PHONY: conformancerun
-conformancerun: conformancerunjava ## Run the conformance tests.
-
-.PHONY: conformancerunjava
-conformancerunjava: generate ## Run the conformance tests for protoc-gen-java integration.
-	./gradlew $(GRADLE_ARGS) conformance:google-java:test
+conformancerun: generate ## Run the conformance tests.
+	./gradlew $(GRADLE_ARGS) conformance:google-java:test conformance:google-javalite:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
