@@ -213,6 +213,8 @@ internal class PipeDuplexRequestBody(
 
     override fun isDuplex() = true
 
+    override fun isOneShot() = true
+
     fun close() {
         try {
             bufferedSink.close()
