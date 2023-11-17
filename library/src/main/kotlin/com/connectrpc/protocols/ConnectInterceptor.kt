@@ -21,15 +21,15 @@ import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.Idempotency
 import com.connectrpc.Interceptor
-import com.connectrpc.Method.GET_METHOD
-import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.StreamFunction
 import com.connectrpc.StreamResult
+import com.connectrpc.StreamType
 import com.connectrpc.Trailers
 import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
+import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.squareup.moshi.Moshi
@@ -189,7 +189,8 @@ internal class ConnectInterceptor(
     }
 
     private fun shouldUseGETRequest(request: HTTPRequest, finalRequestBody: Buffer): Boolean {
-        return request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
+        return request.methodSpec.streamType == StreamType.UNARY &&
+            request.methodSpec.idempotency == Idempotency.NO_SIDE_EFFECTS &&
             clientConfig.getConfiguration.useGET(finalRequestBody)
     }
 
@@ -210,13 +211,8 @@ internal class ConnectInterceptor(
             url = url,
             contentType = "application/${requestCodec.encodingName()}",
             headers = request.headers,
-            methodSpec = MethodSpec(
-                path = request.methodSpec.path,
-                requestClass = request.methodSpec.requestClass,
-                responseClass = request.methodSpec.responseClass,
-                idempotency = request.methodSpec.idempotency,
-                method = GET_METHOD,
-            ),
+            methodSpec = request.methodSpec,
+            httpMethod = HTTPMethod.GET,
         )
     }
 
@@ -261,7 +257,7 @@ internal class ConnectInterceptor(
                     errorJSON,
                 )
             } catch (e: Exception) {
-                return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON)
+                return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON, e)
             }
             val errorDetails = parseErrorDetails(errorPayloadJSON)
             ConnectException(

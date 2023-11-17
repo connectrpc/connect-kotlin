@@ -18,6 +18,7 @@ import com.connectrpc.Codec
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ class BiDirectionalStreamTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
             stream.sendClose()
@@ -83,6 +85,7 @@ class BiDirectionalStreamTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
             val result = stream.send("input")

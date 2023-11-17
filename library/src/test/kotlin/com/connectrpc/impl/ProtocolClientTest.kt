@@ -18,6 +18,7 @@ import com.connectrpc.Codec
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamType
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import kotlinx.coroutines.CoroutineScope
@@ -57,6 +58,7 @@ class ProtocolClientTest {
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class,
+                streamType = StreamType.UNARY,
             ),
         ) { _ -> }
     }
@@ -81,6 +83,7 @@ class ProtocolClientTest {
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class,
+                streamType = StreamType.UNARY,
             ),
         ) { _ -> }
     }
@@ -105,6 +108,7 @@ class ProtocolClientTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
         }
@@ -130,6 +134,7 @@ class ProtocolClientTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
         }
@@ -154,6 +159,7 @@ class ProtocolClientTest {
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class,
+                streamType = StreamType.UNARY,
             ),
         ) {}
 
@@ -182,6 +188,7 @@ class ProtocolClientTest {
                 path = "com.connectrpc.SomeService/Service",
                 String::class,
                 String::class,
+                streamType = StreamType.UNARY,
             ),
         ) {}
 

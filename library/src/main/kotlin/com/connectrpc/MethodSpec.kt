@@ -16,11 +16,6 @@ package com.connectrpc
 
 import kotlin.reflect.KClass
 
-internal object Method {
-    internal const val GET_METHOD = "GET"
-    internal const val POST_METHOD = "POST"
-}
-
 /**
  * Represents the minimum set of information to execute an RPC method.
  * Primarily used in generated code.
@@ -29,12 +24,12 @@ internal object Method {
  * @param requestClass The Kotlin Class for the request message.
  * @param responseClass The Kotlin Class for the response message.
  * @param idempotency The declared idempotency of a method.
- * @param method The HTTP method of a request.
+ * @param streamType The method's stream type.
  */
 class MethodSpec<Input : Any, Output : Any>(
     val path: String,
     val requestClass: KClass<Input>,
     val responseClass: KClass<Output>,
     val idempotency: Idempotency = Idempotency.UNKNOWN,
-    val method: String = Method.POST_METHOD,
+    val streamType: StreamType = StreamType.UNKNOWN,
 )
