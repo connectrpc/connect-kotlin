@@ -21,7 +21,7 @@ android-multidex = { module = "com.android.support:multidex", version = "1.0.3" 
 android-plugin = { module = "com.android.tools.build:gradle", version = "8.1.3" }
 androidx-annotations = { module = "androidx.annotation:annotation", version = "1.7.0" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.6.1" }
-androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.0" }
+androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.1" }
 androidx-constraintLayout = { module = "androidx.constraintlayout:constraintlayout", version = "2.1.4" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version = "2.6.2" }
 androidx-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
