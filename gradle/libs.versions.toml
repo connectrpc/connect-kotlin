@@ -4,13 +4,13 @@ assertj = "3.24.2"
 coroutines = "1.7.3"
 dokka = "1.9.10"
 junit = "4.13.2"
-kotlin = "1.9.20"
-kotlinpoet = "1.14.2"
+kotlin = "1.9.21"
+kotlinpoet = "1.15.1"
 mavenplugin = "0.25.3"
 moshi = "1.15.0"
 okhttp = "4.12.0"
 okio = "3.6.0"
-protobuf = "3.25.0"
+protobuf = "3.25.1"
 slf4j = "2.0.9"
 spotless = "6.22.0"
 
@@ -18,10 +18,10 @@ spotless = "6.22.0"
 android = { module = "com.google.android:android", version.ref = "android" }
 android-material = { module = "com.google.android.material:material", version = "1.10.0" }
 android-multidex = { module = "com.android.support:multidex", version = "1.0.3" }
-android-plugin = { module = "com.android.tools.build:gradle", version = "8.1.3" }
+android-plugin = { module = "com.android.tools.build:gradle", version = "8.1.4" }
 androidx-annotations = { module = "androidx.annotation:annotation", version = "1.7.0" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.6.1" }
-androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.0" }
+androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.1" }
 androidx-constraintLayout = { module = "androidx.constraintlayout:constraintlayout", version = "2.1.4" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version = "2.6.2" }
 androidx-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
@@ -54,7 +54,7 @@ protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref 
 protobuf-kotlinlite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
-testcontainers = { module = "org.testcontainers:testcontainers", version = "1.19.1" }
+testcontainers = { module = "org.testcontainers:testcontainers", version = "1.19.3" }
 
 [plugins]
 git = { id = "com.palantir.git-version", version = "3.0.0" }
