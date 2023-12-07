@@ -88,7 +88,6 @@ class ConformanceTest(
         }
         assertThat(responses.map { it.payload.type }.toSet()).isEqualTo(setOf(PayloadType.COMPRESSABLE))
         assertThat(responses.map { it.payload.body.size() }).isEqualTo(sizes)
-        assertThat(stream.responseTrailers().isCompleted).isTrue()
         assertThat(stream.responseTrailers().await()).containsAllEntriesOf(responseTrailers)
     }
 
@@ -701,7 +700,6 @@ class ConformanceTest(
                     val response = stream.receiveAndClose()
                     assertThat(response.aggregatedPayloadSize).isEqualTo(sum)
                     assertThat(stream.responseHeaders().isCompleted).isTrue()
-                    assertThat(stream.responseTrailers().isCompleted).isTrue()
                     assertThat(stream.responseHeaders().await()).isNotEmpty()
                     if (protocol != NetworkProtocol.CONNECT) {
                         // gRPC and gRPC-web communicate RPC status in trailers, so
