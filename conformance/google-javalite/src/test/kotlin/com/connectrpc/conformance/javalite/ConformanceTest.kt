@@ -56,7 +56,7 @@ class ConformanceTest(
 ) : BaseConformanceTest(protocol, serverType) {
     companion object {
         private val responseHeaders = mapOf(Pair("x-grpc-test-echo-initial", listOf("test_initial_metadata_value")))
-        private val responseTrailers = mapOf(Pair("x-grpc-test-echo-trailing-bin", listOf("CgsKCwoL")), /* base64-encoded 0x0a0b0a0b0a0b */)
+        private val responseTrailers = mapOf(Pair("x-grpc-test-echo-trailing-bin", listOf("CgsKCwoL"))) // base64-encoded 0x0a0b0a0b0a0b
         private val requestHeaders = responseHeaders + responseTrailers
     }
 

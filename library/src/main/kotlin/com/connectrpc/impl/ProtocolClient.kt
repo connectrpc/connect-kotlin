@@ -216,10 +216,6 @@ class ProtocolClient(
                         )
                         channel.send(message)
                     } catch (e: Throwable) {
-                        // TODO: setting isComplete, responseTrailers, and RPC status
-                        //       here seems wrong. What would prevent the call to
-                        //       channel.send such that we don't bother getting the
-                        //       actual result/trailers from the server?
                         isComplete = true
                         try {
                             channel.close(ConnectException(Code.UNKNOWN, exception = e))

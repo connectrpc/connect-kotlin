@@ -75,9 +75,17 @@ class Stream(
 
     fun receiveClose() {
         if (!isReceiveClosed.getAndSet(true)) {
-            onReceiveClose()
-            // closing receive side implicitly closes send side, too
-            isSendClosed.set(true)
+            try {
+                onReceiveClose()
+            } finally {
+                // When receive side is closed, the send side is
+                // implicitly closed as well.
+                // We don't use sendClose() because we don't want to
+                // invoke onSendClose() since that will try to actually
+                // half-close the HTTP stream, which will fail since the
+                // closing the receive side cancels the entire thing.
+                isSendClosed.set(true)
+            }
         }
     }
 
