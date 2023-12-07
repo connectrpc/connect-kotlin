@@ -15,7 +15,9 @@
 package com.connectrpc.impl
 
 import com.connectrpc.BidirectionalStreamInterface
+import com.connectrpc.Headers
 import com.connectrpc.ServerOnlyStreamInterface
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
 
 /**
@@ -26,6 +28,14 @@ internal class ServerOnlyStream<Input, Output>(
 ) : ServerOnlyStreamInterface<Input, Output> {
     override fun responseChannel(): ReceiveChannel<Output> {
         return messageStream.responseChannel()
+    }
+
+    override fun responseHeaders(): Deferred<Headers> {
+        return messageStream.responseHeaders()
+    }
+
+    override fun responseTrailers(): Deferred<Headers> {
+        return messageStream.responseTrailers()
     }
 
     override suspend fun sendAndClose(input: Input): Result<Unit> {
