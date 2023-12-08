@@ -30,7 +30,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.lang.IllegalArgumentException
 
-class BiDirectionalStreamTest {
+class BidirectionalStreamTest {
     private val serializationStrategy: SerializationStrategy = mock { }
     private val codec: Codec<String> = mock { }
 
