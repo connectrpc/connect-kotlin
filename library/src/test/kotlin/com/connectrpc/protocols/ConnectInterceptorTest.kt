@@ -688,8 +688,8 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                     streamType = StreamType.UNARY,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )
@@ -725,8 +725,8 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                     streamType = StreamType.UNARY,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )
@@ -754,8 +754,8 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                     streamType = StreamType.UNARY,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )
@@ -788,8 +788,8 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
-                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                     streamType = StreamType.UNARY,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )

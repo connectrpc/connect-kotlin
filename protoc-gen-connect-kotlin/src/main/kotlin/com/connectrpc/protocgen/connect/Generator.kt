@@ -280,21 +280,21 @@ class Generator : CodeGenerator {
                 .indent()
                 .addStatement("$inputClassName::class,")
                 .addStatement("$outputClassName::class,")
+            if (method.isClientStreaming && method.isServerStreaming) {
+                methodSpecBuilder.addStatement("StreamType.${StreamType.BIDI.name},")
+            } else if (method.isClientStreaming) {
+                methodSpecBuilder.addStatement("StreamType.${StreamType.CLIENT.name},")
+            } else if (method.isServerStreaming) {
+                methodSpecBuilder.addStatement("StreamType.${StreamType.SERVER.name},")
+            } else {
+                methodSpecBuilder.addStatement("StreamType.${StreamType.UNARY.name},")
+            }
             when (method.options.idempotencyLevel) {
                 IdempotencyLevel.NO_SIDE_EFFECTS -> methodSpecBuilder.addStatement("idempotency = Idempotency.${Idempotency.NO_SIDE_EFFECTS.name},")
                 IdempotencyLevel.IDEMPOTENT -> methodSpecBuilder.addStatement("idempotency = Idempotency.${Idempotency.IDEMPOTENT.name},")
                 else -> {
                     // Use default value in method spec.
                 }
-            }
-            if (method.isClientStreaming && method.isServerStreaming) {
-                methodSpecBuilder.addStatement("streamType = StreamType.${StreamType.BIDI.name},")
-            } else if (method.isClientStreaming) {
-                methodSpecBuilder.addStatement("streamType = StreamType.${StreamType.CLIENT.name},")
-            } else if (method.isServerStreaming) {
-                methodSpecBuilder.addStatement("streamType = StreamType.${StreamType.SERVER.name},")
-            } else {
-                methodSpecBuilder.addStatement("streamType = StreamType.${StreamType.UNARY.name},")
             }
             val methodSpecCallBlock = methodSpecBuilder
                 .unindent()

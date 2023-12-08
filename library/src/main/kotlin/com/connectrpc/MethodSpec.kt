@@ -30,6 +30,6 @@ class MethodSpec<Input : Any, Output : Any>(
     val path: String,
     val requestClass: KClass<Input>,
     val responseClass: KClass<Output>,
+    val streamType: StreamType,
     val idempotency: Idempotency = Idempotency.UNKNOWN,
-    val streamType: StreamType = StreamType.UNKNOWN,
 )

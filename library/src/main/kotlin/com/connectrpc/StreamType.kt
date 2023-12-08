@@ -18,9 +18,6 @@ package com.connectrpc
  * Represents the RPC stream type. Set by the code generator on each [MethodSpec].
  */
 enum class StreamType {
-    /** Unknown stream type. */
-    UNKNOWN,
-
     /** Unary RPC. */
     UNARY,
 
