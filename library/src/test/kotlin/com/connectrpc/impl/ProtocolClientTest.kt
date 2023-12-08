@@ -44,23 +44,15 @@ class ProtocolClientTest {
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
 
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com/")
         client.unary(
             "input",
             emptyMap(),
-            MethodSpec(
-                path = "com.connectrpc.SomeService/Service",
-                String::class,
-                String::class,
-                streamType = StreamType.UNARY,
-            ),
+            createMethodSpec(StreamType.UNARY),
         ) { _ -> }
+        val captor = argumentCaptor<HTTPRequest>()
+        verify(httpClient).unary(captor.capture(), any())
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
 
     @Test
@@ -69,23 +61,15 @@ class ProtocolClientTest {
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
 
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com")
         client.unary(
             "input",
             emptyMap(),
-            MethodSpec(
-                path = "com.connectrpc.SomeService/Service",
-                String::class,
-                String::class,
-                streamType = StreamType.UNARY,
-            ),
+            createMethodSpec(StreamType.UNARY),
         ) { _ -> }
+        val captor = argumentCaptor<HTTPRequest>()
+        verify(httpClient).unary(captor.capture(), any())
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
 
     @Test
@@ -94,23 +78,15 @@ class ProtocolClientTest {
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
 
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com/")
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
                 emptyMap(),
-                MethodSpec(
-                    path = "com.connectrpc.SomeService/Service",
-                    String::class,
-                    String::class,
-                    streamType = StreamType.BIDI,
-                ),
+                createMethodSpec(StreamType.BIDI),
             )
+            val captor = argumentCaptor<HTTPRequest>()
+            verify(httpClient).stream(captor.capture(), any())
+            assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
         }
     }
 
@@ -120,23 +96,15 @@ class ProtocolClientTest {
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
 
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com")
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
                 emptyMap(),
-                MethodSpec(
-                    path = "com.connectrpc.SomeService/Service",
-                    String::class,
-                    String::class,
-                    streamType = StreamType.BIDI,
-                ),
+                createMethodSpec(StreamType.BIDI),
             )
+            val captor = argumentCaptor<HTTPRequest>()
+            verify(httpClient).stream(captor.capture(), any())
+            assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
         }
     }
 
@@ -145,25 +113,12 @@ class ProtocolClientTest {
         whenever(codec.encodingName()).thenReturn("testing")
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com")
         client.unary(
             "",
             emptyMap(),
-            MethodSpec(
-                path = "com.connectrpc.SomeService/Service",
-                String::class,
-                String::class,
-                streamType = StreamType.UNARY,
-            ),
+            createMethodSpec(StreamType.UNARY),
         ) {}
-
-        // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
@@ -174,27 +129,65 @@ class ProtocolClientTest {
         whenever(codec.encodingName()).thenReturn("testing")
         whenever(codec.serialize(any())).thenReturn(Buffer())
         whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
-        val client = ProtocolClient(
-            httpClient = httpClient,
-            config = ProtocolClientConfig(
-                host = "https://connectrpc.com/",
-                serializationStrategy = serializationStrategy,
-            ),
-        )
+        val client = createClient("https://connectrpc.com/")
         client.unary(
             "",
             emptyMap(),
-            MethodSpec(
-                path = "com.connectrpc.SomeService/Service",
-                String::class,
-                String::class,
-                streamType = StreamType.UNARY,
-            ),
+            createMethodSpec(StreamType.UNARY),
         ) {}
-
-        // Use HTTP client to determine and verify the final URL.
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
+    }
+
+    @Test
+    fun finalUrlRelativeBaseURI() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+        val client = createClient("https://connectrpc.com/api")
+        client.unary(
+            "",
+            emptyMap(),
+            createMethodSpec(StreamType.UNARY),
+        ) {}
+        val captor = argumentCaptor<HTTPRequest>()
+        verify(httpClient).unary(captor.capture(), any())
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
+    }
+
+    @Test
+    fun finalUrlAbsoluteBaseURI() {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+        val client = createClient("https://connectrpc.com/api/")
+        client.unary(
+            "",
+            emptyMap(),
+            createMethodSpec(StreamType.UNARY),
+        ) {}
+        val captor = argumentCaptor<HTTPRequest>()
+        verify(httpClient).unary(captor.capture(), any())
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/api/com.connectrpc.SomeService/Service")
+    }
+
+    private fun createClient(host: String): ProtocolClient {
+        return ProtocolClient(
+            httpClient = httpClient,
+            config = ProtocolClientConfig(
+                host = host,
+                serializationStrategy = serializationStrategy,
+            ),
+        )
+    }
+
+    private fun createMethodSpec(streamType: StreamType): MethodSpec<String, String> {
+        return MethodSpec(
+            path = "com.connectrpc.SomeService/Service",
+            String::class,
+            String::class,
+            streamType,
+        )
     }
 }

@@ -34,7 +34,6 @@ import com.connectrpc.protocols.GETConfiguration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.net.URL
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
 
@@ -268,8 +267,5 @@ class ProtocolClient(
         )
     }
 
-    private fun <Input : Any, Output : Any> urlFromMethodSpec(methodSpec: MethodSpec<Input, Output>): URL {
-        val host = config.baseUri.resolve("/${methodSpec.path}")
-        return host.toURL()
-    }
+    private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>) = config.baseUri.resolve(methodSpec.path).toURL()
 }
