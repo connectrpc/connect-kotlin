@@ -52,8 +52,15 @@ class ProtocolClient(
         config.baseUri
     } else {
         val path = config.baseUri.path ?: ""
-        URI(config.baseUri.scheme, config.baseUri.userInfo, config.baseUri.host, config.baseUri.port, "$path/",
-            config.baseUri.query, config.baseUri.fragment)
+        URI(
+            config.baseUri.scheme,
+            config.baseUri.userInfo,
+            config.baseUri.host,
+            config.baseUri.port,
+            "$path/",
+            config.baseUri.query,
+            config.baseUri.fragment,
+        )
     }
 
     override fun <Input : Any, Output : Any> unary(
