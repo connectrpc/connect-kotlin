@@ -14,6 +14,8 @@
 
 package com.connectrpc
 
+import kotlinx.coroutines.Deferred
+
 /**
  * Represents a client-only stream (a stream where the client streams data to the server and
  * eventually receives a response) that can send request messages and initiate closes.
@@ -33,6 +35,24 @@ interface ClientOnlyStreamInterface<Input, Output> {
      * @throws ConnectException If an error occurs making the call or processing the response.
      */
     suspend fun receiveAndClose(): Output
+
+    /**
+     * The response headers. This value will become available before any call to
+     * [receiveAndClose] completes and before trailers are available from
+     * [responseTrailers] (though these may occur nearly simultaneously). If the
+     * stream fails before headers are ever received, this will complete with an
+     * empty value. The [receiveAndClose] method can be used to recover the
+     * exception that caused such a failure.
+     */
+    fun responseHeaders(): Deferred<Headers>
+
+    /**
+     * The response trailers. This value will not become available until the entire
+     * RPC operation is complete. If the stream fails before trailers are ever
+     * received, this will complete with an empty value. The [receiveAndClose]
+     * method can be used to recover the exception that caused such a failure.
+     */
+    fun responseTrailers(): Deferred<Headers>
 
     /**
      * Close the stream. No calls to [send] are valid after calling [sendClose].

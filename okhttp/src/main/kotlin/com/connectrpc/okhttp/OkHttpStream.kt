@@ -76,6 +76,8 @@ internal fun OkHttpClient.initializeStream(
         onReceiveClose = {
             isReceiveClosed.set(true)
             call.cancel()
+            // cancelling implicitly closes send-side, too
+            isSendClosed.set(true)
         },
     )
 }
