@@ -14,6 +14,7 @@
 
 package com.connectrpc
 
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
 
 /**
@@ -26,6 +27,25 @@ interface BidirectionalStreamInterface<Input, Output> {
      * @return ReceiveChannel for iterating over the responses.
      */
     fun responseChannel(): ReceiveChannel<Output>
+
+    /**
+     * The response headers. This value will become available before any output
+     * messages become available from the [responseChannel] and before trailers
+     * are available from [responseTrailers]. If the stream fails before headers
+     * are ever received, this will complete with an empty value. The
+     * [ReceiveChannel.receive] method of [responseChannel] can be used to
+     * recover the exception that caused such a failure.
+     */
+    fun responseHeaders(): Deferred<Headers>
+
+    /**
+     * The response trailers. This value will not become available until the entire
+     * RPC operation is complete. If the stream fails before trailers are ever
+     * received, this will complete with an empty value. The [ReceiveChannel.receive]
+     * method of [responseChannel] can be used to recover the exception that caused
+     * such a failure.
+     */
+    fun responseTrailers(): Deferred<Headers>
 
     /**
      * Send a request to the server over the stream.

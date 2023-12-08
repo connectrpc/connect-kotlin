@@ -56,7 +56,7 @@ class Stream(
     private val isReceiveClosed = AtomicReference(false)
 
     fun send(buffer: Buffer): Result<Unit> {
-        if (isClosed()) {
+        if (isSendClosed()) {
             return Result.failure(IllegalStateException("cannot send. underlying stream is closed"))
         }
         return try {
@@ -75,12 +75,23 @@ class Stream(
 
     fun receiveClose() {
         if (!isReceiveClosed.getAndSet(true)) {
-            onReceiveClose()
+            try {
+                onReceiveClose()
+            } finally {
+                // When receive side is closed, the send side is
+                // implicitly closed as well.
+                // We don't use sendClose() because we don't want to
+                // invoke onSendClose() since that will try to actually
+                // half-close the HTTP stream, which will fail since the
+                // closing the receive side cancels the entire thing.
+                isSendClosed.set(true)
+            }
         }
     }
 
+    // TODO: remove this method as it is redundant with receive closed
     fun isClosed(): Boolean {
-        return isSendClosed() && isReceiveClosed()
+        return isReceiveClosed()
     }
 
     fun isSendClosed(): Boolean {

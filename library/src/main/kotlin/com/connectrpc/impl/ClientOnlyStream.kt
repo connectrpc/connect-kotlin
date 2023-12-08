@@ -18,6 +18,8 @@ import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
+import com.connectrpc.Headers
+import kotlinx.coroutines.Deferred
 
 /**
  * Concrete implementation of [ClientOnlyStreamInterface].
@@ -42,6 +44,14 @@ internal class ClientOnlyStream<Input, Output>(
         } finally {
             resultChannel.cancel()
         }
+    }
+
+    override fun responseHeaders(): Deferred<Headers> {
+        return messageStream.responseHeaders()
+    }
+
+    override fun responseTrailers(): Deferred<Headers> {
+        return messageStream.responseTrailers()
     }
 
     override fun sendClose() {

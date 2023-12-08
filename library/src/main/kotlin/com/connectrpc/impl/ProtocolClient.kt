@@ -31,6 +31,7 @@ import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
 import com.connectrpc.protocols.GETConfiguration
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.URL
@@ -178,6 +179,8 @@ class ProtocolClient(
         headers: Headers,
     ): BidirectionalStream<Input, Output> = suspendCancellableCoroutine { continuation ->
         val channel = Channel<Output>(1)
+        val responseHeaders = CompletableDeferred<Headers>()
+        val responseTrailers = CompletableDeferred<Headers>()
         val requestCodec = config.serializationStrategy.codec(methodSpec.requestClass)
         val responseCodec = config.serializationStrategy.codec(methodSpec.responseClass)
         val request = HTTPRequest(
@@ -197,10 +200,16 @@ class ProtocolClient(
             // Pass through the interceptor chain.
             when (val streamResult = streamFunc.streamResultFunction(initialResult)) {
                 is StreamResult.Headers -> {
-                    // Not currently used except for interceptors.
+                    // If this is incorrectly called 2x, only the first result is used.
+                    // Subsequent calls to complete will be ignored.
+                    responseHeaders.complete(streamResult.headers)
                 }
 
                 is StreamResult.Message -> {
+                    // Just in case protocol impl failed to provide StreamResult.Headers,
+                    // treat headers as empty. This is a no-op if we did correctly receive
+                    // them already.
+                    responseHeaders.complete(emptyMap())
                     try {
                         val message = responseCodec.deserialize(
                             streamResult.message,
@@ -208,21 +217,30 @@ class ProtocolClient(
                         channel.send(message)
                     } catch (e: Throwable) {
                         isComplete = true
-                        channel.close(ConnectException(Code.UNKNOWN, exception = e))
+                        try {
+                            channel.close(ConnectException(Code.UNKNOWN, exception = e))
+                        } finally {
+                            responseTrailers.complete(emptyMap())
+                        }
                     }
                 }
 
                 is StreamResult.Complete -> {
+                    // This is a no-op if we already received a StreamResult.Headers.
+                    responseHeaders.complete(emptyMap())
                     isComplete = true
-                    when (streamResult.code) {
-                        Code.OK -> channel.close()
-                        else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code))
+                    try {
+                        when (streamResult.code) {
+                            Code.OK -> channel.close()
+                            else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code))
+                        }
+                    } finally {
+                        responseTrailers.complete(streamResult.trailers)
                     }
                 }
             }
         }
         continuation.invokeOnCancellation {
-            httpStream.sendClose()
             httpStream.receiveClose()
         }
         val stream = Stream(
@@ -237,7 +255,6 @@ class ProtocolClient(
             },
         )
         channel.invokeOnClose {
-            // Receive channel is closed so the stream's receive will be closed.
             stream.receiveClose()
         }
         continuation.resume(
@@ -245,6 +262,8 @@ class ProtocolClient(
                 stream,
                 requestCodec,
                 channel,
+                responseHeaders,
+                responseTrailers,
             ),
         )
     }
