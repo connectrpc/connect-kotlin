@@ -23,6 +23,7 @@ import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.StreamResult
+import com.connectrpc.StreamType
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
@@ -72,6 +73,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -99,6 +101,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -126,6 +129,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -154,6 +158,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -313,6 +318,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.SERVER,
                 ),
             ),
         )
@@ -342,6 +348,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.CLIENT,
                 ),
             ),
         )
@@ -368,6 +375,7 @@ class GRPCInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )

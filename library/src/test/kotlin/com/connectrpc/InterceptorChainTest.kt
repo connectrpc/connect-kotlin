@@ -26,10 +26,18 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import java.net.URL
 
-private val METHOD_SPEC = MethodSpec(
+private val UNARY_METHOD_SPEC = MethodSpec(
     path = "",
     requestClass = Any::class,
     responseClass = Any::class,
+    streamType = StreamType.UNARY,
+)
+
+private val STREAM_METHOD_SPEC = MethodSpec(
+    path = "",
+    requestClass = Any::class,
+    responseClass = Any::class,
+    streamType = StreamType.BIDI,
 )
 
 class InterceptorChainTest {
@@ -64,7 +72,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, METHOD_SPEC))
+        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, UNARY_METHOD_SPEC))
         assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -76,7 +84,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, METHOD_SPEC))
+        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, STREAM_METHOD_SPEC))
         assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -112,7 +120,7 @@ class InterceptorChainTest {
                         it.contentType,
                         headers,
                         it.message,
-                        METHOD_SPEC,
+                        UNARY_METHOD_SPEC,
                     )
                 },
                 responseFunction = {
@@ -144,7 +152,7 @@ class InterceptorChainTest {
                         it.contentType,
                         headers,
                         it.message,
-                        METHOD_SPEC,
+                        STREAM_METHOD_SPEC,
                     )
                 },
                 requestBodyFunction = {

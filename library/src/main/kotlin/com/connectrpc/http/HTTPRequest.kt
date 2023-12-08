@@ -18,6 +18,11 @@ import com.connectrpc.Headers
 import com.connectrpc.MethodSpec
 import java.net.URL
 
+internal object HTTPMethod {
+    internal const val GET = "GET"
+    internal const val POST = "POST"
+}
+
 /**
  * HTTP request used for sending primitive data to the server.
  */
@@ -32,6 +37,9 @@ class HTTPRequest internal constructor(
     val message: ByteArray? = null,
     // The method spec associated with the request.
     val methodSpec: MethodSpec<*, *>,
+    // HTTP method to use with the request.
+    // Almost always POST, but side effect free unary RPCs may be made with GET.
+    val httpMethod: String = HTTPMethod.POST,
 ) {
     /**
      * Clones the [HTTPRequest] with override values.
@@ -50,6 +58,8 @@ class HTTPRequest internal constructor(
         message: ByteArray? = this.message,
         // The method spec associated with the request.
         methodSpec: MethodSpec<*, *> = this.methodSpec,
+        // The HTTP method to use with the request.
+        httpMethod: String = this.httpMethod,
     ): HTTPRequest {
         return HTTPRequest(
             url,
@@ -57,6 +67,7 @@ class HTTPRequest internal constructor(
             headers,
             message,
             methodSpec,
+            httpMethod,
         )
     }
 }

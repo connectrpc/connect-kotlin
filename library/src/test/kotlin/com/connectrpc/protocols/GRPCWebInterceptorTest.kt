@@ -22,6 +22,7 @@ import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.StreamResult
+import com.connectrpc.StreamType
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
@@ -68,6 +69,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -96,6 +98,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -123,6 +126,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -151,6 +155,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -331,6 +336,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )
@@ -361,6 +367,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )
@@ -387,6 +394,7 @@ class GRPCWebInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )

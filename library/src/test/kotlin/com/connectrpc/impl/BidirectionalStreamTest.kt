@@ -18,6 +18,7 @@ import com.connectrpc.Codec
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +30,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.lang.IllegalArgumentException
 
-class BiDirectionalStreamTest {
+class BidirectionalStreamTest {
     private val serializationStrategy: SerializationStrategy = mock { }
     private val codec: Codec<String> = mock { }
 
@@ -54,6 +55,7 @@ class BiDirectionalStreamTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
             stream.sendClose()
@@ -83,6 +85,7 @@ class BiDirectionalStreamTest {
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
                     String::class,
+                    streamType = StreamType.BIDI,
                 ),
             )
             val result = stream.send("input")

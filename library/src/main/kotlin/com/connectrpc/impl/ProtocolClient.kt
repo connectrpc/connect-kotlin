@@ -232,7 +232,7 @@ class ProtocolClient(
                     try {
                         when (streamResult.code) {
                             Code.OK -> channel.close()
-                            else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code))
+                            else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code, exception = streamResult.cause))
                         }
                     } finally {
                         responseTrailers.complete(streamResult.trailers)

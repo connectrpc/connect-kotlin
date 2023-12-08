@@ -50,7 +50,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             }
         }
         val content = request.message ?: ByteArray(0)
-        val method = request.methodSpec.method
+        val method = request.httpMethod
         val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
         val callRequest = builder
             .url(request.url)
@@ -127,7 +127,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         request: HTTPRequest,
         onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
-        return streamClient.initializeStream(request.methodSpec.method, request, onResult)
+        return streamClient.initializeStream(request.httpMethod, request, onResult)
     }
 }
 

@@ -19,14 +19,14 @@ import com.connectrpc.Codec
 import com.connectrpc.ConnectException
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.Idempotency
-import com.connectrpc.Method.GET_METHOD
-import com.connectrpc.Method.POST_METHOD
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.StreamResult
+import com.connectrpc.StreamType
 import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.TracingInfo
@@ -79,6 +79,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -109,6 +110,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -136,6 +138,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -163,6 +166,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -191,6 +195,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -368,6 +373,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )
@@ -399,6 +405,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                 ),
             ),
         )
@@ -426,6 +433,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.BIDI,
                 ),
             ),
         )
@@ -680,6 +688,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                     idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
@@ -690,7 +699,7 @@ class ConnectInterceptorTest {
         assertThat(queryMap.get(GETConstants.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
         assertThat(queryMap.get(GETConstants.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
         assertThat(queryMap.get(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
-        assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
+        assertThat(request.httpMethod).isEqualTo(HTTPMethod.GET)
     }
 
     @Test
@@ -716,12 +725,13 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                     idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )
         assertThat(request.url.query).isNull()
-        assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)
+        assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
     @Test
@@ -744,6 +754,7 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                     idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
@@ -753,7 +764,7 @@ class ConnectInterceptorTest {
         assertThat(queryMap.get(GETConstants.BASE64_QUERY_PARAM_KEY)).isEqualTo("1")
         assertThat(queryMap.get(GETConstants.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
         assertThat(queryMap.get(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
-        assertThat(request.methodSpec.method).isEqualTo(GET_METHOD)
+        assertThat(request.httpMethod).isEqualTo(HTTPMethod.GET)
     }
 
     @Test
@@ -777,12 +788,13 @@ class ConnectInterceptorTest {
                     path = "",
                     requestClass = Any::class,
                     responseClass = Any::class,
+                    streamType = StreamType.UNARY,
                     idempotency = Idempotency.NO_SIDE_EFFECTS,
                 ),
             ),
         )
         assertThat(request.url.query).isNull()
-        assertThat(request.methodSpec.method).isEqualTo(POST_METHOD)
+        assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
     private fun parseQuery(request: HTTPRequest) = request.url.query
