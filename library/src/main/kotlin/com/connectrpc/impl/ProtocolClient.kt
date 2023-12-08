@@ -34,6 +34,7 @@ import com.connectrpc.protocols.GETConfiguration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.net.URI
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
 
@@ -46,6 +47,14 @@ class ProtocolClient(
     // The configuration for the ProtocolClient.
     private val config: ProtocolClientConfig,
 ) : ProtocolClientInterface {
+
+    private val baseURIWithTrailingSlash = if (config.baseUri.path != null && config.baseUri.path.endsWith('/')) {
+        config.baseUri
+    } else {
+        val path = config.baseUri.path ?: ""
+        URI(config.baseUri.scheme, config.baseUri.userInfo, config.baseUri.host, config.baseUri.port, "$path/",
+            config.baseUri.query, config.baseUri.fragment)
+    }
 
     override fun <Input : Any, Output : Any> unary(
         request: Input,
@@ -267,5 +276,5 @@ class ProtocolClient(
         )
     }
 
-    private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>) = config.baseUri.resolve(methodSpec.path).toURL()
+    private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>) = baseURIWithTrailingSlash.resolve(methodSpec.path).toURL()
 }

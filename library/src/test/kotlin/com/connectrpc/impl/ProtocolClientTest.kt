@@ -153,7 +153,7 @@ class ProtocolClientTest {
         ) {}
         val captor = argumentCaptor<HTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
-        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
+        assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/api/com.connectrpc.SomeService/Service")
     }
 
     @Test
