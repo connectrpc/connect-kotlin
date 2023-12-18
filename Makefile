@@ -74,6 +74,8 @@ generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate
 .PHONY: generateconformance
 generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
 	buf generate --template conformance/buf.gen.yaml -o conformance conformance/proto
+	buf generate --template conformance/client/buf.gen.yaml -o conformance/client buf.build/connectrpc/conformance:v1.0.0-rc1
+	buf generate --template conformance/client/buf.gen.lite.yaml -o conformance/client buf.build/connectrpc/conformance:v1.0.0-rc1
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.
