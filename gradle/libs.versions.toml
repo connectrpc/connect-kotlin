@@ -1,28 +1,28 @@
 [versions]
 android = "4.1.1.4"
-assertj = "3.24.2"
+assertj = "3.25.0"
 coroutines = "1.7.3"
 dokka = "1.9.10"
 junit = "4.13.2"
-kotlin = "1.9.21"
+kotlin = "1.9.22"
 kotlinpoet = "1.15.3"
-mavenplugin = "0.25.3"
+mavenplugin = "0.26.0"
 moshi = "1.15.0"
 okhttp = "4.12.0"
 okio = "3.7.0"
 protobuf = "3.25.1"
 shadowjar = "7.1.2"
-slf4j = "2.0.9"
+slf4j = "2.0.10"
 spotless = "6.23.3"
 
 [libraries]
 android = { module = "com.google.android:android", version.ref = "android" }
-android-material = { module = "com.google.android.material:material", version = "1.10.0" }
+android-material = { module = "com.google.android.material:material", version = "1.11.0" }
 android-multidex = { module = "com.android.support:multidex", version = "1.0.3" }
 android-plugin = { module = "com.android.tools.build:gradle", version = "8.2.0" }
-androidx-annotations = { module = "androidx.annotation:annotation", version = "1.7.0" }
+androidx-annotations = { module = "androidx.annotation:annotation", version = "1.7.1" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.6.1" }
-androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.1" }
+androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
 androidx-constraintLayout = { module = "androidx.constraintlayout:constraintlayout", version = "2.1.4" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version = "2.6.2" }
 androidx-ktx = { module = "androidx.core:core-ktx", version = "1.12.0" }
@@ -60,6 +60,6 @@ testcontainers = { module = "org.testcontainers:testcontainers", version = "1.19
 
 [plugins]
 git = { id = "com.palantir.git-version", version = "3.0.0" }
-ksp = { id = "com.google.devtools.ksp", version = "1.9.21-1.0.16" }
+ksp = { id = "com.google.devtools.ksp", version = "1.9.22-1.0.16" }
 shadowjar = { id = "com.github.johnrengelman.shadow", version.ref = "shadowjar" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
