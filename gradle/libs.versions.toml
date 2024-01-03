@@ -11,6 +11,7 @@ moshi = "1.15.0"
 okhttp = "4.12.0"
 okio = "3.7.0"
 protobuf = "3.25.1"
+shadowjar = "7.1.2"
 slf4j = "2.0.10"
 spotless = "6.23.3"
 
@@ -52,6 +53,7 @@ protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util", versio
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
 protobuf-kotlinlite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
+shadowjar = { module = "gradle.plugin.com.github.johnrengelman:shadow", version.ref = "shadowjar" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 testcontainers = { module = "org.testcontainers:testcontainers", version = "1.19.3" }
@@ -59,4 +61,5 @@ testcontainers = { module = "org.testcontainers:testcontainers", version = "1.19
 [plugins]
 git = { id = "com.palantir.git-version", version = "3.0.0" }
 ksp = { id = "com.google.devtools.ksp", version = "1.9.22-1.0.16" }
+shadowjar = { id = "com.github.johnrengelman.shadow", version.ref = "shadowjar" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

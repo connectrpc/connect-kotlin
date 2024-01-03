@@ -1,5 +1,8 @@
 rootProject.name = "connect-kotlin"
 
+include(":conformance:client")
+include(":conformance:client:google-java")
+include(":conformance:client:google-javalite")
 include(":conformance:common")
 include(":conformance:google-java")
 include(":conformance:google-javalite")
