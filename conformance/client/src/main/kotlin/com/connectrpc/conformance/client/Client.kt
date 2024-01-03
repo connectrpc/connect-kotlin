@@ -116,12 +116,13 @@ class Client(
     private fun getProtocolClient(req: ClientCompatRequest): ProtocolClient {
         // TODO: cache/re-use clients instead of creating a new one for every request
         val serializationStrategy = serializationFactory(req.codec)
-        val scheme = if (req.serverTlsCert.isEmpty) "http" else "https"
+        val useTls = !req.serverTlsCert.isEmpty
+        val scheme = if (useTls) "https" else "http"
         val host = "$scheme://${req.host}:${req.port}"
         var clientBuilder = OkHttpClient.Builder()
-            .protocols(listOf(asOkHttpProtocol(req.httpVersion)))
+            .protocols(listOf(asOkHttpProtocol(req.httpVersion, useTls)))
             .connectTimeout(Duration.ofMinutes(1))
-        if (!req.serverTlsCert.isEmpty) {
+        if (useTls) {
             val certs = certs(req)
             clientBuilder = clientBuilder.sslSocketFactory(certs.sslSocketFactory(), certs.trustManager)
         }
@@ -164,10 +165,10 @@ class Client(
         }
     }
 
-    private fun asOkHttpProtocol(httpVersion: HTTPVersion): okhttp3.Protocol {
+    private fun asOkHttpProtocol(httpVersion: HTTPVersion, useTls: Boolean): okhttp3.Protocol {
         return when (httpVersion) {
             HTTPVersion.HTTP_VERSION_1 -> okhttp3.Protocol.HTTP_1_1
-            HTTPVersion.HTTP_VERSION_2 -> okhttp3.Protocol.HTTP_2
+            HTTPVersion.HTTP_VERSION_2 -> if (useTls) okhttp3.Protocol.HTTP_2 else okhttp3.Protocol.H2_PRIOR_KNOWLEDGE
             else -> throw RuntimeException("unsupported HTTP version: $httpVersion")
         }
     }

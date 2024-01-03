@@ -4,13 +4,13 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath("gradle.plugin.com.github.johnrengelman:shadow:7.1.2")
+        classpath(libs.shadowjar)
     }
 }
 
 plugins {
     kotlin("jvm")
-    id("com.github.johnrengelman.shadow").version("7.1.2")
+    alias(libs.plugins.shadowjar)
 }
 
 tasks {
@@ -30,7 +30,7 @@ dependencies {
     implementation(project(":extensions:google-javalite"))
     implementation(project(":okhttp"))
     implementation(libs.kotlin.coroutines.core)
-    implementation(libs.protobuf.kotlin)
+    implementation(libs.protobuf.kotlinlite)
     implementation(libs.okio.core)
     implementation(libs.okhttp.tls)
 }

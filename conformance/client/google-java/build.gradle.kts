@@ -4,13 +4,13 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath("gradle.plugin.com.github.johnrengelman:shadow:7.1.2")
+        classpath(libs.shadowjar)
     }
 }
 
 plugins {
     kotlin("jvm")
-    id("com.github.johnrengelman.shadow").version("7.1.2")
+    alias(libs.plugins.shadowjar)
 }
 
 tasks {
@@ -44,6 +44,7 @@ sourceSets {
 dependencies {
     implementation(project(":conformance:client")) {
         exclude(group = "com.google.protobuf", module = "protobuf-javalite")
+        exclude(group = "com.google.protobuf", module = "protobuf-kotlinlite")
     }
     implementation(project(":extensions:google-java"))
     implementation(project(":okhttp"))

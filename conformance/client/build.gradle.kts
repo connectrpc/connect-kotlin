@@ -32,7 +32,7 @@ tasks {
 dependencies {
     implementation(project(":okhttp"))
     implementation(libs.kotlin.coroutines.core)
-    implementation(libs.protobuf.kotlin)
+    implementation(libs.protobuf.kotlinlite)
     implementation(libs.protobuf.javalite)
     implementation(libs.okio.core)
     implementation(libs.okhttp.tls)
