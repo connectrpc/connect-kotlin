@@ -19,7 +19,7 @@ spotless = "6.23.3"
 android = { module = "com.google.android:android", version.ref = "android" }
 android-material = { module = "com.google.android.material:material", version = "1.11.0" }
 android-multidex = { module = "com.android.support:multidex", version = "1.0.3" }
-android-plugin = { module = "com.android.tools.build:gradle", version = "8.2.0" }
+android-plugin = { module = "com.android.tools.build:gradle", version = "8.2.1" }
 androidx-annotations = { module = "androidx.annotation:annotation", version = "1.7.1" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version = "1.6.1" }
 androidx-compose = { module = "androidx.activity:activity-compose", version = "1.8.2" }
