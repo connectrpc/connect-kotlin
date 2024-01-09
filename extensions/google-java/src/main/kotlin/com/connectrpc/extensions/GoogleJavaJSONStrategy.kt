@@ -18,25 +18,31 @@ import com.connectrpc.CODEC_NAME_JSON
 import com.connectrpc.Codec
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.SerializationStrategy
-import com.google.protobuf.GeneratedMessageV3
+import com.google.protobuf.Message
+import com.google.protobuf.TypeRegistry
 import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * The Google Java JSON serialization strategy.
  */
-class GoogleJavaJSONStrategy : SerializationStrategy {
+class GoogleJavaJSONStrategy(
+    private val registry: TypeRegistry = TypeRegistry.getEmptyTypeRegistry(),
+) : SerializationStrategy {
     override fun serializationName(): String {
         return CODEC_NAME_JSON
     }
 
-    /**
-     * This unchecked cast assumes the underlying class type is
-     * a Google GeneratedMessageV3.
-     */
-    @Suppress("UNCHECKED_CAST")
     override fun <E : Any> codec(clazz: KClass<E>): Codec<E> {
-        val messageClass = clazz as KClass<GeneratedMessageV3>
-        return GoogleJavaJSONAdapter(messageClass) as Codec<E>
+        if (!clazz.isSubclassOf(Message::class)) {
+            throw RuntimeException("class ${clazz.qualifiedName} does not extend MessageLite")
+        }
+        @Suppress("UNCHECKED_CAST") // we just checked above, so it's safe
+        val messageClass = clazz as KClass<out Message>
+
+        @Suppress("UNCHECKED_CAST") // messageClass is actually KClass<E>, so it's safe
+        val adapter = GoogleJavaJSONAdapter(messageClass, registry) as Codec<E>
+        return adapter
     }
 
     override fun errorDetailParser(): ErrorDetailParser {

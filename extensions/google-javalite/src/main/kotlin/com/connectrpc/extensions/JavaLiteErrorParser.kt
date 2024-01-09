@@ -20,25 +20,20 @@ import com.connectrpc.ErrorDetailParser
 import com.connectrpc.google.rpc.Status
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
-import okio.ByteString.Companion.decodeBase64
-import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
+import kotlin.reflect.full.isSubclassOf
 
 internal object JavaLiteErrorParser : ErrorDetailParser {
-    /**
-     * This unchecked cast is making the assumption that the caller
-     * expects a generic type E? and the underlying type is a Google
-     * MessageLite.
-     */
-    @Suppress("UNCHECKED_CAST")
     override fun <E : Any> unpack(any: AnyError, clazz: KClass<E>): E? {
-        val instance = Internal.getDefaultInstance(clazz.java as Class<MessageLite>) as MessageLite
-        val value = any.value.utf8().decodeBase64() ?: any.value
-        val unpacked = instance.parserForType.parseFrom(value.toByteArray())
-        if (unpacked?.javaClass?.isAssignableFrom(clazz.java) == true) {
-            return unpacked as E?
+        if (!clazz.isSubclassOf(MessageLite::class)) {
+            throw RuntimeException("class ${clazz.qualifiedName} does not extend MessageLite")
         }
-        return null
+        @Suppress("UNCHECKED_CAST") // we just checked above, so it's safe
+        val instance = Internal.getDefaultInstance(clazz.java as Class<MessageLite>) as MessageLite
+        val unpacked = instance.parserForType.parseFrom(any.value.toByteArray())
+        return clazz.cast(unpacked)
     }
 
     override fun parseDetails(bytes: ByteArray): List<ConnectErrorDetail> {
@@ -46,8 +41,7 @@ internal object JavaLiteErrorParser : ErrorDetailParser {
         return status.detailsList.map { msg ->
             ConnectErrorDetail(
                 type = msg.typeUrl,
-                payload = msg.value.toStringUtf8().decodeBase64()
-                    ?: msg.value.toStringUtf8().encodeUtf8(),
+                payload = ByteString.of(*msg.value.toByteArray()),
             )
         }
     }

@@ -14,6 +14,7 @@
 
 package com.connectrpc.protocols
 
+import com.connectrpc.Headers
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
@@ -33,5 +34,5 @@ internal class ErrorDetailPayloadJSON(
 @JsonClass(generateAdapter = true)
 internal class EndStreamResponseJSON(
     @Json(name = "error") val error: ErrorPayloadJSON?,
-    @Json(name = "metadata") val metadata: Map<String, List<String>>?,
+    @Json(name = "metadata") val metadata: Headers?,
 )

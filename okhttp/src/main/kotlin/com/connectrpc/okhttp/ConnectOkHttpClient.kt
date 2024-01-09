@@ -33,6 +33,8 @@ import okhttp3.Response
 import okhttp3.internal.http.HttpMethod
 import okio.Buffer
 import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
@@ -64,11 +66,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             newCall.enqueue(
                 object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        val code = if (e.message?.lowercase() == "canceled") {
-                            Code.CANCELED
-                        } else {
-                            Code.UNKNOWN
-                        }
+                        val code = codeFromIOException(e)
                         onResult(
                             HTTPResponse(
                                 code = code,
@@ -132,9 +130,20 @@ class ConnectOkHttpClient @JvmOverloads constructor(
 }
 
 internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
-    return toMultimap()
-        .map { (key, value) ->
-            key.lowercase() to value
-        }
-        .toMap()
+    return this.asSequence().groupBy(
+        { it.first.lowercase() },
+        { it.second },
+    )
+}
+
+internal fun codeFromIOException(e: IOException): Code {
+    return if ((e is InterruptedIOException && e.message == "timeout") ||
+        e is SocketTimeoutException
+    ) {
+        Code.DEADLINE_EXCEEDED
+    } else if (e.message?.lowercase() == "canceled") {
+        Code.CANCELED
+    } else {
+        Code.UNKNOWN
+    }
 }

@@ -17,27 +17,24 @@ package com.connectrpc.extensions
 import com.connectrpc.CODEC_NAME_PROTO
 import com.connectrpc.Codec
 import com.google.protobuf.CodedOutputStream
-import com.google.protobuf.GeneratedMessageLite
+import com.google.protobuf.ExtensionRegistryLite
 import com.google.protobuf.Internal
 import com.google.protobuf.MessageLite
 import okio.Buffer
 import okio.BufferedSource
-import java.io.IOException
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 /**
  * Adapter to use Google's protobuf-javalite runtime for
  * deserializing and serializing data types.
  */
-internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
-    clazz: KClass<E>,
+internal class GoogleLiteProtoAdapter<E : MessageLite>(
+    private val clazz: KClass<E>,
+    private val registry: ExtensionRegistryLite,
 ) : Codec<E> {
-    /**
-     * Casting assumes the user is using Google's MessageLite type.
-     */
-    @Suppress("UNCHECKED_CAST")
     private val instance by lazy {
-        Internal.getDefaultInstance(clazz.java as Class<MessageLite>) as E
+        Internal.getDefaultInstance(clazz.java)
     }
 
     override fun encodingName(): String {
@@ -45,23 +42,25 @@ internal class GoogleLiteProtoAdapter<E : GeneratedMessageLite<out E, *>>(
     }
 
     override fun deserialize(source: BufferedSource): E {
-        return instance.parserForType.parseFrom(source.inputStream())
+        return clazz.cast(instance.parserForType.parseFrom(source.inputStream(), registry))
     }
 
     override fun serialize(message: E): Buffer {
-        return Buffer().write(message.toByteArray())
+        return serialize(message, false)
     }
 
     override fun deterministicSerialize(message: E): Buffer {
-        return try {
-            val result = Buffer()
-            val output = CodedOutputStream.newInstance(result.outputStream())
+        return serialize(message, true)
+    }
+
+    private fun serialize(message: E, deterministic: Boolean): Buffer {
+        val result = ByteArray(message.serializedSize)
+        val output = CodedOutputStream.newInstance(result)
+        if (deterministic) {
             output.useDeterministicSerialization()
-            message.writeTo(output)
-            output.checkNoSpaceLeft()
-            result
-        } catch (e: IOException) {
-            throw RuntimeException("deterministic serialization failed", e)
         }
+        message.writeTo(output)
+        output.checkNoSpaceLeft()
+        return Buffer().write(result)
     }
 }

@@ -244,7 +244,14 @@ internal class GRPCWebInterceptor(
             if (i > 0) {
                 val name = line.substring(0, i).trim()
                 val value = line.substring(i + 1).trim()
-                trailers[name.lowercase()] = listOf(value)
+                trailers.compute(name.lowercase()) { _: String, a: List<String>? ->
+                    if (a == null) {
+                        mutableListOf(value)
+                    } else {
+                        (a as MutableList).add(value)
+                        a
+                    }
+                }
             }
         }
         return trailers
