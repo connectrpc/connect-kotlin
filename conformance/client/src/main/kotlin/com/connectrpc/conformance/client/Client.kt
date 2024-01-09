@@ -16,25 +16,23 @@ package com.connectrpc.conformance.client
 
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
-import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest.Codec
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest.Compression
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest.HttpVersion
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest.StreamType
+import com.connectrpc.conformance.client.adapt.ClientResponseResult
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
 import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.lite.connectrpc.conformance.v1.ClientCompatRequest
-import com.connectrpc.lite.connectrpc.conformance.v1.ClientResponseResult
-import com.connectrpc.lite.connectrpc.conformance.v1.Codec
-import com.connectrpc.lite.connectrpc.conformance.v1.Compression
-import com.connectrpc.lite.connectrpc.conformance.v1.HTTPVersion
-import com.connectrpc.lite.connectrpc.conformance.v1.Protocol
-import com.connectrpc.lite.connectrpc.conformance.v1.StreamType
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
-import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.MessageLite
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
@@ -49,39 +47,67 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.time.Duration
 import java.util.Base64
 import kotlin.reflect.cast
-import kotlin.reflect.safeCast
 
+/**
+ * The conformance client. This contains the logic for invoking an
+ * RPC and returning a representation of its result.
+ */
 class Client(
     private val invokerFactory: (ProtocolClient) -> Invoker,
     private val serializationFactory: (Codec) -> SerializationStrategy,
     private val invokeStyle: UnaryClient.InvokeStyle,
+    private val payloadExtractor: (MessageLite) -> MessageLite,
 ) {
-    suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
-        val invoker = invokerFactory(getProtocolClient(req))
-        val service = req.service.orEmpty()
-        if (service != "connectrpc.conformance.v1.ConformanceService") {
-            throw RuntimeException("service $service is not known")
-        }
+    companion object {
+        private const val CONFORMANCE_SERVICE_NAME = "connectrpc.conformance.v1.ConformanceService"
+        private const val UNARY_METHOD_NAME = "Unary"
+        private const val IDEMPOTENT_UNARY_METHOD_NAME = "IdempotentUnary"
+        private const val UNIMPLEMENTED_METHOD_NAME = "Unimplemented"
+        private const val CLIENT_STREAM_METHOD_NAME = "ClientStream"
+        private const val SERVER_STREAM_METHOD_NAME = "ServerStream"
+        private const val BIDI_STREAM_METHOD_NAME = "BidiStream"
 
-        return when (val method = req.method.orEmpty()) {
-            "Unary" -> handleUnary(invoker.unaryClient(), req)
-            // TODO: IdempotentUnary
-            "Unimplemented" -> handleUnary(invoker.unimplementedClient(), req)
-            "ClientStream" -> handleClient(invoker.clientStreamClient(), req)
-            "ServerStream" -> handleServer(invoker.serverStreamClient(), req)
-            "BidiStream" -> if (req.streamType == StreamType.STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM) {
-                handleFullDuplexBidi(invoker.bidiStreamClient(), req)
-            } else {
-                handleHalfDuplexBidi(invoker.bidiStreamClient(), req)
+        private const val UNARY_REQUEST_NAME = "connectrpc.conformance.v1.UnaryRequest"
+        private const val IDEMPOTENT_UNARY_REQUEST_NAME = "connectrpc.conformance.v1.IdempotentUnaryRequest"
+        private const val UNIMPLEMENTED_REQUEST_NAME = "connectrpc.conformance.v1.UnimplementedRequest"
+    }
+
+    suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
+        val (httpClient, protocolClient) = getClient(req)
+        try {
+            val invoker = invokerFactory(protocolClient)
+            val service = req.service
+            if (service != CONFORMANCE_SERVICE_NAME) {
+                throw RuntimeException("service $service is not known")
             }
-            else -> throw RuntimeException("method $method is not known")
+
+            return when (req.method) {
+                UNARY_METHOD_NAME -> handleUnary(invoker.unaryClient(), UNARY_REQUEST_NAME, req)
+                IDEMPOTENT_UNARY_METHOD_NAME -> handleUnary(invoker.idempotentUnaryClient(), IDEMPOTENT_UNARY_REQUEST_NAME, req)
+                UNIMPLEMENTED_METHOD_NAME -> handleUnary(invoker.unimplementedClient(), UNIMPLEMENTED_REQUEST_NAME, req)
+                CLIENT_STREAM_METHOD_NAME -> handleClient(invoker.clientStreamClient(), req)
+                SERVER_STREAM_METHOD_NAME -> handleServer(invoker.serverStreamClient(), req)
+                BIDI_STREAM_METHOD_NAME -> handleBidi(invoker.bidiStreamClient(), req)
+                else -> throw RuntimeException("method ${req.method} is not known")
+            }
+        } finally {
+            // Clean-up HTTP client.
+            httpClient.connectionPool.evictAll()
+            httpClient.dispatcher.executorService.shutdown()
         }
     }
 
-    private suspend fun <Req : MessageLite, Resp : MessageLite> handleUnary(
+    private suspend fun <
+        Req : MessageLite,
+        Resp : MessageLite,
+        > handleUnary(
         client: UnaryClient<Req, Resp>,
+        requestType: String,
         req: ClientCompatRequest,
     ): ClientResponseResult {
+        if (req.streamType != StreamType.UNARY) {
+            throw RuntimeException("specified method ${req.method} is unary but stream type indicates ${req.streamType}")
+        }
         TODO("implement me")
     }
 
@@ -89,6 +115,9 @@ class Client(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
+        if (req.streamType != StreamType.CLIENT_STREAM) {
+            throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
+        }
         TODO("implement me")
     }
 
@@ -96,7 +125,24 @@ class Client(
         client: ServerStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
+        if (req.streamType != StreamType.SERVER_STREAM) {
+            throw RuntimeException("specified method ${req.method} is server-stream but stream type indicates ${req.streamType}")
+        }
         TODO("implement me")
+    }
+
+    private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
+        client: BidiStreamClient<Req, Resp>,
+        req: ClientCompatRequest,
+    ): ClientResponseResult {
+        return when (req.streamType) {
+            StreamType.HALF_DUPLEX_BIDI_STREAM ->
+                handleHalfDuplexBidi(client, req)
+            StreamType.FULL_DUPLEX_BIDI_STREAM ->
+                handleFullDuplexBidi(client, req)
+            else ->
+                throw RuntimeException("specified method ${req.method} is bidi-stream but stream type indicates ${req.streamType}")
+        }
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleHalfDuplexBidi(
@@ -113,63 +159,66 @@ class Client(
         TODO("implement me")
     }
 
-    private fun getProtocolClient(req: ClientCompatRequest): ProtocolClient {
+    private fun getClient(req: ClientCompatRequest): Pair<OkHttpClient, ProtocolClient> {
         // TODO: cache/re-use clients instead of creating a new one for every request
         val serializationStrategy = serializationFactory(req.codec)
         val useTls = !req.serverTlsCert.isEmpty
         val scheme = if (useTls) "https" else "http"
         val host = "$scheme://${req.host}:${req.port}"
         var clientBuilder = OkHttpClient.Builder()
-            .protocols(listOf(asOkHttpProtocol(req.httpVersion, useTls)))
+            .protocols(asOkHttpProtocols(req.httpVersion, useTls))
             .connectTimeout(Duration.ofMinutes(1))
         if (useTls) {
             val certs = certs(req)
             clientBuilder = clientBuilder.sslSocketFactory(certs.sslSocketFactory(), certs.trustManager)
         }
-        if (req.hasTimeoutMs()) {
+        if (req.timeoutMs != 0) {
             clientBuilder = clientBuilder.callTimeout(Duration.ofMillis(req.timeoutMs.toLong()))
         }
 
         val getConfig = if (req.useGetHttpMethod) GETConfiguration.Enabled else GETConfiguration.Disabled
         val requestCompression =
-            if (req.compression == Compression.COMPRESSION_GZIP) {
-                RequestCompression(10, GzipCompressionPool)
+            if (req.compression == Compression.GZIP) {
+                RequestCompression(0, GzipCompressionPool)
             } else {
                 null
             }
         val compressionPools =
-            if (req.compression == Compression.COMPRESSION_GZIP) {
+            if (req.compression == Compression.GZIP) {
                 listOf(GzipCompressionPool)
             } else {
                 emptyList()
             }
-        return ProtocolClient(
-            httpClient = ConnectOkHttpClient(clientBuilder.build()),
-            ProtocolClientConfig(
-                host = host,
-                serializationStrategy = serializationStrategy,
-                networkProtocol = asNetworkProtocol(req.protocol),
-                getConfiguration = getConfig,
-                requestCompression = requestCompression,
-                compressionPools = compressionPools,
+        val httpClient = clientBuilder.build()
+        return Pair(
+            httpClient,
+            ProtocolClient(
+                httpClient = ConnectOkHttpClient(httpClient),
+                ProtocolClientConfig(
+                    host = host,
+                    serializationStrategy = serializationStrategy,
+                    networkProtocol = req.protocol,
+                    getConfiguration = getConfig,
+                    requestCompression = requestCompression,
+                    compressionPools = compressionPools,
+                ),
             ),
         )
     }
 
-    private fun asNetworkProtocol(protocol: Protocol): NetworkProtocol {
-        return when (protocol) {
-            Protocol.PROTOCOL_CONNECT -> NetworkProtocol.CONNECT
-            Protocol.PROTOCOL_GRPC -> NetworkProtocol.GRPC
-            Protocol.PROTOCOL_GRPC_WEB -> NetworkProtocol.GRPC_WEB
-            else -> throw RuntimeException("unsupported protocol: $protocol")
-        }
-    }
-
-    private fun asOkHttpProtocol(httpVersion: HTTPVersion, useTls: Boolean): okhttp3.Protocol {
+    private fun asOkHttpProtocols(httpVersion: HttpVersion, useTls: Boolean): List<okhttp3.Protocol> {
         return when (httpVersion) {
-            HTTPVersion.HTTP_VERSION_1 -> okhttp3.Protocol.HTTP_1_1
-            HTTPVersion.HTTP_VERSION_2 -> if (useTls) okhttp3.Protocol.HTTP_2 else okhttp3.Protocol.H2_PRIOR_KNOWLEDGE
-            else -> throw RuntimeException("unsupported HTTP version: $httpVersion")
+            HttpVersion.HTTP_1_1 -> listOf(okhttp3.Protocol.HTTP_1_1)
+            HttpVersion.HTTP_2 ->
+                if (useTls) {
+                    // okhttp *requires* that protocols contains HTTP_1_1
+                    // or H2_PRIOR_KNOWLEDGE. So we leave 1.1 in here, but
+                    // expect HTTP/2 to always be used in practice since it
+                    // should be negotiated during TLS handshake,
+                    listOf(okhttp3.Protocol.HTTP_2, okhttp3.Protocol.HTTP_1_1)
+                } else {
+                    listOf(okhttp3.Protocol.H2_PRIOR_KNOWLEDGE)
+                }
         }
     }
 
@@ -180,15 +229,13 @@ class Client(
         val result = HandshakeCertificates.Builder()
             .addTrustedCertificate(certificateAuthority)
 
-        if (!req.hasClientTlsCreds()) {
-            return result.build()
-        }
+        val creds = req.clientTlsCreds ?: return result.build()
 
-        val certificate = req.clientTlsCreds.cert.newInput().use { stream ->
+        val certificate = creds.cert.newInput().use { stream ->
             CertificateFactory.getInstance("X.509").generateCertificate(stream) as X509Certificate
         }
         val publicKey = certificate.publicKey as RSAPublicKey
-        val privateKeyBytes = req.clientTlsCreds.key.newInput().bufferedReader().use { stream ->
+        val privateKeyBytes = creds.key.newInput().bufferedReader().use { stream ->
             val lines = stream.readLines().toMutableList()
             // Remove BEGIN RSA PRIVATE KEY / END RSA PRIVATE KEY lines
             lines.removeFirst()
@@ -205,39 +252,19 @@ class Client(
             .build()
     }
 
-    private fun <From : MessageLite, To : MessageLite> convert(
-        from: From,
-        template: To,
-    ): To {
-        val clazz = template::class
-        return clazz.safeCast(from)
-            ?: clazz.cast(
-                template
-                    .newBuilderForType()
-                    .mergeFrom(from.toByteString())
-                    .build(),
-            )
-    }
-
-    private fun <From : MessageLite, To : MessageLite> convert(
-        from: ResponseMessage<From>,
-        template: To,
-    ): ResponseMessage<To> {
-        return when (from) {
-            is ResponseMessage.Success -> {
-                ResponseMessage.Success(
-                    message = convert(from.message, template),
-                    code = from.code,
-                    headers = from.headers,
-                    trailers = from.trailers,
-                )
-            }
-            is ResponseMessage.Failure -> {
-                // Value does not actually contain a reference
-                // to response type, so we can just cast it.
-                @Suppress("UNCHECKED_CAST")
-                from as ResponseMessage<To>
-            }
+    private fun <M : MessageLite> fromAny(
+        any: AnyMessage,
+        template: M,
+        typeName: String,
+    ): M {
+        val pos = any.typeUrl.lastIndexOf('/')
+        val actualTypeName = any.typeUrl.substring(pos + 1)
+        if (actualTypeName != typeName) {
+            throw RuntimeException("expecting request message to be $typeName, instead got $actualTypeName")
         }
+        val msgClass = template::class
+        return msgClass.cast(
+            template.newBuilderForType().mergeFrom(any.value).build(),
+        )
     }
 }

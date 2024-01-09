@@ -18,16 +18,17 @@ import com.connectrpc.conformance.client.Client
 import com.connectrpc.conformance.client.ConformanceClientLoop
 
 fun main(args: Array<String>) {
-    try {
-        val invokeStyle = ConformanceClientLoop.parseArgs(args)
-        val client = Client(
-            invokerFactory = ::JavaInvoker,
-            serializationFactory = JavaInvoker::serializationStrategy,
-            invokeStyle = invokeStyle,
-        )
-        ConformanceClientLoop.run(System.`in`, System.out, client)
-    } catch (e: Exception) {
-        e.printStackTrace(System.err)
-        Runtime.getRuntime().exit(1)
-    }
+    val invokeStyle = ConformanceClientLoop.parseArgs(args)
+    val loop = ConformanceClientLoop(
+        JavaHelpers::unmarshalRequest,
+        JavaHelpers::marshalResponse,
+    )
+    val client = Client(
+        invokerFactory = ::JavaInvoker,
+        serializationFactory = JavaHelpers::serializationStrategy,
+        invokeStyle = invokeStyle,
+        payloadExtractor = JavaHelpers::extractPayload,
+    )
+    loop.run(System.`in`, System.out, client)
+    // TODO: catch any exception for better error output/logging?
 }

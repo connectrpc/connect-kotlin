@@ -14,17 +14,15 @@
 
 package com.connectrpc.conformance.client.adapt
 
+import com.google.protobuf.ByteString
+
 /**
- * An RPC stub that allows for invoking RPC methods.
- * Each method of Invoker corresponds to an RPC method
- * and returns a client stub that can be used to actually
- * invoke that RPC.
+ * Corresponds to a google.protobuf.Any message. This is distinct
+ * from the com.google.protobuf.Any Java class so that it can be
+ * used without relying on a particular runtime (e.g. the lite vs.
+ * standard runtimes).
  */
-interface Invoker {
-    fun unaryClient(): UnaryClient<*, *>
-    fun idempotentUnaryClient(): UnaryClient<*, *>
-    fun unimplementedClient(): UnaryClient<*, *>
-    fun clientStreamClient(): ClientStreamClient<*, *>
-    fun serverStreamClient(): ServerStreamClient<*, *>
-    fun bidiStreamClient(): BidiStreamClient<*, *>
-}
+class AnyMessage(
+    val typeUrl: String,
+    val value: ByteString,
+)

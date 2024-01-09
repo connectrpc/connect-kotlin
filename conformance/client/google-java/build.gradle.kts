@@ -16,12 +16,12 @@ plugins {
 tasks {
     compileKotlin {
         kotlinOptions {
-            // Generated Kotlin code for protobufs uses OptIn annotation
+            // Generated Kotlin code for protobuf uses OptIn annotation
             freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
         }
     }
     shadowJar {
-        archiveBaseName.set("shadow")
+        archiveFileName.set("conformance-client-java.jar")
         manifest {
             attributes(mapOf("Main-Class" to "com.connectrpc.conformance.client.java.MainKt"))
         }
@@ -31,8 +31,6 @@ tasks {
     }
 }
 
-// This project contains an alternate copy of the generated
-// types, generated for the non-lite runtime.
 sourceSets {
     main {
         java {
@@ -43,8 +41,12 @@ sourceSets {
 
 dependencies {
     implementation(project(":conformance:client")) {
+        // Shared module depends on javalite, just for some core
+        // classes that are shared across both java and javalite
+        // runtimes, like ByteString and MessageLite. We must
+        // exclude it here to avoid any classpath ambiguity since
+        // we pull in the full runtime for this module.
         exclude(group = "com.google.protobuf", module = "protobuf-javalite")
-        exclude(group = "com.google.protobuf", module = "protobuf-kotlinlite")
     }
     implementation(project(":extensions:google-java"))
     implementation(project(":okhttp"))

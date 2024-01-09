@@ -16,9 +16,9 @@ package com.connectrpc.conformance.client.javalite
 
 import com.connectrpc.Headers
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
-import com.connectrpc.lite.connectrpc.conformance.v1.BidiStreamRequest
-import com.connectrpc.lite.connectrpc.conformance.v1.BidiStreamResponse
-import com.connectrpc.lite.connectrpc.conformance.v1.ConformanceServiceClient
+import com.connectrpc.conformance.v1.BidiStreamRequest
+import com.connectrpc.conformance.v1.BidiStreamResponse
+import com.connectrpc.conformance.v1.ConformanceServiceClient
 
 class JavaLiteBidiStreamClient(
     private val client: ConformanceServiceClient,

@@ -30,7 +30,6 @@ import com.google.protobuf.MessageLite
  * @param Req The request message type
  * @param Resp The response message type
  */
-
 abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,

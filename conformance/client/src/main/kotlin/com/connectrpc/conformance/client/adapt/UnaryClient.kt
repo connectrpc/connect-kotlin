@@ -41,6 +41,17 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
 
     abstract fun blocking(req: Req, headers: Headers): UnaryBlockingCall<Resp>
 
+    /**
+     * Executes the unary RPC using the given invocation style, request
+     * message, and request headers. The given callback is invoked when
+     * the operation completes.
+     *
+     * This signature resembles the one above that takes a callback, but
+     * will adapt the call to the suspend or blocking signatures if so
+     * directed by the given InvokeStyle. This allows a caller to use a
+     * single shape to invoke the RPC, but actually exercise any/all of
+     * the above three signatures.
+     */
     suspend fun execute(
         style: InvokeStyle,
         req: Req,
@@ -75,9 +86,36 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
         }
     }
 
+    /**
+     * The style of invocation, one each for the three different
+     * ways to invoke a unary RPC.
+     */
     enum class InvokeStyle {
+        /**
+         * Indicates the callback-based async signature, which
+         * invokes the method with the following signature:
+         * ```
+         * fun execute(Req, Headers, (ResponseMessage<Resp>)->Unit): Cancelable
+         * ```
+         */
         CALLBACK,
+
+        /**
+         * Indicates the suspend-based async signature, which
+         * invokes the method with the following signature:
+         * ```
+         * suspend fun execute(Req, Headers): ResponseMessage<Resp>
+         * ```
+         */
         SUSPEND,
+
+        /**
+         * Indicates the blocking signature, which invokes the
+         * method with the following signature:
+         * ```
+         * fun blocking(Req, Headers): UnaryBlockingCall<Resp>
+         * ```
+         */
         BLOCKING,
     }
 }

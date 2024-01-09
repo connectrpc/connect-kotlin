@@ -14,24 +14,25 @@
 
 package com.connectrpc.conformance.client.java
 
-import com.connectrpc.SerializationStrategy
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
 import com.connectrpc.conformance.v1.ConformanceServiceClient
-import com.connectrpc.extensions.GoogleJavaJSONStrategy
-import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.lite.connectrpc.conformance.v1.Codec
 
 class JavaInvoker(
     protocolClient: ProtocolClient,
 ) : Invoker {
     private val client = ConformanceServiceClient(protocolClient)
+
     override fun unaryClient(): UnaryClient<*, *> {
         return JavaUnaryClient(client)
+    }
+
+    override fun idempotentUnaryClient(): UnaryClient<*, *> {
+        return JavaIdempotentUnaryClient(client)
     }
 
     override fun unimplementedClient(): UnaryClient<*, *> {
@@ -48,15 +49,5 @@ class JavaInvoker(
 
     override fun bidiStreamClient(): BidiStreamClient<*, *> {
         return JavaBidiStreamClient(client)
-    }
-
-    companion object {
-        fun serializationStrategy(codec: Codec): SerializationStrategy {
-            return when (codec) {
-                Codec.CODEC_PROTO -> GoogleJavaProtobufStrategy()
-                Codec.CODEC_JSON -> GoogleJavaJSONStrategy()
-                else -> throw RuntimeException("unsupported codec $codec")
-            }
-        }
     }
 }

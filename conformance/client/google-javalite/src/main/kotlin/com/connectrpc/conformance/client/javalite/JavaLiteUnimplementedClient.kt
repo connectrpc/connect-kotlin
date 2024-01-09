@@ -18,10 +18,10 @@ import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.conformance.client.adapt.UnaryClient
+import com.connectrpc.conformance.v1.ConformanceServiceClient
+import com.connectrpc.conformance.v1.UnimplementedRequest
+import com.connectrpc.conformance.v1.UnimplementedResponse
 import com.connectrpc.http.Cancelable
-import com.connectrpc.lite.connectrpc.conformance.v1.ConformanceServiceClient
-import com.connectrpc.lite.connectrpc.conformance.v1.UnimplementedRequest
-import com.connectrpc.lite.connectrpc.conformance.v1.UnimplementedResponse
 
 class JavaLiteUnimplementedClient(
     private val client: ConformanceServiceClient,
