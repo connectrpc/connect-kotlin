@@ -16,54 +16,57 @@ package com.connectrpc.extensions
 
 import com.connectrpc.CODEC_NAME_JSON
 import com.connectrpc.Codec
-import com.google.protobuf.GeneratedMessageV3
 import com.google.protobuf.Internal
+import com.google.protobuf.Message
+import com.google.protobuf.TypeRegistry
 import com.google.protobuf.util.JsonFormat
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
 import kotlin.reflect.KClass
+import kotlin.reflect.cast
 
 /**
  * Adapter for Connect to use Google's protobuf-java runtime for
  * deserializing and serializing data types.
  */
-internal class GoogleJavaJSONAdapter<E : GeneratedMessageV3>(
-    clazz: KClass<E>,
+internal class GoogleJavaJSONAdapter<E : Message>(
+    private val clazz: KClass<E>,
+    private val registry: TypeRegistry,
 ) : Codec<E> {
-    /**
-     * Casting assumes the user is using Google's GeneratedMessageV3 type.
-     */
-    @Suppress("UNCHECKED_CAST")
     private val instance by lazy {
-        Internal.getDefaultInstance(clazz.java as Class<GeneratedMessageV3>)
+        Internal.getDefaultInstance(clazz.java)
     }
 
     override fun encodingName(): String {
         return CODEC_NAME_JSON
     }
 
-    /**
-     * Casting assumes the user is using Google's GeneratedMessageV3 type.
-     * The builder returns a GeneratedMessageV3 but it is assumed to be used
-     * with the assumption that the generic E is the underlying type.
-     */
-    @Suppress("UNCHECKED_CAST")
     override fun deserialize(source: BufferedSource): E {
-        val builder = instance.toBuilder()
-        JsonFormat.parser().ignoringUnknownFields().merge(source.readUtf8(), builder)
-        return builder.build() as E
+        val builder = instance.newBuilderForType()
+        JsonFormat.parser()
+            .ignoringUnknownFields()
+            .usingTypeRegistry(registry)
+            .merge(source.readUtf8(), builder)
+        return clazz.cast(builder.build())
     }
 
     override fun serialize(message: E): Buffer {
-        val jsonString = JsonFormat.printer().print(message)
-        return Buffer().write(jsonString.encodeUtf8())
+        return serialize(message, false)
     }
 
     override fun deterministicSerialize(message: E): Buffer {
-        val jsonString = JsonFormat.printer()
-            .sortingMapKeys()
-            .print(message)
+        return serialize(message, true)
+    }
+
+    private fun serialize(message: E, deterministic: Boolean): Buffer {
+        var printer = JsonFormat.printer()
+        if (deterministic) {
+            printer = printer.sortingMapKeys()
+        }
+        // TODO: It would likely be more efficient to use printer.appendTo
+        //       with an Appendable implementation that wraps a Buffer.
+        val jsonString = printer.print(message)
         return Buffer().write(jsonString.encodeUtf8())
     }
 }

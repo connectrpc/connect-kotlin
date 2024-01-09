@@ -18,44 +18,39 @@ import com.connectrpc.AnyError
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.google.rpc.Status
+import com.google.protobuf.Internal
 import com.google.protobuf.Message
-import okio.ByteString.Companion.decodeBase64
-import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString
 import kotlin.reflect.KClass
-
-private const val TYPE_URL_PREFIX = "type.googleapis.com/"
+import kotlin.reflect.cast
+import kotlin.reflect.full.isSubclassOf
 
 internal object JavaErrorParser : ErrorDetailParser {
-    /**
-     * This unchecked cast is making the assumption that the caller
-     * expects a generic type E? and the underlying type is a Google
-     * Java Message.
-     */
-    @Suppress("UNCHECKED_CAST")
     override fun <E : Any> unpack(any: AnyError, clazz: KClass<E>): E? {
-        val value = any.value.utf8().decodeBase64() ?: any.value
-        val anyProto = com.google.protobuf.Any.newBuilder()
-            .setTypeUrl(if (any.typeUrl.contains('/')) any.typeUrl else "$TYPE_URL_PREFIX${any.typeUrl}")
-            .setValue(com.google.protobuf.ByteString.copyFrom(value.asByteBuffer()))
-            .build()
-        val kClass = clazz.java as Class<Message>
-        val unpacked = anyProto.unpack(kClass)
-        if (unpacked?.javaClass?.isAssignableFrom(clazz.java) == true) {
-            return unpacked as E?
+        if (!clazz.isSubclassOf(Message::class)) {
+            throw RuntimeException("class ${clazz.qualifiedName} does not extend Message")
         }
-        return null
+        @Suppress("UNCHECKED_CAST") // we just checked above, so it's safe
+        val instance = Internal.getDefaultInstance(clazz.java as Class<Message>) as Message
+        if (typeNameFromUrl(any.typeUrl) != instance.descriptorForType.fullName) {
+            // TODO: should this throw instead?
+            return null
+        }
+        val unpacked = instance.parserForType.parseFrom(any.value.toByteArray())
+        return clazz.cast(unpacked)
     }
 
     override fun parseDetails(bytes: ByteArray): List<ConnectErrorDetail> {
         val status = Status.parseFrom(bytes)
         return status.detailsList.map { msg ->
             ConnectErrorDetail(
-                msg.typeUrl,
-                // Try to decode via base64 and if that fails, use the original value.
-                // Connect unary ends up encoding the payload as base64. GRPC and GRPC-Web
-                // both do not encode this payload as base64 so decodeBase64() returns null.
-                msg.value.toStringUtf8().decodeBase64() ?: msg.value.toStringUtf8().encodeUtf8(),
+                type = msg.typeUrl,
+                payload = ByteString.of(*msg.value.toByteArray()),
             )
         }
+    }
+
+    private fun typeNameFromUrl(url: String): String {
+        return url.substring(url.lastIndexOf('/') + 1)
     }
 }

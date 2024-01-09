@@ -110,3 +110,11 @@ interface ProtocolClientInterface {
         methodSpec: MethodSpec<Input, Output>,
     ): ClientOnlyStreamInterface<Input, Output>
 }
+
+fun Headers.toLowercase(): Headers {
+    return asSequence().groupingBy {
+        it.key.lowercase()
+    }.aggregate { _: String, accumulator: List<String>?, element: Map.Entry<String, List<String>>, _: Boolean ->
+        accumulator?.plus(element.value) ?: element.value
+    }
+}

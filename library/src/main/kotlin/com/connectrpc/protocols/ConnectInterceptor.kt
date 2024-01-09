@@ -32,10 +32,11 @@ import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.toLowercase
 import com.squareup.moshi.Moshi
 import okio.Buffer
 import okio.ByteString
-import okio.ByteString.Companion.encodeUtf8
+import okio.ByteString.Companion.decodeBase64
 import java.net.URL
 
 /**
@@ -225,7 +226,7 @@ internal class ConnectInterceptor(
             } catch (e: Throwable) {
                 return StreamResult.Complete(Code.UNKNOWN, e)
             }
-            val metadata = endStreamResponseJSON.metadata?.mapKeys { entry -> entry.key.lowercase() }
+            val metadata = endStreamResponseJSON.metadata?.toLowercase()
             if (endStreamResponseJSON.error?.code == null) {
                 return StreamResult.Complete(Code.OK, trailers = metadata ?: emptyMap())
             }
@@ -237,7 +238,7 @@ internal class ConnectInterceptor(
                     errorDetailParser = serializationStrategy.errorDetailParser(),
                     message = endStreamResponseJSON.error.message,
                     details = parseErrorDetails(endStreamResponseJSON.error),
-                    metadata = metadata ?: emptyMap(),
+                    metadata = metadata.orEmpty(),
                 ),
             )
         }
@@ -278,15 +279,10 @@ internal class ConnectInterceptor(
             if (detail.type == null) {
                 continue
             }
-            val payload = detail.value
-            if (payload == null) {
-                errorDetails.add(ConnectErrorDetail(detail.type, ByteString.EMPTY))
-                continue
-            }
             errorDetails.add(
                 ConnectErrorDetail(
                     detail.type,
-                    payload.encodeUtf8(),
+                    detail.value?.decodeBase64() ?: ByteString.EMPTY,
                 ),
             )
         }
@@ -295,14 +291,11 @@ internal class ConnectInterceptor(
 }
 
 private fun Headers.toTrailers(): Trailers {
-    val trailers = mutableMapOf<String, MutableList<String>>()
-    for (pair in this.filter { entry -> entry.key.startsWith("trailer-") }) {
-        val key = pair.key.substringAfter("trailer-")
-        if (trailers.containsKey(key)) {
-            trailers[key]?.add(pair.value.first())
-        } else {
-            trailers[key] = mutableListOf(pair.value.first())
-        }
+    val trailers = mutableMapOf<String, List<String>>()
+    for (entry in entries) {
+        val newKey = entry.key.substringAfter("trailer-", "")
+        if (newKey.isEmpty()) continue
+        trailers[newKey] = entry.value
     }
     return trailers
 }
