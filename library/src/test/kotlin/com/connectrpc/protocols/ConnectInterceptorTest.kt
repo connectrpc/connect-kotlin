@@ -284,7 +284,7 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value",
+                    "value".encodeUtf8().base64(),
                 ),
             ),
         )
@@ -567,7 +567,7 @@ class ConnectInterceptorTest {
             listOf(
                 ErrorDetailPayloadJSON(
                     "type",
-                    "value",
+                    "value".encodeUtf8().base64(),
                 ),
             ),
         )

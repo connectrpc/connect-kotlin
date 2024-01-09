@@ -18,25 +18,31 @@ import com.connectrpc.CODEC_NAME_PROTO
 import com.connectrpc.Codec
 import com.connectrpc.ErrorDetailParser
 import com.connectrpc.SerializationStrategy
-import com.google.protobuf.GeneratedMessageLite
+import com.google.protobuf.ExtensionRegistryLite
+import com.google.protobuf.MessageLite
 import kotlin.reflect.KClass
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * The Google Java-lite Protobuf serialization strategy.
  */
-class GoogleJavaLiteProtobufStrategy : SerializationStrategy {
+class GoogleJavaLiteProtobufStrategy(
+    private val registry: ExtensionRegistryLite = ExtensionRegistryLite.getEmptyRegistry(),
+) : SerializationStrategy {
     override fun serializationName(): String {
         return CODEC_NAME_PROTO
     }
 
-    /**
-     * This unchecked cast assumes the underlying class type is
-     * a Google GeneratedMessageLite.
-     */
-    @Suppress("UNCHECKED_CAST")
     override fun <E : Any> codec(clazz: KClass<E>): Codec<E> {
-        val messageClass = clazz as KClass<GeneratedMessageLite<out GeneratedMessageLite<*, *>, *>>
-        return GoogleLiteProtoAdapter(messageClass) as Codec<E>
+        if (!clazz.isSubclassOf(MessageLite::class)) {
+            throw RuntimeException("class ${clazz.qualifiedName} does not extend MessageLite")
+        }
+        @Suppress("UNCHECKED_CAST") // we just checked above, so it's safe
+        val messageClass = clazz as KClass<out MessageLite>
+
+        @Suppress("UNCHECKED_CAST") // messageClass is actually KClass<E>, so it's safe
+        val adapter = GoogleLiteProtoAdapter(messageClass, registry) as Codec<E>
+        return adapter
     }
 
     override fun errorDetailParser(): ErrorDetailParser {
