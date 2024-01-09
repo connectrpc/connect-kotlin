@@ -142,6 +142,9 @@ internal fun codeFromIOException(e: IOException): Code {
     ) {
         Code.DEADLINE_EXCEEDED
     } else if (e.message?.lowercase() == "canceled") {
+        // TODO: Figure out what, if anything, actually throws an exception
+        //       with this message. It seems more likely that a JVM or
+        //       Kotlin coroutine exception would spell it with two Ls.
         Code.CANCELED
     } else {
         Code.UNKNOWN

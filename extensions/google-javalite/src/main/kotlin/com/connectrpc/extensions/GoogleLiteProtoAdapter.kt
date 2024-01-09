@@ -54,6 +54,10 @@ internal class GoogleLiteProtoAdapter<E : MessageLite>(
     }
 
     private fun serialize(message: E, deterministic: Boolean): Buffer {
+        // TODO: It would likely be more efficient to wrap a Buffer with
+        //       an OutputStream implementation so we don't have to
+        //       first create a separate byte array that gets copied to
+        //       buffer.
         val result = ByteArray(message.serializedSize)
         val output = CodedOutputStream.newInstance(result)
         if (deterministic) {

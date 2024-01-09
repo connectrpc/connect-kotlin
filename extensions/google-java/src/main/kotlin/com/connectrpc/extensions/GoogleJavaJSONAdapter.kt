@@ -64,6 +64,8 @@ internal class GoogleJavaJSONAdapter<E : Message>(
         if (deterministic) {
             printer = printer.sortingMapKeys()
         }
+        // TODO: It would likely be more efficient to use printer.appendTo
+        //       with an Appendable implementation that wraps a Buffer.
         val jsonString = printer.print(message)
         return Buffer().write(jsonString.encodeUtf8())
     }

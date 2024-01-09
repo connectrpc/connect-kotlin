@@ -35,7 +35,7 @@ class GoogleJavaJSONStrategy(
 
     override fun <E : Any> codec(clazz: KClass<E>): Codec<E> {
         if (!clazz.isSubclassOf(Message::class)) {
-            throw RuntimeException("class ${clazz.qualifiedName} does not extend MessageLite")
+            throw RuntimeException("class ${clazz.qualifiedName} does not extend Message")
         }
         @Suppress("UNCHECKED_CAST") // we just checked above, so it's safe
         val messageClass = clazz as KClass<out Message>
