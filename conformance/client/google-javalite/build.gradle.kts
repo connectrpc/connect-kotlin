@@ -1,16 +1,10 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath(libs.shadowjar)
-    }
-}
-
 plugins {
     kotlin("jvm")
-    alias(libs.plugins.shadowjar)
+    application
+}
+
+application {
+    mainClass.set("com.connectrpc.conformance.client.javalite.MainKt")
 }
 
 tasks {
@@ -20,14 +14,13 @@ tasks {
             freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
         }
     }
-    shadowJar {
-        archiveFileName.set("conformance-client-javalite.jar")
+    jar {
         manifest {
-            attributes(mapOf("Main-Class" to "com.connectrpc.conformance.client.javalite.MainKt"))
+            attributes(mapOf("Main-Class" to application.mainClass.get()))
         }
-    }
-    build {
-        dependsOn(shadowJar)
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+            exclude("META-INF/**/*")
+        }
     }
 }
 
