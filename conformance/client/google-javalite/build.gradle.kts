@@ -1,27 +1,34 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        gradlePluginPortal()
-    }
-    dependencies {
-        classpath(libs.shadowjar)
-    }
-}
-
 plugins {
     kotlin("jvm")
-    alias(libs.plugins.shadowjar)
+    application
+}
+
+application {
+    mainClass.set("com.connectrpc.conformance.client.javalite.MainKt")
 }
 
 tasks {
-    shadowJar {
-        archiveBaseName.set("shadow")
-        manifest {
-            attributes(mapOf("Main-Class" to "com.connectrpc.conformance.client.javalite.MainKt"))
+    compileKotlin {
+        kotlinOptions {
+            // Generated Kotlin code for protobuf uses RequiresOptIn annotation
+            freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
         }
     }
-    build {
-        dependsOn(shadowJar)
+    jar {
+        manifest {
+            attributes(mapOf("Main-Class" to application.mainClass.get()))
+        }
+        from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }) {
+            exclude("META-INF/**/*")
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir("build/generated/sources/bufgen")
+        }
     }
 }
 
@@ -31,6 +38,7 @@ dependencies {
     implementation(project(":okhttp"))
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.protobuf.kotlinlite)
+    implementation(libs.protobuf.javalite)
     implementation(libs.okio.core)
     implementation(libs.okhttp.tls)
 }

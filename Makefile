@@ -10,7 +10,7 @@ BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.28.1
-CONFORMANCE_VERSION := v1.0.0-rc1
+CONFORMANCE_VERSION := v1.0.0-rc2
 PROTOC_VERSION ?= 25.1
 GRADLE_ARGS ?=
 
@@ -75,8 +75,7 @@ generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate
 .PHONY: generateconformance
 generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
 	buf generate --template conformance/buf.gen.yaml -o conformance conformance/proto
-	buf generate --template conformance/client/buf.gen.yaml -o conformance/client buf.build/connectrpc/conformance:$(CONFORMANCE_VERSION)
-	buf generate --template conformance/client/buf.gen.lite.yaml -o conformance/client buf.build/connectrpc/conformance:$(CONFORMANCE_VERSION)
+	buf generate --template conformance/buf.gen.yaml -o conformance/client buf.build/connectrpc/conformance:$(CONFORMANCE_VERSION)
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.

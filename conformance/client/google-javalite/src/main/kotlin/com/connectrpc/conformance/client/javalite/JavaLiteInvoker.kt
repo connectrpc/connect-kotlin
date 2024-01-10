@@ -14,23 +14,25 @@
 
 package com.connectrpc.conformance.client.javalite
 
-import com.connectrpc.SerializationStrategy
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
-import com.connectrpc.extensions.GoogleJavaLiteProtobufStrategy
+import com.connectrpc.conformance.v1.ConformanceServiceClient
 import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.lite.connectrpc.conformance.v1.Codec
-import com.connectrpc.lite.connectrpc.conformance.v1.ConformanceServiceClient
 
 class JavaLiteInvoker(
     protocolClient: ProtocolClient,
 ) : Invoker {
     private val client = ConformanceServiceClient(protocolClient)
+
     override fun unaryClient(): UnaryClient<*, *> {
         return JavaLiteUnaryClient(client)
+    }
+
+    override fun idempotentUnaryClient(): UnaryClient<*, *> {
+        return JavaLiteIdempotentUnaryClient(client)
     }
 
     override fun unimplementedClient(): UnaryClient<*, *> {
@@ -47,15 +49,5 @@ class JavaLiteInvoker(
 
     override fun bidiStreamClient(): BidiStreamClient<*, *> {
         return JavaLiteBidiStreamClient(client)
-    }
-
-    companion object {
-        fun serializationStrategy(codec: Codec): SerializationStrategy {
-            return when (codec) {
-                Codec.CODEC_PROTO -> GoogleJavaLiteProtobufStrategy()
-                Codec.CODEC_JSON -> throw RuntimeException("Java Lite does not support JSON")
-                else -> throw RuntimeException("unsupported codec $codec")
-            }
-        }
     }
 }

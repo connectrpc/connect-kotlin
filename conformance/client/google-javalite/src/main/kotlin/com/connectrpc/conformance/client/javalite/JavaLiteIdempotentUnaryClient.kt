@@ -19,32 +19,32 @@ import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.conformance.client.adapt.UnaryClient
 import com.connectrpc.conformance.v1.ConformanceServiceClient
-import com.connectrpc.conformance.v1.UnaryRequest
-import com.connectrpc.conformance.v1.UnaryResponse
+import com.connectrpc.conformance.v1.IdempotentUnaryRequest
+import com.connectrpc.conformance.v1.IdempotentUnaryResponse
 import com.connectrpc.http.Cancelable
 
-class JavaLiteUnaryClient(
+class JavaLiteIdempotentUnaryClient(
     private val client: ConformanceServiceClient,
-) : UnaryClient<UnaryRequest, UnaryResponse>(
-    UnaryRequest.getDefaultInstance(),
-    UnaryResponse.getDefaultInstance(),
+) : UnaryClient<IdempotentUnaryRequest, IdempotentUnaryResponse>(
+    IdempotentUnaryRequest.getDefaultInstance(),
+    IdempotentUnaryResponse.getDefaultInstance(),
 ) {
     override suspend fun execute(
-        req: UnaryRequest,
+        req: IdempotentUnaryRequest,
         headers: Headers,
-    ): ResponseMessage<UnaryResponse> {
-        return client.unary(req, headers)
+    ): ResponseMessage<IdempotentUnaryResponse> {
+        return client.idempotentUnary(req, headers)
     }
 
     override fun execute(
-        req: UnaryRequest,
+        req: IdempotentUnaryRequest,
         headers: Headers,
-        onFinish: (ResponseMessage<UnaryResponse>) -> Unit,
+        onFinish: (ResponseMessage<IdempotentUnaryResponse>) -> Unit,
     ): Cancelable {
-        return client.unary(req, headers, onFinish)
+        return client.idempotentUnary(req, headers, onFinish)
     }
 
-    override fun blocking(req: UnaryRequest, headers: Headers): UnaryBlockingCall<UnaryResponse> {
-        return client.unaryBlocking(req, headers)
+    override fun blocking(req: IdempotentUnaryRequest, headers: Headers): UnaryBlockingCall<IdempotentUnaryResponse> {
+        return client.idempotentUnaryBlocking(req, headers)
     }
 }

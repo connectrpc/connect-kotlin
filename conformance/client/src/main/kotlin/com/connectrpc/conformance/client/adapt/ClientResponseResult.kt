@@ -14,17 +14,21 @@
 
 package com.connectrpc.conformance.client.adapt
 
+import com.connectrpc.ConnectException
+import com.connectrpc.Headers
+import com.google.protobuf.MessageLite
+
 /**
- * An RPC stub that allows for invoking RPC methods.
- * Each method of Invoker corresponds to an RPC method
- * and returns a client stub that can be used to actually
- * invoke that RPC.
+ * Represents the result of issuing an RPC.
+ *
+ * This corresponds to the connectrpc.conformance.v1.ClientResponseResult
+ * proto message. Its presence is to provide a representation that
+ * doesn't rely on either the standard or lite Protobuf runtime.
  */
-interface Invoker {
-    fun unaryClient(): UnaryClient<*, *>
-    fun idempotentUnaryClient(): UnaryClient<*, *>
-    fun unimplementedClient(): UnaryClient<*, *>
-    fun clientStreamClient(): ClientStreamClient<*, *>
-    fun serverStreamClient(): ServerStreamClient<*, *>
-    fun bidiStreamClient(): BidiStreamClient<*, *>
-}
+class ClientResponseResult(
+    val headers: Headers = emptyMap(),
+    val payloads: List<MessageLite> = emptyList(),
+    val trailers: Headers = emptyMap(),
+    val error: ConnectException? = null,
+    val numUnsentRequests: Int = 0,
+)

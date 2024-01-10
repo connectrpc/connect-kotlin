@@ -16,9 +16,9 @@ package com.connectrpc.conformance.client.javalite
 
 import com.connectrpc.Headers
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
-import com.connectrpc.lite.connectrpc.conformance.v1.ClientStreamRequest
-import com.connectrpc.lite.connectrpc.conformance.v1.ClientStreamResponse
-import com.connectrpc.lite.connectrpc.conformance.v1.ConformanceServiceClient
+import com.connectrpc.conformance.v1.ClientStreamRequest
+import com.connectrpc.conformance.v1.ClientStreamResponse
+import com.connectrpc.conformance.v1.ConformanceServiceClient
 
 class JavaLiteClientStreamClient(
     private val client: ConformanceServiceClient,
