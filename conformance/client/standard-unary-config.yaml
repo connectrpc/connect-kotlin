@@ -1,0 +1,24 @@
+# This configures the features that this client
+# supports and that will be verified by the
+# conformance test suite.
+features:
+  versions:
+    - HTTP_VERSION_1
+    - HTTP_VERSION_2
+  protocols:
+    - PROTOCOL_CONNECT
+    - PROTOCOL_GRPC
+    - PROTOCOL_GRPC_WEB
+  codecs:
+    - CODEC_PROTO
+    - CODEC_JSON
+  compressions:
+    - COMPRESSION_IDENTITY
+    - COMPRESSION_GZIP
+  streamTypes:
+    # This config file only runs unary RPC test cases,
+    # so that we can run them all three ways: suspend,
+    # callback, and blocking.
+    - STREAM_TYPE_UNARY
+  supportsTlsClientCerts: true
+  supportsHalfDuplexBidiOverHttp1: true

@@ -23,20 +23,25 @@ import com.connectrpc.conformance.client.adapt.ClientCompatRequest.HttpVersion
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest.TlsCreds
 import com.connectrpc.conformance.client.adapt.ClientCompatResponse
 import com.connectrpc.conformance.v1.BidiStreamResponse
+import com.connectrpc.conformance.v1.ClientCompatProto
 import com.connectrpc.conformance.v1.ClientCompatRequest.Cancel.CancelTimingCase
 import com.connectrpc.conformance.v1.ClientErrorResult
 import com.connectrpc.conformance.v1.ClientResponseResult
 import com.connectrpc.conformance.v1.ClientStreamResponse
 import com.connectrpc.conformance.v1.Codec
 import com.connectrpc.conformance.v1.Compression
+import com.connectrpc.conformance.v1.ConfigProto
 import com.connectrpc.conformance.v1.ConformancePayload
 import com.connectrpc.conformance.v1.Error
 import com.connectrpc.conformance.v1.HTTPVersion
 import com.connectrpc.conformance.v1.Header
 import com.connectrpc.conformance.v1.IdempotentUnaryResponse
 import com.connectrpc.conformance.v1.Protocol
+import com.connectrpc.conformance.v1.ServerCompatProto
 import com.connectrpc.conformance.v1.ServerStreamResponse
+import com.connectrpc.conformance.v1.ServiceProto
 import com.connectrpc.conformance.v1.StreamType
+import com.connectrpc.conformance.v1.SuiteProto
 import com.connectrpc.conformance.v1.UnaryResponse
 import com.connectrpc.conformance.v1.UnimplementedResponse
 import com.connectrpc.extensions.GoogleJavaJSONStrategy
@@ -45,6 +50,7 @@ import com.connectrpc.protocols.NetworkProtocol
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
 import com.google.protobuf.MessageLite
+import com.google.protobuf.TypeRegistry
 
 class JavaHelpers {
     companion object {
@@ -53,7 +59,7 @@ class JavaHelpers {
         fun serializationStrategy(codec: ClientCompatRequest.Codec): SerializationStrategy {
             return when (codec) {
                 ClientCompatRequest.Codec.PROTO -> GoogleJavaProtobufStrategy()
-                ClientCompatRequest.Codec.JSON -> GoogleJavaJSONStrategy()
+                ClientCompatRequest.Codec.JSON -> GoogleJavaJSONStrategy(getTypes())
                 else -> throw RuntimeException("unsupported codec $codec")
             }
         }
@@ -144,6 +150,16 @@ class JavaHelpers {
 
         private fun toTypeUrl(typeName: String): String {
             return if (typeName.contains('/')) typeName else TYPE_URL_PREFIX + typeName
+        }
+
+        private fun getTypes(): TypeRegistry {
+            return TypeRegistry.newBuilder()
+                .add(ClientCompatProto.getDescriptor().messageTypes)
+                .add(ConfigProto.getDescriptor().messageTypes)
+                .add(ServerCompatProto.getDescriptor().messageTypes)
+                .add(ServiceProto.getDescriptor().messageTypes)
+                .add(SuiteProto.getDescriptor().messageTypes)
+                .build()
         }
     }
 

@@ -69,7 +69,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run conformance tests
-        run: make conformancerun
+        run: make runconformance
       - name: Upload test reports
         uses: actions/upload-artifact@v4
         if: always()

@@ -15,18 +15,20 @@
 package com.connectrpc.conformance.client.javalite
 
 import com.connectrpc.conformance.client.Client
+import com.connectrpc.conformance.client.ClientArgs
 import com.connectrpc.conformance.client.ConformanceClientLoop
 
 fun main(args: Array<String>) {
-    val invokeStyle = ConformanceClientLoop.parseArgs(args)
+    val clientArgs = ClientArgs.parseArgs(args)
     val loop = ConformanceClientLoop(
         JavaLiteHelpers::unmarshalRequest,
         JavaLiteHelpers::marshalResponse,
+        clientArgs.verbosity,
     )
     val client = Client(
+        args = clientArgs,
         invokerFactory = ::JavaLiteInvoker,
         serializationFactory = JavaLiteHelpers::serializationStrategy,
-        invokeStyle = invokeStyle,
         payloadExtractor = JavaLiteHelpers::extractPayload,
     )
     loop.run(System.`in`, System.out, client)

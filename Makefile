@@ -13,6 +13,8 @@ LICENSE_HEADER_VERSION := v1.28.1
 CONFORMANCE_VERSION := v1.0.0-rc2
 PROTOC_VERSION ?= 25.1
 GRADLE_ARGS ?=
+PROTOC := $(BIN)/protoc
+CONNECT_CONFORMANCE := $(BIN)/connectconformance
 
 UNAME_OS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -m)
@@ -36,8 +38,41 @@ buildplugin: ## Build the connect-kotlin protoc plugin.
 clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
 
-.PHONY: conformancerun
-conformancerun: generate ## Run the conformance tests.
+# TODO: remove the cross-tests and rely solely on new conformance suite
+.PHONY: runconformance
+runconformance: runcrosstests runconformancenew
+
+.PHONY: runconformancenew
+runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
+	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
+		--style suspend
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
+		--style callback
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
+		--style blocking
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-java/build/install/google-java/bin/google-java \
+		--style suspend
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-java/build/install/google-java/bin/google-java \
+		--style callback
+	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
+		--known-failing conformance/client/known-failing-cases.txt -- \
+		conformance/client/google-java/build/install/google-java/bin/google-java \
+		--style blocking
+# TODO: streaming conformance test cases
+
+.PHONY: runcrosstests
+runcrosstests: generate ## Run the old cross-test suite.
 	./gradlew $(GRADLE_ARGS) conformance:google-java:test conformance:google-javalite:test
 
 ifeq ($(UNAME_OS),Darwin)
@@ -53,18 +88,35 @@ PROTOC_OS = linux
 PROTOC_ARCH := $(UNAME_ARCH)
 endif
 
-PROTOC := $(CACHE)/protoc-$(PROTOC_VERSION).zip
-$(PROTOC):
+PROTOC_DOWNLOAD := $(CACHE)/protoc-$(PROTOC_VERSION).zip
+$(PROTOC_DOWNLOAD):
 	@if ! command -v curl >/dev/null 2>/dev/null; then echo "error: curl must be installed" >&2; exit 1; fi
 	@if ! command -v unzip >/dev/null 2>/dev/null; then echo "error: unzip must be installed" >&2; exit 1; fi
-	@rm -f $(BIN)/protoc
 	$(eval PROTOC_TMP := $(shell mktemp -d))
 	curl -sSL https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC_VERSION)/protoc-$(PROTOC_VERSION)-$(PROTOC_OS)-$(PROTOC_ARCH).zip -o $(PROTOC_TMP)/protoc.zip
-	@mkdir -p $(BIN)
-	unzip -q $(PROTOC_TMP)/protoc.zip -d $(dir $(BIN)) bin/protoc
-	@rm -rf $(PROTOC_TMP)
 	@mkdir -p $(dir $@)
-	@touch $@
+	@mv $(PROTOC_TMP)/protoc.zip $@
+	@rm -rf $(PROTOC_TMP)
+
+$(PROTOC): $(PROTOC_DOWNLOAD)
+	@mkdir -p $(BIN)
+	unzip -DD -q $(PROTOC_DOWNLOAD) -d $(dir $(BIN)) bin/protoc
+	chmod u+w $@
+
+CONNECT_CONFORMANCE_DOWNLOAD := $(CACHE)/connect-conformance-$(CONFORMANCE_VERSION).tgz
+$(CONNECT_CONFORMANCE_DOWNLOAD):
+	@if ! command -v curl >/dev/null 2>/dev/null; then echo "error: curl must be installed" >&2; exit 1; fi
+	@if ! command -v tar >/dev/null 2>/dev/null; then echo "error: tar must be installed" >&2; exit 1; fi
+	$(eval CONFORMANCE_TMP := $(shell mktemp -d))
+	curl -sSL https://github.com/connectrpc/conformance/releases/download/$(CONFORMANCE_VERSION)/connectconformance-$(CONFORMANCE_VERSION)-$(UNAME_OS)-$(UNAME_ARCH).tar.gz -o $(CONFORMANCE_TMP)/conformance.tgz
+	@mkdir -p $(dir $@)
+	@mv $(CONFORMANCE_TMP)/conformance.tgz $@
+	@rm -rf $(CONFORMANCE_TMP)
+
+$(CONNECT_CONFORMANCE): $(CONNECT_CONFORMANCE_DOWNLOAD)
+	@mkdir -p $(BIN)
+	tar -x -z -f $(CONNECT_CONFORMANCE_DOWNLOAD) -O connectconformance > $@
+	@chmod +x $@
 
 .PHONY: generate
 generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.

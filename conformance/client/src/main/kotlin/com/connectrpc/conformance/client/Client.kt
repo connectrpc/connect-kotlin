@@ -14,13 +14,16 @@
 
 package com.connectrpc.conformance.client
 
+import com.connectrpc.Code
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
+import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest
+import com.connectrpc.conformance.client.adapt.ClientCompatRequest.Cancel
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest.Codec
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest.Compression
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest.HttpVersion
@@ -34,6 +37,8 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -53,9 +58,9 @@ import kotlin.reflect.cast
  * RPC and returning a representation of its result.
  */
 class Client(
+    private val args: ClientArgs,
     private val invokerFactory: (ProtocolClient) -> Invoker,
     private val serializationFactory: (Codec) -> SerializationStrategy,
-    private val invokeStyle: UnaryClient.InvokeStyle,
     private val payloadExtractor: (MessageLite) -> MessageLite,
 ) {
     companion object {
@@ -108,7 +113,57 @@ class Client(
         if (req.streamType != StreamType.UNARY) {
             throw RuntimeException("specified method ${req.method} is unary but stream type indicates ${req.streamType}")
         }
-        TODO("implement me")
+        if (req.requestMessages.size != 1) {
+            throw RuntimeException("unary calls should indicate exactly one request message, got ${req.requestMessages.size}")
+        }
+        if (req.cancel != null && req.cancel !is Cancel.AfterCloseSendMs) {
+            throw RuntimeException("unary calls can only support 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
+        }
+        val msg = fromAny(req.requestMessages[0], client.reqTemplate, requestType)
+        val resp = CompletableDeferred<ResponseMessage<Resp>>()
+        val canceler = client.execute(
+            args.invokeStyle,
+            msg,
+            req.requestHeaders,
+            resp::complete,
+        )
+        when (val cancel = req.cancel) {
+            is Cancel.AfterCloseSendMs -> {
+                delay(cancel.millis.toLong())
+                canceler()
+            }
+            else -> {
+                // We already validated the case above.
+                // So this case means no cancellation.
+            }
+        }
+        return when (val result = resp.await()) {
+            is ResponseMessage.Success -> {
+                if (result.code != Code.OK) {
+                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
+                }
+
+                ClientResponseResult(
+                    headers = result.headers,
+                    payloads = listOf(payloadExtractor(result.message)),
+                    trailers = result.trailers,
+                )
+            }
+            is ResponseMessage.Failure -> {
+                if (result.code != result.cause.code) {
+                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
+                }
+                if (args.verbosity > 2) {
+                    System.err.println("* client: RPC failed with code ${result.code}")
+                    result.cause.printStackTrace()
+                }
+                ClientResponseResult(
+                    headers = result.headers,
+                    error = result.cause,
+                    trailers = result.trailers,
+                )
+            }
+        }
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(

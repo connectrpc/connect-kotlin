@@ -16,7 +16,6 @@ package com.connectrpc.conformance.client
 
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest
 import com.connectrpc.conformance.client.adapt.ClientCompatResponse
-import com.connectrpc.conformance.client.adapt.UnaryClient.InvokeStyle
 import kotlinx.coroutines.runBlocking
 import java.io.EOFException
 import java.io.InputStream
@@ -31,16 +30,27 @@ import java.io.OutputStream
 class ConformanceClientLoop(
     private val requestUnmarshaller: (ByteArray) -> ClientCompatRequest,
     private val responseMarshaller: (ClientCompatResponse) -> ByteArray,
+    private val verbosity: Int = 0,
 ) {
     fun run(input: InputStream, output: OutputStream, client: Client) = runBlocking {
         // TODO: issue RPCs in parallel
         while (true) {
             var result: ClientCompatResponse.Result
             val req = readRequest(input) ?: return@runBlocking // end of stream
+            if (verbosity > 0) {
+                System.err.println("* client: read request for test ${req.testName}")
+            }
             try {
                 val resp = client.handle(req)
                 result = ClientCompatResponse.Result.ResponseResult(resp)
+                if (verbosity > 0) {
+                    System.err.println("* client: RPC completed for test ${req.testName}")
+                }
             } catch (e: Exception) {
+                if (verbosity > 0) {
+                    System.err.println("* client: RPC could not be issued for test ${req.testName}")
+                    e.printStackTrace()
+                }
                 val msg = if (e.message.orEmpty() == "") {
                     e::class.qualifiedName.orEmpty()
                 } else {
@@ -105,22 +115,5 @@ class ConformanceClientLoop(
             bytes[1].toInt().and(0xff).shl(16) or
             bytes[2].toInt().and(0xff).shl(8) or
             bytes[3].toInt().and(0xff)
-    }
-
-    companion object {
-        fun parseArgs(args: Array<String>): InvokeStyle {
-            if (args.isEmpty()) {
-                return InvokeStyle.SUSPEND
-            }
-            if (args.size > 1) {
-                throw IllegalArgumentException("expecting exactly one args (invoke style), but got ${args.size}")
-            }
-            return when (args[0].lowercase()) {
-                "suspend" -> InvokeStyle.SUSPEND
-                "blocking" -> InvokeStyle.BLOCKING
-                "callback" -> InvokeStyle.CALLBACK
-                else -> throw IllegalArgumentException("expecting one args to be 'suspend', 'blocking', or 'callback', but got '${args[0]}'")
-            }
-        }
     }
 }
