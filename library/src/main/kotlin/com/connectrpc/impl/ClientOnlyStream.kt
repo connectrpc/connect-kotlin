@@ -58,6 +58,10 @@ internal class ClientOnlyStream<Input, Output>(
         return messageStream.sendClose()
     }
 
+    override fun cancel() {
+        return messageStream.receiveClose()
+    }
+
     override fun isSendClosed(): Boolean {
         return messageStream.isSendClosed()
     }

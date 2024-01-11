@@ -47,7 +47,7 @@ internal data class GRPCCompletion(
 
         if (cause != null || code != Code.OK) {
             return ConnectException(
-                code = code,
+                code = if (code == Code.OK) Code.UNKNOWN else code,
                 errorDetailParser = serializationStrategy.errorDetailParser(),
                 message = message.utf8(),
                 exception = cause,

@@ -38,7 +38,9 @@ import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -75,6 +77,9 @@ class Client(
         private const val UNARY_REQUEST_NAME = "connectrpc.conformance.v1.UnaryRequest"
         private const val IDEMPOTENT_UNARY_REQUEST_NAME = "connectrpc.conformance.v1.IdempotentUnaryRequest"
         private const val UNIMPLEMENTED_REQUEST_NAME = "connectrpc.conformance.v1.UnimplementedRequest"
+        private const val CLIENT_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.ClientStreamRequest"
+        private const val SERVER_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.ServerStreamRequest"
+        private const val BIDI_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.BidiStreamRequest"
     }
 
     suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
@@ -137,43 +142,52 @@ class Client(
                 // So this case means no cancellation.
             }
         }
-        return when (val result = resp.await()) {
-            is ResponseMessage.Success -> {
-                if (result.code != Code.OK) {
-                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
-                }
-
-                ClientResponseResult(
-                    headers = result.headers,
-                    payloads = listOf(payloadExtractor(result.message)),
-                    trailers = result.trailers,
-                )
-            }
-            is ResponseMessage.Failure -> {
-                if (result.code != result.cause.code) {
-                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
-                }
-                if (args.verbosity > 2) {
-                    System.err.println("* client: RPC failed with code ${result.code}")
-                    result.cause.printStackTrace()
-                }
-                ClientResponseResult(
-                    headers = result.headers,
-                    error = result.cause,
-                    trailers = result.trailers,
-                )
-            }
-        }
+        return unaryResult(0, resp.await())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-    ): ClientResponseResult {
+    ): ClientResponseResult = coroutineScope {
         if (req.streamType != StreamType.CLIENT_STREAM) {
             throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
         }
-        TODO("implement me")
+        if (req.cancel != null &&
+            req.cancel !is Cancel.BeforeCloseSend &&
+            req.cancel !is Cancel.AfterCloseSendMs
+        ) {
+            throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
+        }
+        val stream = client.execute(req.requestHeaders)
+        var numUnsent = 0
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, CLIENT_STREAM_REQUEST_NAME)
+            try {
+                stream.send(msg)
+            } catch (_: Exception) {
+                numUnsent = req.requestMessages.size - i
+                break
+            }
+        }
+        when (val cancel = req.cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.cancel()
+            }
+            is Cancel.AfterCloseSendMs -> {
+                launch {
+                    delay(cancel.millis.toLong())
+                    stream.cancel()
+                }
+            }
+            else -> {
+                // We already validated the case above.
+                // So this case means no cancellation.
+            }
+        }
+        return@coroutineScope unaryResult(numUnsent, stream.closeAndReceive())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleServer(
@@ -214,6 +228,37 @@ class Client(
         TODO("implement me")
     }
 
+    private fun unaryResult(numUnsent: Int, result: ResponseMessage<out MessageLite>): ClientResponseResult {
+        return when (result) {
+            is ResponseMessage.Success -> {
+                if (result.code != Code.OK) {
+                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
+                }
+                ClientResponseResult(
+                    headers = result.headers,
+                    payloads = listOf(payloadExtractor(result.message)),
+                    trailers = result.trailers,
+                    numUnsentRequests = numUnsent,
+                )
+            }
+            is ResponseMessage.Failure -> {
+                if (result.code != result.cause.code) {
+                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
+                }
+                if (args.verbosity > 2) {
+                    System.err.println("* client: RPC failed with code ${result.code}")
+                    result.cause.printStackTrace()
+                }
+                ClientResponseResult(
+                    headers = result.headers,
+                    error = result.cause,
+                    trailers = result.trailers,
+                    numUnsentRequests = numUnsent,
+                )
+            }
+        }
+    }
+
     private fun getClient(req: ClientCompatRequest): Pair<OkHttpClient, ProtocolClient> {
         // TODO: cache/re-use clients instead of creating a new one for every request
         val serializationStrategy = serializationFactory(req.codec)
@@ -230,7 +275,7 @@ class Client(
         if (req.timeoutMs != 0) {
             clientBuilder = clientBuilder.callTimeout(Duration.ofMillis(req.timeoutMs.toLong()))
         }
-
+        // TODO: need to support max receive bytes and use req.receiveLimitBytes
         val getConfig = if (req.useGetHttpMethod) GETConfiguration.Enabled else GETConfiguration.Disabled
         val requestCompression =
             if (req.compression == Compression.GZIP) {

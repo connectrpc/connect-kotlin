@@ -43,6 +43,7 @@ interface ClientCompatRequest {
     val port: Int
     val serverTlsCert: ByteString
     val clientTlsCreds: TlsCreds?
+    val receiveLimitBytes: Int
     val timeoutMs: Int
     val requestDelayMs: Int
     val useGetHttpMethod: Boolean

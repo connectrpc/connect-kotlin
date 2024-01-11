@@ -46,6 +46,7 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
     interface ClientStream<Req : MessageLite, Resp : MessageLite> {
         suspend fun send(req: Req)
         suspend fun closeAndReceive(): ResponseMessage<Resp>
+        suspend fun cancel()
 
         companion object {
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: ClientOnlyStreamInterface<Req, Resp>): ClientStream<Req, Resp> {
@@ -74,9 +75,13 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                                 cause = connectException,
                                 code = connectException.code,
                                 headers = underlying.responseHeaders().await(),
-                                trailers = underlying.responseTrailers().await(),
+                                trailers = connectException.metadata,
                             )
                         }
+                    }
+
+                    override suspend fun cancel() {
+                        underlying.cancel()
                     }
                 }
             }

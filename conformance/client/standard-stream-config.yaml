@@ -1,0 +1,25 @@
+# This configures the features that this client
+# supports and that will be verified by the
+# conformance test suite.
+features:
+  versions:
+    - HTTP_VERSION_1
+    - HTTP_VERSION_2
+  protocols:
+    - PROTOCOL_CONNECT
+    - PROTOCOL_GRPC
+    - PROTOCOL_GRPC_WEB
+  codecs:
+    - CODEC_PROTO
+    - CODEC_JSON
+  compressions:
+    - COMPRESSION_IDENTITY
+    - COMPRESSION_GZIP
+  streamTypes:
+    # This config file only runs stream RPC test cases.
+    - STREAM_TYPE_CLIENT_STREAM
+    #- STREAM_TYPE_SERVER_STREAM
+    #- STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
+    #- STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  #supportsTlsClientCerts: true
+  supportsHalfDuplexBidiOverHttp1: true

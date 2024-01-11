@@ -25,6 +25,10 @@ import okio.Buffer
  *  Interceptors are expected to be instantiated once per request/stream.
  */
 interface Interceptor {
+    // TODO: This interface and the StreamResult class should be internal.
+    //       User-provided interceptors should have a better API that provides
+    //       similar higher-level abstraction as the stream interfaces.
+
     /**
      * Invoked when a unary call is started. Provides a set of closures that will be called
      * as the request progresses, allowing the interceptor to alter request/response data.

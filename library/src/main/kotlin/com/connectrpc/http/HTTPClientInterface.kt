@@ -44,7 +44,7 @@ interface HTTPClientInterface {
      *
      * @return The created stream.
      */
-    fun stream(request: HTTPRequest, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream
+    fun stream(request: HTTPRequest, duplex: Boolean, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream
 }
 
 class Stream(

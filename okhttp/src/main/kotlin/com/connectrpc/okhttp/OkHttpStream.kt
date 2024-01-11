@@ -45,11 +45,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 internal fun OkHttpClient.initializeStream(
     method: String,
     request: HTTPRequest,
+    duplex: Boolean,
     onResult: suspend (StreamResult<Buffer>) -> Unit,
 ): Stream {
     val isSendClosed = AtomicBoolean(false)
     val isReceiveClosed = AtomicBoolean(false)
-    val duplexRequestBody = PipeDuplexRequestBody(request.contentType.toMediaType())
+    val duplexRequestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
         .method(method, duplexRequestBody)
@@ -60,7 +61,7 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(onResult, isReceiveClosed))
+    call.enqueue(ResponseCallback(call, onResult, isReceiveClosed))
     return Stream(
         onSend = { buffer ->
             if (!isSendClosed.get()) {
@@ -81,12 +82,13 @@ internal fun OkHttpClient.initializeStream(
 }
 
 private class ResponseCallback(
+    private val call: Call,
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
     private val isClosed: AtomicBoolean,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
         runBlocking {
-            onResult(StreamResult.Complete(codeFromIOException(e), cause = e))
+            onResult(StreamResult.Complete(codeFromException(call.isCanceled(), e), cause = e))
         }
     }
 
@@ -107,7 +109,7 @@ private class ResponseCallback(
             }
             response.use { resp ->
                 resp.body!!.source().use { sourceBuffer ->
-                    var exception: Throwable? = null
+                    var exception: Exception? = null
                     try {
                         while (!sourceBuffer.safeExhausted() && !isClosed.get()) {
                             val buffer = readStream(sourceBuffer)
@@ -122,7 +124,7 @@ private class ResponseCallback(
                         // If trailers are not yet communicated.
                         // This is the final chance to notify trailers to the consumer.
                         val finalResult = StreamResult.Complete<Buffer>(
-                            code = code,
+                            code = if (exception != null) codeFromException(call.isCanceled(), exception) else code,
                             trailers = response.safeTrailers() ?: emptyMap(),
                             cause = exception,
                         )
@@ -175,7 +177,8 @@ private class ResponseCallback(
     }
 }
 
-internal class PipeDuplexRequestBody(
+internal class PipeRequestBody(
+    private val duplex: Boolean,
     private val contentType: MediaType?,
     pipeMaxBufferSize: Long = 1024 * 1024,
 ) : RequestBody() {
@@ -201,7 +204,7 @@ internal class PipeDuplexRequestBody(
         pipe.fold(sink)
     }
 
-    override fun isDuplex() = true
+    override fun isDuplex() = duplex
 
     override fun isOneShot() = true
 

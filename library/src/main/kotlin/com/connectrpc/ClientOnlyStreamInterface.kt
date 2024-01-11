@@ -60,6 +60,12 @@ interface ClientOnlyStreamInterface<Input, Output> {
     fun sendClose()
 
     /**
+     * Cancels the stream. This closes both send and receive sides of the stream
+     * without awaiting any server reply.
+     */
+    fun cancel()
+
+    /**
      * Determine if the underlying client send stream is closed.
      *
      * @return true if the underlying client receive stream is closed. If the stream is still open,
