@@ -273,7 +273,79 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        TODO("implement me")
+        val stream = client.execute(req.requestHeaders)
+        val cancel = req.cancel
+        val payloads : MutableList<MessageLite> = mutableListOf()
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+            try {
+                stream.requests.send(msg)
+            } catch (_: Exception) {
+                // Ignore. We should see it again below when we receive the response.
+            }
+
+            // In full-duplex mode, we read the response after writing request,
+            // to interleave the requests and responses.
+            if (i == 0 && cancel is Cancel.AfterNumResponses && cancel.num == 0) {
+                stream.responses.close()
+            }
+            try {
+                val resp = stream.responses.messages.receive()
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.responses.close()
+                }
+            } catch (ex: ConnectException) {
+                return ClientResponseResult(
+                    headers = stream.responses.headers(),
+                    payloads = payloads,
+                    error = ex,
+                    trailers = ex.metadata,
+                    numUnsentRequests = req.requestMessages.size - i,
+                )
+            }
+        }
+        when (cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.responses.close() // cancel
+                stream.requests.close()  // close send
+            }
+            is Cancel.AfterCloseSendMs -> {
+                stream.requests.close()  // close send
+                delay(cancel.millis.toLong())
+                stream.responses.close() // cancel
+            }
+            else -> {
+                stream.requests.close() // close send
+            }
+        }
+
+        // Drain the response, in case there are any other messages.
+        var connEx : ConnectException? = null
+        var trailers : Headers
+        try {
+            for (resp in stream.responses.messages) {
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.responses.close()
+                }
+            }
+            trailers = stream.responses.trailers()
+        } catch (ex: ConnectException) {
+            connEx = ex
+            trailers = ex.metadata
+        } finally {
+            stream.responses.close()
+        }
+        return ClientResponseResult(
+            headers = stream.responses.headers(),
+            payloads = payloads,
+            error = connEx,
+            trailers = trailers,
+        )
     }
 
     private fun unaryResult(numUnsent: Int, result: ResponseMessage<out MessageLite>): ClientResponseResult {
