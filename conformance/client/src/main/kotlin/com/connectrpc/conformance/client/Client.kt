@@ -15,6 +15,8 @@
 package com.connectrpc.conformance.client
 
 import com.connectrpc.Code
+import com.connectrpc.ConnectException
+import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.ResponseMessage
@@ -197,7 +199,48 @@ class Client(
         if (req.streamType != StreamType.SERVER_STREAM) {
             throw RuntimeException("specified method ${req.method} is server-stream but stream type indicates ${req.streamType}")
         }
-        TODO("implement me")
+        if (req.requestMessages.size != 1) {
+            throw RuntimeException("server-stream calls should indicate exactly one request message, got ${req.requestMessages.size}")
+        }
+        if (req.cancel != null &&
+            req.cancel !is Cancel.AfterCloseSendMs &&
+            req.cancel !is Cancel.AfterNumResponses
+        ) {
+            throw RuntimeException("server stream calls can only support `AfterCloseSendMs` and 'AfterNumResponses' cancellation field, instead got ${req.cancel!!::class.simpleName}")
+        }
+        val msg = fromAny(req.requestMessages[0], client.reqTemplate, SERVER_STREAM_REQUEST_NAME)
+        val stream = client.execute(msg, req.requestHeaders)
+        val cancel = req.cancel
+        if (cancel is Cancel.AfterCloseSendMs) {
+            delay(cancel.millis.toLong())
+            stream.close()
+        }
+        val payloads : MutableList<MessageLite> = mutableListOf()
+        var connEx : ConnectException? = null
+        var trailers : Headers
+        try {
+            if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
+                stream.close()
+            }
+            for (resp in stream.messages()) {
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && payloads.size == cancel.num) {
+                    stream.close()
+                }
+            }
+            trailers = stream.trailers()
+        } catch (ex: ConnectException) {
+            connEx = ex
+            trailers = ex.metadata
+        } finally {
+            stream.close()
+        }
+        return ClientResponseResult(
+            headers = stream.headers(),
+            payloads = payloads,
+            error = connEx,
+            trailers = trailers,
+        )
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
@@ -244,10 +287,6 @@ class Client(
             is ResponseMessage.Failure -> {
                 if (result.code != result.cause.code) {
                     throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
-                }
-                if (args.verbosity > 2) {
-                    System.err.println("* client: RPC failed with code ${result.code}")
-                    result.cause.printStackTrace()
                 }
                 ClientResponseResult(
                     headers = result.headers,

@@ -18,7 +18,7 @@ features:
   streamTypes:
     # This config file only runs stream RPC test cases.
     - STREAM_TYPE_CLIENT_STREAM
-    #- STREAM_TYPE_SERVER_STREAM
+    - STREAM_TYPE_SERVER_STREAM
     #- STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
     #- STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
   #supportsTlsClientCerts: true

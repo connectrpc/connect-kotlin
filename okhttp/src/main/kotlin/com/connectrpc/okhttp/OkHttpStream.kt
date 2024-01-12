@@ -61,7 +61,7 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(call, onResult, isReceiveClosed))
+    call.enqueue(ResponseCallback(onResult))
     return Stream(
         onSend = { buffer ->
             if (!isSendClosed.get()) {
@@ -82,9 +82,7 @@ internal fun OkHttpClient.initializeStream(
 }
 
 private class ResponseCallback(
-    private val call: Call,
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
-    private val isClosed: AtomicBoolean,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
         runBlocking {
@@ -111,7 +109,7 @@ private class ResponseCallback(
                 resp.body!!.source().use { sourceBuffer ->
                     var exception: Exception? = null
                     try {
-                        while (!sourceBuffer.safeExhausted() && !isClosed.get()) {
+                        while (!sourceBuffer.exhausted()) {
                             val buffer = readStream(sourceBuffer)
                             val streamResult = StreamResult.Message(
                                 message = buffer,
@@ -135,21 +133,18 @@ private class ResponseCallback(
         }
     }
 
-    private fun BufferedSource.safeExhausted(): Boolean {
-        return try {
-            exhausted()
-        } catch (e: StreamResetException) {
-            true
-        }
-    }
-
     private fun Response.safeTrailers(): Map<String, List<String>>? {
-        return try {
-            if (body?.source()?.safeExhausted() == false) {
+        try {
+            if (body?.source()?.exhausted() == false) {
                 // Assuming this means that trailers are not available.
                 // Returning null to signal trailers are "missing".
                 return null
             }
+        } catch (e: Exception) {
+            return null
+        }
+
+        return try {
             trailers().toLowerCaseKeysMultiMap()
         } catch (_: Throwable) {
             // Something went terribly wrong.
