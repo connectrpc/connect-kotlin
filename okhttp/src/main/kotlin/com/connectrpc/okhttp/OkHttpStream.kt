@@ -28,7 +28,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
-import okhttp3.internal.http2.StreamResetException
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource

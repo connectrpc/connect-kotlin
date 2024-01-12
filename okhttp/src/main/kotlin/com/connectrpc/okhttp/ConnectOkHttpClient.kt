@@ -34,7 +34,6 @@ import okhttp3.internal.http.HttpMethod
 import okio.Buffer
 import java.io.IOException
 import java.io.InterruptedIOException
-import java.net.SocketException
 import java.net.SocketTimeoutException
 
 /**

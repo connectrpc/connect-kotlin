@@ -255,10 +255,10 @@ class Client(
         when (cancel) {
             is Cancel.BeforeCloseSend -> {
                 stream.responses.close() // cancel
-                stream.requests.close()  // close send
+                stream.requests.close() // close send
             }
             is Cancel.AfterCloseSendMs -> {
-                stream.requests.close()  // close send
+                stream.requests.close() // close send
                 delay(cancel.millis.toLong())
                 stream.responses.close() // cancel
             }
@@ -275,7 +275,7 @@ class Client(
     ): ClientResponseResult {
         val stream = client.execute(req.requestHeaders)
         val cancel = req.cancel
-        val payloads : MutableList<MessageLite> = mutableListOf()
+        val payloads: MutableList<MessageLite> = mutableListOf()
         for (i in req.requestMessages.indices) {
             if (req.requestDelayMs > 0) {
                 delay(req.requestDelayMs.toLong())
@@ -311,10 +311,10 @@ class Client(
         when (cancel) {
             is Cancel.BeforeCloseSend -> {
                 stream.responses.close() // cancel
-                stream.requests.close()  // close send
+                stream.requests.close() // close send
             }
             is Cancel.AfterCloseSendMs -> {
-                stream.requests.close()  // close send
+                stream.requests.close() // close send
                 delay(cancel.millis.toLong())
                 stream.responses.close() // cancel
             }
@@ -324,8 +324,8 @@ class Client(
         }
 
         // Drain the response, in case there are any other messages.
-        var connEx : ConnectException? = null
-        var trailers : Headers
+        var connEx: ConnectException? = null
+        var trailers: Headers
         try {
             for (resp in stream.responses.messages) {
                 payloads.add(payloadExtractor(resp))
@@ -376,9 +376,9 @@ class Client(
     }
 
     private suspend fun streamResult(numUnsent: Int, stream: ResponseStream<out MessageLite>, cancel: Cancel?): ClientResponseResult {
-        val payloads : MutableList<MessageLite> = mutableListOf()
-        var connEx : ConnectException? = null
-        var trailers : Headers
+        val payloads: MutableList<MessageLite> = mutableListOf()
+        var connEx: ConnectException? = null
+        var trailers: Headers
         try {
             if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
                 stream.close()
