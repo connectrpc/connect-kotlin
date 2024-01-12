@@ -30,7 +30,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
  * @param Resp The response message type
  */
 interface ResponseStream<Resp : MessageLite> {
-    fun messages(): ReceiveChannel<Resp>
+    val messages: ReceiveChannel<Resp>
 
     suspend fun headers(): Headers
 
@@ -41,9 +41,8 @@ interface ResponseStream<Resp : MessageLite> {
     companion object {
         fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): ResponseStream<Resp> {
             return object : ResponseStream<Resp> {
-                override fun messages(): ReceiveChannel<Resp> {
-                    return underlying.responseChannel()
-                }
+                override val messages: ReceiveChannel<Resp>
+                    get() = underlying.responseChannel()
 
                 override suspend fun headers(): Headers {
                     return underlying.responseHeaders().await()
@@ -61,9 +60,8 @@ interface ResponseStream<Resp : MessageLite> {
 
         fun <Req : MessageLite, Resp : MessageLite> new(underlying: ServerOnlyStreamInterface<Req, Resp>): ResponseStream<Resp> {
             return object : ResponseStream<Resp> {
-                override fun messages(): ReceiveChannel<Resp> {
-                    return underlying.responseChannel()
-                }
+                override val messages: ReceiveChannel<Resp>
+                    get() = underlying.responseChannel()
 
                 override suspend fun headers(): Headers {
                     return underlying.responseHeaders().await()

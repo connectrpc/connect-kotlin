@@ -33,6 +33,7 @@ import com.connectrpc.conformance.client.adapt.ClientCompatRequest.StreamType
 import com.connectrpc.conformance.client.adapt.ClientResponseResult
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.client.adapt.Invoker
+import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
 import com.connectrpc.impl.ProtocolClient
@@ -215,32 +216,7 @@ class Client(
             delay(cancel.millis.toLong())
             stream.close()
         }
-        val payloads : MutableList<MessageLite> = mutableListOf()
-        var connEx : ConnectException? = null
-        var trailers : Headers
-        try {
-            if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
-                stream.close()
-            }
-            for (resp in stream.messages()) {
-                payloads.add(payloadExtractor(resp))
-                if (cancel is Cancel.AfterNumResponses && payloads.size == cancel.num) {
-                    stream.close()
-                }
-            }
-            trailers = stream.trailers()
-        } catch (ex: ConnectException) {
-            connEx = ex
-            trailers = ex.metadata
-        } finally {
-            stream.close()
-        }
-        return ClientResponseResult(
-            headers = stream.headers(),
-            payloads = payloads,
-            error = connEx,
-            trailers = trailers,
-        )
+        return streamResult(0, stream, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
@@ -261,7 +237,36 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        TODO("implement me")
+        val stream = client.execute(req.requestHeaders)
+        var numUnsent = 0
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+            try {
+                stream.requests.send(msg)
+            } catch (_: Exception) {
+                numUnsent = req.requestMessages.size - i
+                break
+            }
+        }
+        val cancel = req.cancel
+        when (cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.responses.close() // cancel
+                stream.requests.close()  // close send
+            }
+            is Cancel.AfterCloseSendMs -> {
+                stream.requests.close()  // close send
+                delay(cancel.millis.toLong())
+                stream.responses.close() // cancel
+            }
+            else -> {
+                stream.requests.close() // close send
+            }
+        }
+        return streamResult(numUnsent, stream.responses, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleFullDuplexBidi(
@@ -296,6 +301,36 @@ class Client(
                 )
             }
         }
+    }
+
+    private suspend fun streamResult(numUnsent: Int, stream: ResponseStream<out MessageLite>, cancel: Cancel?): ClientResponseResult {
+        val payloads : MutableList<MessageLite> = mutableListOf()
+        var connEx : ConnectException? = null
+        var trailers : Headers
+        try {
+            if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
+                stream.close()
+            }
+            for (resp in stream.messages) {
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.close()
+                }
+            }
+            trailers = stream.trailers()
+        } catch (ex: ConnectException) {
+            connEx = ex
+            trailers = ex.metadata
+        } finally {
+            stream.close()
+        }
+        return ClientResponseResult(
+            headers = stream.headers(),
+            payloads = payloads,
+            error = connEx,
+            trailers = trailers,
+            numUnsentRequests = numUnsent,
+        )
     }
 
     private fun getClient(req: ClientCompatRequest): Pair<OkHttpClient, ProtocolClient> {
