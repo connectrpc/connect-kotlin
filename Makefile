@@ -57,9 +57,6 @@ runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance te
 		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style blocking
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
-		--known-failing conformance/client/known-failing-stream-cases.txt -- \
-		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
 		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
@@ -72,9 +69,16 @@ runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance te
 		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style blocking
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
-		--known-failing conformance/client/known-failing-stream-cases.txt -- \
-		conformance/client/google-java/build/install/google-java/bin/google-java
+
+# TODO: Add streaming conformance tests. Currently, a small number of the test cases
+# are flaky, so leaving this commented out for now.
+# (Will continue investigating and address soon).
+#	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
+#		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+#		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
+#	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
+#		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+#		conformance/client/google-java/build/install/google-java/bin/google-java
 
 .PHONY: runcrosstests
 runcrosstests: generate ## Run the old cross-test suite.

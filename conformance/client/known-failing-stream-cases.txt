@@ -1,1 +1,15 @@
-# TODO
+# OkHttp seems to have a bug where timeout is not properly
+# enforced when request body is full-duplex.
+Timeouts/HTTPVersion:2/**/bidi half duplex timeout
+Timeouts/HTTPVersion:2/**/bidi full duplex timeout
+
+# Connect-kotlin does not have a way to limit the size of messages
+# received. It probably should. Despite this, many cases in this suite
+# still pass, so they are likely not exercising what we think they are.
+# TODO: add flag to config yaml for whether implementation supports
+#       a receive size limit
+Client Message Size/**/Compression:COMPRESSION_GZIP/TLS:false/**/client stream first request exceeds client limit
+Client Message Size/**/Compression:COMPRESSION_GZIP/TLS:false/**/client stream subsequent request exceeds client limit
+Client Message Size/**/Compression:COMPRESSION_GZIP/TLS:false/**/client stream all requests equal to client limit
+Client Message Size/**/Compression:COMPRESSION_GZIP/TLS:false/**/server stream request equal to client limit
+Client Message Size/**/Compression:COMPRESSION_GZIP/TLS:false/**/server stream request exceeds client limit
