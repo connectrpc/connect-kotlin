@@ -19,17 +19,22 @@ import okio.ByteString.Companion.encodeUtf8
 import okio.GzipSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import kotlin.random.Random
 
 class GzipCompressionPoolTest {
 
     @Test
     fun gzipCompressionDecompression() {
+        val rand = Random.Default
         val compressionPool = GzipCompressionPool
-        val input = "some_string".encodeUtf8()
-        val buffer = Buffer().write(input)
-        val compressed = compressionPool.compress(buffer)
-        val result = compressionPool.decompress(compressed)
-        assertThat(result.readUtf8()).isEqualTo(input.utf8())
+        for (i in 1..10_000) {
+            val inputLen = rand.nextInt(200, 2000)
+            val input = rand.nextBytes(inputLen)
+            val buffer = Buffer().write(input)
+            val compressed = compressionPool.compress(buffer)
+            val result = compressionPool.decompress(compressed)
+            assertThat(result.readByteArray()).isEqualTo(input)
+        }
     }
 
     @Test
