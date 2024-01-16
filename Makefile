@@ -11,7 +11,7 @@ CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.28.1
 CONFORMANCE_VERSION := v1.0.0-rc2
-PROTOC_VERSION ?= 25.1
+PROTOC_VERSION ?= 25.2
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
 CONNECT_CONFORMANCE := $(BIN)/connectconformance
@@ -109,7 +109,7 @@ $(PROTOC_DOWNLOAD):
 
 $(PROTOC): $(PROTOC_DOWNLOAD)
 	@mkdir -p $(BIN)
-	unzip -DD -q $(PROTOC_DOWNLOAD) -d $(dir $(BIN)) bin/protoc
+	unzip -DD -o -q $(PROTOC_DOWNLOAD) -d $(dir $(BIN)) bin/protoc
 	chmod u+w $@
 
 CONNECT_CONFORMANCE_DOWNLOAD := $(CACHE)/connect-conformance-$(CONFORMANCE_VERSION).tgz
