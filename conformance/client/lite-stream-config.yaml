@@ -21,3 +21,5 @@ features:
     - STREAM_TYPE_SERVER_STREAM
     - STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
     - STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
+  # TODO: get client certs working and uncomment this
+  #supportsTlsClientCerts: true
