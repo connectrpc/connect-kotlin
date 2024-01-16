@@ -75,6 +75,8 @@ sealed class StreamResult<Output> {
 
     /**
      * Fold the different results into a nullable single type.
+     * Unlike `fold`, the caller can omit some transformations,
+     * which default to returning null.
      *
      * @param onHeaders Transform a Header result.
      * @param onMessage Transform a Message result.
@@ -85,16 +87,6 @@ sealed class StreamResult<Output> {
         onMessage: (Message<Output>) -> Result? = { null },
         onCompletion: (Complete<Output>) -> Result? = { null },
     ): Result? {
-        return when (this) {
-            is Headers -> {
-                onHeaders(this)
-            }
-            is Message -> {
-                onMessage(this)
-            }
-            is Complete -> {
-                onCompletion(this)
-            }
-        }
+        return fold(onHeaders, onMessage, onCompletion)
     }
 }

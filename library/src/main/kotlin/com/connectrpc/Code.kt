@@ -60,6 +60,9 @@ enum class Code(val codeName: String, val value: Int) {
             }
         }
         fun fromName(name: String?): Code {
+            if (name == null) {
+                return UNKNOWN
+            }
             for (value in values()) {
                 if (value.codeName == name) {
                     return value
@@ -71,7 +74,8 @@ enum class Code(val codeName: String, val value: Int) {
             if (value == null) {
                 return UNKNOWN
             }
-            return values().first { code -> code.value == value }
+            val code = values().firstOrNull { code -> code.value == value }
+            return code ?: UNKNOWN
         }
     }
 }

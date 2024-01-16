@@ -58,6 +58,13 @@ class ConformanceClientLoop(
                 }
                 result = ClientCompatResponse.Result.ErrorResult(msg)
             }
+            if (result is ClientCompatResponse.Result.ResponseResult && result.response.error != null) {
+                if (verbosity > 2) {
+                    val ex = result.response.error!!
+                    System.err.println("* client: RPC failed with code ${ex.code}")
+                    ex.printStackTrace()
+                }
+            }
             writeResponse(
                 output,
                 ClientCompatResponse(

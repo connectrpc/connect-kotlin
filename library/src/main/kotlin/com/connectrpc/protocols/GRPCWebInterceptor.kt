@@ -205,10 +205,10 @@ internal class GRPCWebInterceptor(
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val completion = completionParser.parse(emptyMap(), streamTrailers)
-                            val code = completion!!.code
+                            val code = completion?.code ?: Code.UNKNOWN
                             return@fold StreamResult.Complete(
                                 code = code,
-                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
+                                cause = completion?.toConnectExceptionOrNull(serializationStrategy) ?: ConnectException(code),
                                 trailers = streamTrailers,
                             )
                         }

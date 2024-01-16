@@ -180,6 +180,8 @@ class JavaHelpers {
             get() = msg.serverTlsCert
         override val clientTlsCreds: TlsCreds?
             get() = if (msg.hasClientTlsCreds()) TlsCredsImpl(msg.clientTlsCreds) else null
+        override val receiveLimitBytes: Int
+            get() = msg.messageReceiveLimit
         override val timeoutMs: Int
             get() = msg.timeoutMs
         override val requestDelayMs: Int

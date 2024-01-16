@@ -85,7 +85,7 @@ class ProtocolClientTest {
                 createMethodSpec(StreamType.BIDI),
             )
             val captor = argumentCaptor<HTTPRequest>()
-            verify(httpClient).stream(captor.capture(), any())
+            verify(httpClient).stream(captor.capture(), true, any())
             assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
         }
     }
@@ -103,7 +103,7 @@ class ProtocolClientTest {
                 createMethodSpec(StreamType.BIDI),
             )
             val captor = argumentCaptor<HTTPRequest>()
-            verify(httpClient).stream(captor.capture(), any())
+            verify(httpClient).stream(captor.capture(), true, any())
             assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
         }
     }

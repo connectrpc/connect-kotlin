@@ -66,7 +66,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             newCall.enqueue(
                 object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        val code = codeFromIOException(e)
+                        val code = codeFromException(newCall.isCanceled(), e)
                         onResult(
                             HTTPResponse(
                                 code = code,
@@ -123,9 +123,10 @@ class ConnectOkHttpClient @JvmOverloads constructor(
 
     override fun stream(
         request: HTTPRequest,
+        duplex: Boolean,
         onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
-        return streamClient.initializeStream(request.httpMethod, request, onResult)
+        return streamClient.initializeStream(request.httpMethod, request, duplex, onResult)
     }
 }
 
@@ -136,15 +137,12 @@ internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
     )
 }
 
-internal fun codeFromIOException(e: IOException): Code {
+internal fun codeFromException(callCanceled: Boolean, e: Exception): Code {
     return if ((e is InterruptedIOException && e.message == "timeout") ||
         e is SocketTimeoutException
     ) {
         Code.DEADLINE_EXCEEDED
-    } else if (e.message?.lowercase() == "canceled") {
-        // TODO: Figure out what, if anything, actually throws an exception
-        //       with this message. It seems more likely that a JVM or
-        //       Kotlin coroutine exception would spell it with two Ls.
+    } else if (e is IOException && callCanceled) {
         Code.CANCELED
     } else {
         Code.UNKNOWN

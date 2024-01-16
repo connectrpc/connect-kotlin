@@ -11,14 +11,15 @@ features:
     - PROTOCOL_GRPC_WEB
   codecs:
     - CODEC_PROTO
-    # Lite does not support JSON
+    - CODEC_JSON
   compressions:
     - COMPRESSION_IDENTITY
     - COMPRESSION_GZIP
   streamTypes:
-    # This config file only runs unary RPC test cases,
-    # so that we can run them all three ways: suspend,
-    # callback, and blocking.
-    - STREAM_TYPE_UNARY
+    # This config file only runs stream RPC test cases.
+    - STREAM_TYPE_CLIENT_STREAM
+    - STREAM_TYPE_SERVER_STREAM
+    - STREAM_TYPE_HALF_DUPLEX_BIDI_STREAM
+    - STREAM_TYPE_FULL_DUPLEX_BIDI_STREAM
   # TODO: get client certs working and uncomment this
   #supportsTlsClientCerts: true

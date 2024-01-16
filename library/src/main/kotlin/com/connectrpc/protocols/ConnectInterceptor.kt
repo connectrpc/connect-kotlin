@@ -227,8 +227,8 @@ internal class ConnectInterceptor(
                 return StreamResult.Complete(Code.UNKNOWN, e)
             }
             val metadata = endStreamResponseJSON.metadata?.toLowercase()
-            if (endStreamResponseJSON.error?.code == null) {
-                return StreamResult.Complete(Code.OK, trailers = metadata ?: emptyMap())
+            if (endStreamResponseJSON.error == null) {
+                return StreamResult.Complete(Code.OK, trailers = metadata.orEmpty())
             }
             val code = Code.fromName(endStreamResponseJSON.error.code)
             StreamResult.Complete(

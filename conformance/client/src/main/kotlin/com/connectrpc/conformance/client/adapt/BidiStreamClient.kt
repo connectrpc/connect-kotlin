@@ -44,20 +44,18 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Resp The response message type
      */
     interface BidiStream<Req : MessageLite, Resp : MessageLite> {
-        fun requests(): RequestStream<Req>
-        fun responses(): ResponseStream<Resp>
+        val requests: RequestStream<Req>
+        val responses: ResponseStream<Resp>
         companion object {
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): BidiStream<Req, Resp> {
                 val reqStream = RequestStream.new(underlying)
                 val respStream = ResponseStream.new(underlying)
                 return object : BidiStream<Req, Resp> {
-                    override fun requests(): RequestStream<Req> {
-                        return reqStream
-                    }
+                    override val requests: RequestStream<Req>
+                        get() = reqStream
 
-                    override fun responses(): ResponseStream<Resp> {
-                        return respStream
-                    }
+                    override val responses: ResponseStream<Resp>
+                        get() = respStream
                 }
             }
         }

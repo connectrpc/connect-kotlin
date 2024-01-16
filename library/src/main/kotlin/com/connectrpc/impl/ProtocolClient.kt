@@ -25,6 +25,7 @@ import com.connectrpc.ProtocolClientInterface
 import com.connectrpc.ResponseMessage
 import com.connectrpc.ServerOnlyStreamInterface
 import com.connectrpc.StreamResult
+import com.connectrpc.StreamType
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
@@ -207,7 +208,7 @@ class ProtocolClient(
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
         var isComplete = false
-        val httpStream = httpClient.stream(finalRequest) { initialResult ->
+        val httpStream = httpClient.stream(finalRequest, methodSpec.streamType == StreamType.BIDI) { initialResult ->
             if (isComplete) {
                 // No-op on remaining handlers after a completion.
                 return@stream

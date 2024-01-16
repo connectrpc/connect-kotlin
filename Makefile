@@ -46,30 +46,39 @@ runconformance: runcrosstests runconformancenew
 runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style blocking
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-cases.txt -- \
+		--known-failing conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style blocking
-# TODO: streaming conformance test cases
+
+# TODO: Add streaming conformance tests. Currently, a small number of the test cases
+# are flaky, so leaving this commented out for now.
+# (Will continue investigating and address soon).
+#	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
+#		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+#		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
+#	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
+#		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+#		conformance/client/google-java/build/install/google-java/bin/google-java
 
 .PHONY: runcrosstests
 runcrosstests: generate ## Run the old cross-test suite.

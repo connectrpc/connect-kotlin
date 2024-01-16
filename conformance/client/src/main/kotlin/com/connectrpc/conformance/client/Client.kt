@@ -15,6 +15,8 @@
 package com.connectrpc.conformance.client
 
 import com.connectrpc.Code
+import com.connectrpc.ConnectException
+import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.ResponseMessage
@@ -31,6 +33,7 @@ import com.connectrpc.conformance.client.adapt.ClientCompatRequest.StreamType
 import com.connectrpc.conformance.client.adapt.ClientResponseResult
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.client.adapt.Invoker
+import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
 import com.connectrpc.impl.ProtocolClient
@@ -38,7 +41,9 @@ import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
@@ -75,6 +80,9 @@ class Client(
         private const val UNARY_REQUEST_NAME = "connectrpc.conformance.v1.UnaryRequest"
         private const val IDEMPOTENT_UNARY_REQUEST_NAME = "connectrpc.conformance.v1.IdempotentUnaryRequest"
         private const val UNIMPLEMENTED_REQUEST_NAME = "connectrpc.conformance.v1.UnimplementedRequest"
+        private const val CLIENT_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.ClientStreamRequest"
+        private const val SERVER_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.ServerStreamRequest"
+        private const val BIDI_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.BidiStreamRequest"
     }
 
     suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
@@ -137,43 +145,52 @@ class Client(
                 // So this case means no cancellation.
             }
         }
-        return when (val result = resp.await()) {
-            is ResponseMessage.Success -> {
-                if (result.code != Code.OK) {
-                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
-                }
-
-                ClientResponseResult(
-                    headers = result.headers,
-                    payloads = listOf(payloadExtractor(result.message)),
-                    trailers = result.trailers,
-                )
-            }
-            is ResponseMessage.Failure -> {
-                if (result.code != result.cause.code) {
-                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
-                }
-                if (args.verbosity > 2) {
-                    System.err.println("* client: RPC failed with code ${result.code}")
-                    result.cause.printStackTrace()
-                }
-                ClientResponseResult(
-                    headers = result.headers,
-                    error = result.cause,
-                    trailers = result.trailers,
-                )
-            }
-        }
+        return unaryResult(0, resp.await())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-    ): ClientResponseResult {
+    ): ClientResponseResult = coroutineScope {
         if (req.streamType != StreamType.CLIENT_STREAM) {
             throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
         }
-        TODO("implement me")
+        if (req.cancel != null &&
+            req.cancel !is Cancel.BeforeCloseSend &&
+            req.cancel !is Cancel.AfterCloseSendMs
+        ) {
+            throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
+        }
+        val stream = client.execute(req.requestHeaders)
+        var numUnsent = 0
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, CLIENT_STREAM_REQUEST_NAME)
+            try {
+                stream.send(msg)
+            } catch (_: Exception) {
+                numUnsent = req.requestMessages.size - i
+                break
+            }
+        }
+        when (val cancel = req.cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.cancel()
+            }
+            is Cancel.AfterCloseSendMs -> {
+                launch {
+                    delay(cancel.millis.toLong())
+                    stream.cancel()
+                }
+            }
+            else -> {
+                // We already validated the case above.
+                // So this case means no cancellation.
+            }
+        }
+        return@coroutineScope unaryResult(numUnsent, stream.closeAndReceive())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleServer(
@@ -183,7 +200,23 @@ class Client(
         if (req.streamType != StreamType.SERVER_STREAM) {
             throw RuntimeException("specified method ${req.method} is server-stream but stream type indicates ${req.streamType}")
         }
-        TODO("implement me")
+        if (req.requestMessages.size != 1) {
+            throw RuntimeException("server-stream calls should indicate exactly one request message, got ${req.requestMessages.size}")
+        }
+        if (req.cancel != null &&
+            req.cancel !is Cancel.AfterCloseSendMs &&
+            req.cancel !is Cancel.AfterNumResponses
+        ) {
+            throw RuntimeException("server stream calls can only support `AfterCloseSendMs` and 'AfterNumResponses' cancellation field, instead got ${req.cancel!!::class.simpleName}")
+        }
+        val msg = fromAny(req.requestMessages[0], client.reqTemplate, SERVER_STREAM_REQUEST_NAME)
+        val stream = client.execute(msg, req.requestHeaders)
+        val cancel = req.cancel
+        if (cancel is Cancel.AfterCloseSendMs) {
+            delay(cancel.millis.toLong())
+            stream.close()
+        }
+        return streamResult(0, stream, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
@@ -204,14 +237,172 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        TODO("implement me")
+        val stream = client.execute(req.requestHeaders)
+        var numUnsent = 0
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+            try {
+                stream.requests.send(msg)
+            } catch (_: Exception) {
+                numUnsent = req.requestMessages.size - i
+                break
+            }
+        }
+        val cancel = req.cancel
+        when (cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.responses.close() // cancel
+                stream.requests.close() // close send
+            }
+            is Cancel.AfterCloseSendMs -> {
+                stream.requests.close() // close send
+                delay(cancel.millis.toLong())
+                stream.responses.close() // cancel
+            }
+            else -> {
+                stream.requests.close() // close send
+            }
+        }
+        return streamResult(numUnsent, stream.responses, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleFullDuplexBidi(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        TODO("implement me")
+        val stream = client.execute(req.requestHeaders)
+        val cancel = req.cancel
+        val payloads: MutableList<MessageLite> = mutableListOf()
+        for (i in req.requestMessages.indices) {
+            if (req.requestDelayMs > 0) {
+                delay(req.requestDelayMs.toLong())
+            }
+            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+            try {
+                stream.requests.send(msg)
+            } catch (_: Exception) {
+                // Ignore. We should see it again below when we receive the response.
+            }
+
+            // In full-duplex mode, we read the response after writing request,
+            // to interleave the requests and responses.
+            if (i == 0 && cancel is Cancel.AfterNumResponses && cancel.num == 0) {
+                stream.responses.close()
+            }
+            try {
+                val resp = stream.responses.messages.receive()
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.responses.close()
+                }
+            } catch (ex: ConnectException) {
+                return ClientResponseResult(
+                    headers = stream.responses.headers(),
+                    payloads = payloads,
+                    error = ex,
+                    trailers = ex.metadata,
+                    numUnsentRequests = req.requestMessages.size - i,
+                )
+            }
+        }
+        when (cancel) {
+            is Cancel.BeforeCloseSend -> {
+                stream.responses.close() // cancel
+                stream.requests.close() // close send
+            }
+            is Cancel.AfterCloseSendMs -> {
+                stream.requests.close() // close send
+                delay(cancel.millis.toLong())
+                stream.responses.close() // cancel
+            }
+            else -> {
+                stream.requests.close() // close send
+            }
+        }
+
+        // Drain the response, in case there are any other messages.
+        var connEx: ConnectException? = null
+        var trailers: Headers
+        try {
+            for (resp in stream.responses.messages) {
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.responses.close()
+                }
+            }
+            trailers = stream.responses.trailers()
+        } catch (ex: ConnectException) {
+            connEx = ex
+            trailers = ex.metadata
+        } finally {
+            stream.responses.close()
+        }
+        return ClientResponseResult(
+            headers = stream.responses.headers(),
+            payloads = payloads,
+            error = connEx,
+            trailers = trailers,
+        )
+    }
+
+    private fun unaryResult(numUnsent: Int, result: ResponseMessage<out MessageLite>): ClientResponseResult {
+        return when (result) {
+            is ResponseMessage.Success -> {
+                if (result.code != Code.OK) {
+                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
+                }
+                ClientResponseResult(
+                    headers = result.headers,
+                    payloads = listOf(payloadExtractor(result.message)),
+                    trailers = result.trailers,
+                    numUnsentRequests = numUnsent,
+                )
+            }
+            is ResponseMessage.Failure -> {
+                if (result.code != result.cause.code) {
+                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
+                }
+                ClientResponseResult(
+                    headers = result.headers,
+                    error = result.cause,
+                    trailers = result.trailers,
+                    numUnsentRequests = numUnsent,
+                )
+            }
+        }
+    }
+
+    private suspend fun streamResult(numUnsent: Int, stream: ResponseStream<out MessageLite>, cancel: Cancel?): ClientResponseResult {
+        val payloads: MutableList<MessageLite> = mutableListOf()
+        var connEx: ConnectException? = null
+        var trailers: Headers
+        try {
+            if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
+                stream.close()
+            }
+            for (resp in stream.messages) {
+                payloads.add(payloadExtractor(resp))
+                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                    stream.close()
+                }
+            }
+            trailers = stream.trailers()
+        } catch (ex: ConnectException) {
+            connEx = ex
+            trailers = ex.metadata
+        } finally {
+            stream.close()
+        }
+        return ClientResponseResult(
+            headers = stream.headers(),
+            payloads = payloads,
+            error = connEx,
+            trailers = trailers,
+            numUnsentRequests = numUnsent,
+        )
     }
 
     private fun getClient(req: ClientCompatRequest): Pair<OkHttpClient, ProtocolClient> {
@@ -230,7 +421,7 @@ class Client(
         if (req.timeoutMs != 0) {
             clientBuilder = clientBuilder.callTimeout(Duration.ofMillis(req.timeoutMs.toLong()))
         }
-
+        // TODO: need to support max receive bytes and use req.receiveLimitBytes
         val getConfig = if (req.useGetHttpMethod) GETConfiguration.Enabled else GETConfiguration.Disabled
         val requestCompression =
             if (req.compression == Compression.GZIP) {
