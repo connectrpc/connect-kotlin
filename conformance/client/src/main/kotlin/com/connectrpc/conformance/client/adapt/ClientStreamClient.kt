@@ -52,7 +52,10 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: ClientOnlyStreamInterface<Req, Resp>): ClientStream<Req, Resp> {
                 return object : ClientStream<Req, Resp> {
                     override suspend fun send(req: Req) {
-                        underlying.send(req)
+                        val result = underlying.send(req)
+                        if (result.isFailure) {
+                            throw result.exceptionOrNull()!!
+                        }
                     }
 
                     override suspend fun closeAndReceive(): ResponseMessage<Resp> {

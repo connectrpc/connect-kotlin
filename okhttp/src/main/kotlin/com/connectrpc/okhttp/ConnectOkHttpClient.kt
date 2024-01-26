@@ -23,15 +23,17 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.Stream
 import com.connectrpc.http.TracingInfo
+import com.connectrpc.http.UnaryHTTPRequest
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.internal.http.HttpMethod
 import okio.Buffer
+import okio.BufferedSink
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
@@ -44,16 +46,26 @@ class ConnectOkHttpClient @JvmOverloads constructor(
     private val streamClient: OkHttpClient = unaryClient,
 ) : HTTPClientInterface {
 
-    override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
+    override fun unary(request: UnaryHTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = okhttp3.Request.Builder()
         for (entry in request.headers) {
             for (values in entry.value) {
                 builder.addHeader(entry.key, values)
             }
         }
-        val content = request.message ?: ByteArray(0)
+        val content = request.message
         val method = request.httpMethod
-        val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
+        val requestBody = if (HttpMethod.requiresRequestBody(method)) {
+            object : RequestBody() {
+                override fun contentType() = request.contentType.toMediaType()
+                override fun contentLength() = content.size
+                override fun writeTo(sink: BufferedSink) {
+                    content.readAll(sink)
+                }
+            }
+        } else {
+            null
+        }
         val callRequest = builder
             .url(request.url)
             .method(method, requestBody)

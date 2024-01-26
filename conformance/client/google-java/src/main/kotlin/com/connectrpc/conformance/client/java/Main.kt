@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
     val loop = ConformanceClientLoop(
         JavaHelpers::unmarshalRequest,
         JavaHelpers::marshalResponse,
-        clientArgs.verbosity,
+        clientArgs.verbose,
     )
     val client = Client(
         args = clientArgs,

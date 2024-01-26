@@ -33,7 +33,7 @@ interface HTTPClientInterface {
      *
      * @return A function to cancel the underlying network call.
      */
-    fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
+    fun unary(request: UnaryHTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
 
     /**
      * Initialize a new HTTP stream.
@@ -47,58 +47,101 @@ interface HTTPClientInterface {
     fun stream(request: HTTPRequest, duplex: Boolean, onResult: suspend (StreamResult<Buffer>) -> Unit): Stream
 }
 
-class Stream(
-    private val onSend: (Buffer) -> Unit,
-    private val onSendClose: () -> Unit = {},
-    private val onReceiveClose: () -> Unit = {},
-) {
-    private val isSendClosed = AtomicReference(false)
-    private val isReceiveClosed = AtomicReference(false)
+interface Stream {
+    suspend fun send(buffer: Buffer): Result<Unit>
 
-    fun send(buffer: Buffer): Result<Unit> {
-        if (isSendClosed()) {
-            return Result.failure(IllegalStateException("cannot send. underlying stream is closed"))
-        }
-        return try {
-            onSend(buffer)
-            Result.success(Unit)
-        } catch (e: Throwable) {
-            Result.failure(e)
-        }
-    }
+    fun sendClose()
 
-    fun sendClose() {
-        if (!isSendClosed.getAndSet(true)) {
-            onSendClose()
-        }
-    }
-
-    fun receiveClose() {
-        if (!isReceiveClosed.getAndSet(true)) {
-            try {
-                onReceiveClose()
-            } finally {
-                // When receive side is closed, the send side is
-                // implicitly closed as well.
-                // We don't use sendClose() because we don't want to
-                // invoke onSendClose() since that will try to actually
-                // half-close the HTTP stream, which will fail since the
-                // closing the receive side cancels the entire thing.
-                isSendClosed.set(true)
-            }
-        }
-    }
+    fun receiveClose()
 
     // TODO: remove this method as it is redundant with receive closed
-    fun isClosed(): Boolean {
-        return isReceiveClosed()
-    }
+    fun isClosed(): Boolean
 
-    fun isSendClosed(): Boolean {
-        return isSendClosed.get()
-    }
+    fun isSendClosed(): Boolean
 
-    fun isReceiveClosed(): Boolean {
-        return isReceiveClosed.get()
+    fun isReceiveClosed(): Boolean
+}
+
+fun Stream(
+    onSend: suspend (Buffer) -> Result<Unit>,
+    onSendClose: () -> Unit = {},
+    onReceiveClose: () -> Unit = {},
+): Stream {
+    val isSendClosed = AtomicReference(false)
+    val isReceiveClosed = AtomicReference(false)
+    return object : Stream {
+        override suspend fun send(buffer: Buffer): Result<Unit> {
+            if (isSendClosed()) {
+                return Result.failure(IllegalStateException("cannot send. underlying stream is closed"))
+            }
+            return try {
+                onSend(buffer)
+            } catch (e: Throwable) {
+                Result.failure(e)
+            }
+        }
+
+        override fun sendClose() {
+            if (isSendClosed.compareAndSet(false, true)) {
+                onSendClose()
+            }
+        }
+
+        override fun receiveClose() {
+            if (isReceiveClosed.compareAndSet(false, true)) {
+                try {
+                    onReceiveClose()
+                } finally {
+                    // When receive side is closed, the send side is
+                    // implicitly closed as well.
+                    // We don't use sendClose() because we don't want to
+                    // invoke onSendClose() since that will try to actually
+                    // half-close the HTTP stream, which will fail since
+                    // closing the receive side cancels the entire thing.
+                    isSendClosed.set(true)
+                }
+            }
+        }
+
+        override fun isClosed(): Boolean {
+            return isReceiveClosed()
+        }
+
+        override fun isSendClosed(): Boolean {
+            return isSendClosed.get()
+        }
+
+        override fun isReceiveClosed(): Boolean {
+            return isReceiveClosed.get()
+        }
+    }
+}
+
+/**
+ * Returns a new stream that applies the given function to each
+ * buffer when send is called. The result of that function is
+ * what is passed along to the original stream.
+ */
+fun Stream.transform(apply: (Buffer) -> Buffer): Stream {
+    val delegate = this
+    return object : Stream {
+        override suspend fun send(buffer: Buffer): Result<Unit> {
+            return delegate.send(apply(buffer))
+        }
+        override fun sendClose() {
+            delegate.sendClose()
+        }
+        override fun receiveClose() {
+            delegate.receiveClose()
+        }
+        override fun isClosed(): Boolean {
+            return delegate.isClosed()
+        }
+        override fun isSendClosed(): Boolean {
+            return delegate.isSendClosed()
+        }
+        override fun isReceiveClosed(): Boolean {
+            return delegate.isReceiveClosed()
+        }
     }
 }

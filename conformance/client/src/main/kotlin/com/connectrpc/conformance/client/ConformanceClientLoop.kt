@@ -30,39 +30,43 @@ import java.io.OutputStream
 class ConformanceClientLoop(
     private val requestUnmarshaller: (ByteArray) -> ClientCompatRequest,
     private val responseMarshaller: (ClientCompatResponse) -> ByteArray,
-    private val verbosity: Int = 0,
+    private val verbose: VerbosePrinter,
 ) {
     fun run(input: InputStream, output: OutputStream, client: Client) = runBlocking {
         // TODO: issue RPCs in parallel
         while (true) {
             var result: ClientCompatResponse.Result
             val req = readRequest(input) ?: return@runBlocking // end of stream
-            if (verbosity > 0) {
-                System.err.println("* client: read request for test ${req.testName}")
+            verbose.verbosity(1) {
+                println("read request for test ${req.testName}")
+                verbose.verbosity(3) {
+                    println("RPC request:")
+                    indent().println("${req.raw}")
+                }
             }
             try {
                 val resp = client.handle(req)
                 result = ClientCompatResponse.Result.ResponseResult(resp)
-                if (verbosity > 0) {
-                    System.err.println("* client: RPC completed for test ${req.testName}")
+                verbose.verbosity(1) {
+                    println("RPC completed for test ${req.testName}")
                 }
-            } catch (e: Exception) {
-                if (verbosity > 0) {
-                    System.err.println("* client: RPC could not be issued for test ${req.testName}")
-                    e.printStackTrace()
+            } catch (ex: Exception) {
+                verbose.verbosity(1) {
+                    println("RPC could not be issued for test ${req.testName}")
+                    indent().println(ex.stackTraceToString())
                 }
-                val msg = if (e.message.orEmpty() == "") {
-                    e::class.qualifiedName.orEmpty()
+                val msg = if (ex.message.orEmpty() == "") {
+                    ex::class.qualifiedName.orEmpty()
                 } else {
-                    "${e::class.qualifiedName}: ${e.message}"
+                    "${ex::class.qualifiedName}: ${ex.message}"
                 }
                 result = ClientCompatResponse.Result.ErrorResult(msg)
             }
             if (result is ClientCompatResponse.Result.ResponseResult && result.response.error != null) {
-                if (verbosity > 2) {
+                verbose.verbosity(2) {
                     val ex = result.response.error!!
-                    System.err.println("* client: RPC failed with code ${ex.code}")
-                    ex.printStackTrace()
+                    println("RPC failed with code ${ex.code} for test ${req.testName}")
+                    indent().println(ex.stackTraceToString())
                 }
             }
             writeResponse(
@@ -72,6 +76,12 @@ class ConformanceClientLoop(
                     result = result,
                 ),
             )
+            if (result is ClientCompatResponse.Result.ResponseResult && result.response.raw != null) {
+                verbose.verbosity(3) {
+                    println("RPC result:")
+                    indent().println("${result.response.raw}")
+                }
+            }
         }
     }
 

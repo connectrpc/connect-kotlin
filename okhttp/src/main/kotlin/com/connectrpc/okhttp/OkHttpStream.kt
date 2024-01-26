@@ -19,7 +19,9 @@ import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType
@@ -34,7 +36,7 @@ import okio.BufferedSource
 import okio.Pipe
 import okio.buffer
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CountDownLatch
 
 /**
  * Extension function for OkHttpClient to initialize a stream.
@@ -47,12 +49,10 @@ internal fun OkHttpClient.initializeStream(
     duplex: Boolean,
     onResult: suspend (StreamResult<Buffer>) -> Unit,
 ): Stream {
-    val isSendClosed = AtomicBoolean(false)
-    val isReceiveClosed = AtomicBoolean(false)
-    val duplexRequestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
+    val requestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
-        .method(method, duplexRequestBody)
+        .method(method, requestBody)
     for (entry in request.headers) {
         for (values in entry.value) {
             builder.addHeader(entry.key, values)
@@ -60,39 +60,45 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(onResult))
+    // For non-duplex bodies, the request is complete when the
+    // response arrives.
+    val whenDone = if (!duplex) requestBody::close else { -> }
+    call.enqueue(ResponseCallback(onResult, whenDone))
     return Stream(
         onSend = { buffer ->
-            if (!isSendClosed.get()) {
-                duplexRequestBody.forConsume(buffer)
+            try {
+                requestBody.write(buffer)
+                Result.success(Unit)
+            } catch (ex: Throwable) {
+                Result.failure(ex)
             }
         },
         onSendClose = {
-            isSendClosed.set(true)
-            duplexRequestBody.close()
+            requestBody.close()
         },
         onReceiveClose = {
-            isReceiveClosed.set(true)
             call.cancel()
-            // cancelling implicitly closes send-side, too
-            isSendClosed.set(true)
+            whenDone()
         },
     )
 }
 
 private class ResponseCallback(
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
+    private val whenDone: () -> Unit,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
+        whenDone()
         runBlocking {
             onResult(StreamResult.Complete(codeFromException(call.isCanceled(), e), cause = e))
         }
     }
 
     override fun onResponse(call: Call, response: Response) {
+        whenDone()
         val code = Code.fromHTTPStatus(response.code)
+        val headers = response.headers.toLowerCaseKeysMultiMap()
         runBlocking {
-            val headers = response.headers.toLowerCaseKeysMultiMap()
             onResult(StreamResult.Headers(headers = headers))
             if (code != Code.OK) {
                 // TODO: This is not quite exercised yet. Validate if this is exercised in another test case.
@@ -177,15 +183,12 @@ internal class PipeRequestBody(
     pipeMaxBufferSize: Long = 1024 * 1024,
 ) : RequestBody() {
     private val pipe = Pipe(pipeMaxBufferSize)
+    private val closed = CountDownLatch(1)
 
-    private val bufferedSink by lazy { pipe.sink.buffer() }
-
-    fun forConsume(buffer: Buffer) {
+    suspend fun write(buffer: Buffer) = withContext(Dispatchers.IO) {
         try {
-            if (bufferedSink.isOpen) {
-                bufferedSink.writeAll(buffer)
-                bufferedSink.flush()
-            }
+            pipe.sink.write(buffer, buffer.size)
+            pipe.sink.flush()
         } catch (e: Throwable) {
             close()
             throw e
@@ -196,6 +199,12 @@ internal class PipeRequestBody(
 
     override fun writeTo(sink: BufferedSink) {
         pipe.fold(sink)
+        if (!duplex) {
+            // For non-duplex request bodies, okhttp3
+            // expects this method to return only when
+            // the request body is complete.
+            closed.await()
+        }
     }
 
     override fun isDuplex() = duplex
@@ -204,9 +213,12 @@ internal class PipeRequestBody(
 
     fun close() {
         try {
-            bufferedSink.close()
-        } catch (_: Throwable) {
+            pipe.sink.close()
+        } catch (ex: Throwable) {
+            ex.printStackTrace()
             // No-op
+        } finally {
+            closed.countDown()
         }
     }
 }

@@ -29,7 +29,16 @@ class JavaLiteServerStreamClient(
 ) {
     override suspend fun execute(req: ServerStreamRequest, headers: Headers): ResponseStream<ServerStreamResponse> {
         val stream = client.serverStream(headers)
-        stream.sendAndClose(req)
+        val sendResult: Result<Unit>
+        try {
+            sendResult = stream.sendAndClose(req)
+        } catch (ex: Throwable) {
+            stream.receiveClose()
+            throw ex
+        }
+        if (sendResult.isFailure) {
+            throw sendResult.exceptionOrNull()!!
+        }
         return ResponseStream.new(stream)
     }
 }

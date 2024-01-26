@@ -21,6 +21,7 @@ import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamResult
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
@@ -36,6 +37,12 @@ import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
+import com.connectrpc.http.Cancelable
+import com.connectrpc.http.HTTPClientInterface
+import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Stream
+import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
@@ -45,8 +52,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
+import okio.Buffer
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.cert.CertificateFactory
@@ -162,35 +171,45 @@ class Client(
             throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
         val stream = client.execute(req.requestHeaders)
-        var numUnsent = 0
-        for (i in req.requestMessages.indices) {
-            if (req.requestDelayMs > 0) {
-                delay(req.requestDelayMs.toLong())
-            }
-            val msg = fromAny(req.requestMessages[i], client.reqTemplate, CLIENT_STREAM_REQUEST_NAME)
-            try {
-                stream.send(msg)
-            } catch (_: Exception) {
-                numUnsent = req.requestMessages.size - i
-                break
-            }
-        }
-        when (val cancel = req.cancel) {
-            is Cancel.BeforeCloseSend -> {
-                stream.cancel()
-            }
-            is Cancel.AfterCloseSendMs -> {
-                launch {
-                    delay(cancel.millis.toLong())
-                    stream.cancel()
+        try {
+            var numUnsent = 0
+            for (i in req.requestMessages.indices) {
+                if (req.requestDelayMs > 0) {
+                    delay(req.requestDelayMs.toLong())
+                }
+                val msg = fromAny(req.requestMessages[i], client.reqTemplate, CLIENT_STREAM_REQUEST_NAME)
+                try {
+                    stream.send(msg)
+                } catch (ex: Exception) {
+                    args.verbose.verbosity(1) {
+                        println("Failed to send request message: ${ex.message.orEmpty()}")
+                        args.verbose.verbosity(2) {
+                            indent().println(ex.stackTraceToString())
+                        }
+                    }
+                    numUnsent = req.requestMessages.size - i
+                    break
                 }
             }
-            else -> {
-                // We already validated the case above.
-                // So this case means no cancellation.
+            when (val cancel = req.cancel) {
+                is Cancel.BeforeCloseSend -> {
+                    stream.cancel()
+                }
+                is Cancel.AfterCloseSendMs -> {
+                    launch {
+                        delay(cancel.millis.toLong())
+                        stream.cancel()
+                    }
+                }
+                else -> {
+                    // We already validated the case above.
+                    // So this case means no cancellation.
+                }
             }
+            return@coroutineScope unaryResult(numUnsent, stream.closeAndReceive())
+        } finally {
+            stream.cancel()
         }
-        return@coroutineScope unaryResult(numUnsent, stream.closeAndReceive())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleServer(
@@ -210,13 +229,38 @@ class Client(
             throw RuntimeException("server stream calls can only support `AfterCloseSendMs` and 'AfterNumResponses' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
         val msg = fromAny(req.requestMessages[0], client.reqTemplate, SERVER_STREAM_REQUEST_NAME)
-        val stream = client.execute(msg, req.requestHeaders)
-        val cancel = req.cancel
-        if (cancel is Cancel.AfterCloseSendMs) {
-            delay(cancel.millis.toLong())
+        val stream: ResponseStream<Resp>
+        try {
+            // TODO: should this throw? Maybe not...
+            // An alternative would be to have it return a
+            // stream that throws the relevant exception in
+            // calls to receive.
+            stream = client.execute(msg, req.requestHeaders)
+        } catch (ex: Throwable) {
+            val connEx = if (ex is ConnectException) {
+                ex
+            } else {
+                ConnectException(
+                    code = Code.UNKNOWN,
+                    message = ex.message,
+                    exception = ex,
+                )
+            }
+            return ClientResponseResult(
+                error = connEx,
+                numUnsentRequests = 1,
+            )
+        }
+        try {
+            val cancel = req.cancel
+            if (cancel is Cancel.AfterCloseSendMs) {
+                delay(cancel.millis.toLong())
+                stream.close()
+            }
+            return streamResult(0, stream, cancel)
+        } finally {
             stream.close()
         }
-        return streamResult(0, stream, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
@@ -238,35 +282,45 @@ class Client(
         req: ClientCompatRequest,
     ): ClientResponseResult {
         val stream = client.execute(req.requestHeaders)
-        var numUnsent = 0
-        for (i in req.requestMessages.indices) {
-            if (req.requestDelayMs > 0) {
-                delay(req.requestDelayMs.toLong())
+        try {
+            var numUnsent = 0
+            for (i in req.requestMessages.indices) {
+                if (req.requestDelayMs > 0) {
+                    delay(req.requestDelayMs.toLong())
+                }
+                val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+                try {
+                    stream.requests.send(msg)
+                } catch (ex: Exception) {
+                    args.verbose.verbosity(1) {
+                        println("Failed to send request message: ${ex.message.orEmpty()}")
+                        args.verbose.verbosity(2) {
+                            indent().println(ex.stackTraceToString())
+                        }
+                    }
+                    numUnsent = req.requestMessages.size - i
+                    break
+                }
             }
-            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
-            try {
-                stream.requests.send(msg)
-            } catch (_: Exception) {
-                numUnsent = req.requestMessages.size - i
-                break
+            val cancel = req.cancel
+            when (cancel) {
+                is Cancel.BeforeCloseSend -> {
+                    stream.responses.close() // cancel
+                    stream.requests.close() // close send
+                }
+                is Cancel.AfterCloseSendMs -> {
+                    stream.requests.close() // close send
+                    delay(cancel.millis.toLong())
+                    stream.responses.close() // cancel
+                }
+                else -> {
+                    stream.requests.close() // close send
+                }
             }
+            return streamResult(numUnsent, stream.responses, cancel)
+        } finally {
+            stream.responses.close()
         }
-        val cancel = req.cancel
-        when (cancel) {
-            is Cancel.BeforeCloseSend -> {
-                stream.responses.close() // cancel
-                stream.requests.close() // close send
-            }
-            is Cancel.AfterCloseSendMs -> {
-                stream.requests.close() // close send
-                delay(cancel.millis.toLong())
-                stream.responses.close() // cancel
-            }
-            else -> {
-                stream.requests.close() // close send
-            }
-        }
-        return streamResult(numUnsent, stream.responses, cancel)
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleFullDuplexBidi(
@@ -274,78 +328,86 @@ class Client(
         req: ClientCompatRequest,
     ): ClientResponseResult {
         val stream = client.execute(req.requestHeaders)
-        val cancel = req.cancel
-        val payloads: MutableList<MessageLite> = mutableListOf()
-        for (i in req.requestMessages.indices) {
-            if (req.requestDelayMs > 0) {
-                delay(req.requestDelayMs.toLong())
-            }
-            val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
-            try {
-                stream.requests.send(msg)
-            } catch (_: Exception) {
-                // Ignore. We should see it again below when we receive the response.
-            }
-
-            // In full-duplex mode, we read the response after writing request,
-            // to interleave the requests and responses.
-            if (i == 0 && cancel is Cancel.AfterNumResponses && cancel.num == 0) {
-                stream.responses.close()
-            }
-            try {
-                val resp = stream.responses.messages.receive()
-                payloads.add(payloadExtractor(resp))
-                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
-                    stream.responses.close()
-                }
-            } catch (ex: ConnectException) {
-                return ClientResponseResult(
-                    headers = stream.responses.headers(),
-                    payloads = payloads,
-                    error = ex,
-                    trailers = ex.metadata,
-                    numUnsentRequests = req.requestMessages.size - i,
-                )
-            }
-        }
-        when (cancel) {
-            is Cancel.BeforeCloseSend -> {
-                stream.responses.close() // cancel
-                stream.requests.close() // close send
-            }
-            is Cancel.AfterCloseSendMs -> {
-                stream.requests.close() // close send
-                delay(cancel.millis.toLong())
-                stream.responses.close() // cancel
-            }
-            else -> {
-                stream.requests.close() // close send
-            }
-        }
-
-        // Drain the response, in case there are any other messages.
-        var connEx: ConnectException? = null
-        var trailers: Headers
         try {
-            for (resp in stream.responses.messages) {
-                payloads.add(payloadExtractor(resp))
-                if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+            val cancel = req.cancel
+            val payloads: MutableList<MessageLite> = mutableListOf()
+            for (i in req.requestMessages.indices) {
+                if (req.requestDelayMs > 0) {
+                    delay(req.requestDelayMs.toLong())
+                }
+                val msg = fromAny(req.requestMessages[i], client.reqTemplate, BIDI_STREAM_REQUEST_NAME)
+                try {
+                    stream.requests.send(msg)
+                } catch (ex: Exception) {
+                    args.verbose.verbosity(1) {
+                        println("Failed to send request message: ${ex.message.orEmpty()}")
+                        args.verbose.verbosity(2) {
+                            indent().println(ex.stackTraceToString())
+                        }
+                    }
+                    // Ignore. We should see it again below when we receive the response.
+                }
+
+                // In full-duplex mode, we read the response after writing request,
+                // to interleave the requests and responses.
+                if (i == 0 && cancel is Cancel.AfterNumResponses && cancel.num == 0) {
                     stream.responses.close()
                 }
+                try {
+                    val resp = stream.responses.messages.receive()
+                    payloads.add(payloadExtractor(resp))
+                    if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                        stream.responses.close()
+                    }
+                } catch (ex: ConnectException) {
+                    return ClientResponseResult(
+                        headers = stream.responses.headers(),
+                        payloads = payloads,
+                        error = ex,
+                        trailers = ex.metadata,
+                        numUnsentRequests = req.requestMessages.size - i,
+                    )
+                }
             }
-            trailers = stream.responses.trailers()
-        } catch (ex: ConnectException) {
-            connEx = ex
-            trailers = ex.metadata
+            when (cancel) {
+                is Cancel.BeforeCloseSend -> {
+                    stream.responses.close() // cancel
+                    stream.requests.close() // close send
+                }
+                is Cancel.AfterCloseSendMs -> {
+                    stream.requests.close() // close send
+                    delay(cancel.millis.toLong())
+                    stream.responses.close() // cancel
+                }
+                else -> {
+                    stream.requests.close() // close send
+                }
+            }
+
+            // Drain the response, in case there are any other messages.
+            var connEx: ConnectException? = null
+            var trailers: Headers
+            try {
+                for (resp in stream.responses.messages) {
+                    payloads.add(payloadExtractor(resp))
+                    if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
+                        stream.responses.close()
+                    }
+                }
+                trailers = stream.responses.trailers()
+            } catch (ex: ConnectException) {
+                connEx = ex
+                trailers = ex.metadata
+            }
+            return ClientResponseResult(
+                headers = stream.responses.headers(),
+                payloads = payloads,
+                error = connEx,
+                trailers = trailers,
+            )
         } finally {
             stream.responses.close()
         }
-        return ClientResponseResult(
-            headers = stream.responses.headers(),
-            payloads = payloads,
-            error = connEx,
-            trailers = trailers,
-        )
     }
 
     private fun unaryResult(numUnsent: Int, result: ResponseMessage<out MessageLite>): ClientResponseResult {
@@ -393,8 +455,6 @@ class Client(
         } catch (ex: ConnectException) {
             connEx = ex
             trailers = ex.metadata
-        } finally {
-            stream.close()
         }
         return ClientResponseResult(
             headers = stream.headers(),
@@ -414,6 +474,12 @@ class Client(
         var clientBuilder = OkHttpClient.Builder()
             .protocols(asOkHttpProtocols(req.httpVersion, useTls))
             .connectTimeout(Duration.ofMinutes(1))
+
+        val printer = args.verbose.withPrefix("okhttp3: ")
+        printer.verbosity(5) {
+            clientBuilder = clientBuilder.eventListener(OkHttpEventTracer(this))
+        }
+
         if (useTls) {
             val certs = certs(req)
             clientBuilder = clientBuilder.sslSocketFactory(certs.sslSocketFactory(), certs.trustManager)
@@ -436,10 +502,14 @@ class Client(
                 emptyList()
             }
         val httpClient = clientBuilder.build()
+        var connectHttpClient: HTTPClientInterface = ConnectOkHttpClient(httpClient)
+        args.verbose.withPrefix("HTTP client interface: ").verbosity(3) {
+            connectHttpClient = TracingClient(connectHttpClient, this)
+        }
         return Pair(
             httpClient,
             ProtocolClient(
-                httpClient = ConnectOkHttpClient(httpClient),
+                httpClient = connectHttpClient,
                 ProtocolClientConfig(
                     host = host,
                     serializationStrategy = serializationStrategy,
@@ -512,5 +582,103 @@ class Client(
         return msgClass.cast(
             template.newBuilderForType().mergeFrom(any.value).build(),
         )
+    }
+
+    private class TracingClient(
+        private val delegate: HTTPClientInterface,
+        private val printer: VerbosePrinter.Printer,
+    ) : HTTPClientInterface {
+        override fun unary(request: UnaryHTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
+            printer.printlnWithStackTrace("Sending unary request (${request.message.size} bytes): ${request.httpMethod} ${request.url}")
+            val cancel = delegate.unary(request) { response ->
+                val buffer = Buffer()
+                buffer.writeAll(response.message)
+                if (response.cause != null) {
+                    printer.println("Failed to receive HTTP response (${buffer.size} bytes): ${response.cause!!.message.orEmpty()}")
+                    printer.indent().println(response.cause!!.stackTraceToString())
+                } else {
+                    printer.println("Received HTTP response (${buffer.size} bytes): ${response.tracingInfo?.httpStatus ?: "???"}")
+                }
+                onResult(
+                    HTTPResponse(
+                        code = response.code,
+                        headers = response.headers,
+                        message = buffer,
+                        trailers = response.trailers,
+                        tracingInfo = response.tracingInfo,
+                        cause = response.cause,
+                    ),
+                )
+            }
+            return {
+                printer.println("Canceling HTTP request...")
+                cancel()
+            }
+        }
+
+        override fun stream(
+            request: HTTPRequest,
+            duplex: Boolean,
+            onResult: suspend (StreamResult<Buffer>) -> Unit,
+        ): Stream {
+            printer.printlnWithStackTrace("Sending HTTP stream request: ${request.httpMethod} ${request.url}")
+            val stream = delegate.stream(request, duplex) { result ->
+                when (result) {
+                    is StreamResult.Headers -> {
+                        printer.printlnWithStackTrace("Received HTTP response headers")
+                    }
+                    is StreamResult.Message -> {
+                        printer.printlnWithStackTrace("Received HTTP response data (${result.message.size} bytes)")
+                    }
+                    is StreamResult.Complete -> {
+                        if (result.cause != null) {
+                            printer.printlnWithStackTrace("Failed to complete HTTP response (code=${result.code}): ${result.cause!!.message.orEmpty()}")
+                        } else {
+                            printer.printlnWithStackTrace("Received HTTP response completion: code=${result.code}")
+                        }
+                    }
+                }
+                onResult(result)
+            }
+            return TracingStream(stream, printer)
+        }
+    }
+
+    private class TracingStream(
+        private val delegate: Stream,
+        private val printer: VerbosePrinter.Printer,
+    ) : Stream {
+        override suspend fun send(buffer: Buffer): Result<Unit> {
+            val size = buffer.size
+            val res = delegate.send(buffer)
+            if (res.isFailure) {
+                printer.printlnWithStackTrace("Failed to send HTTP request data ($size bytes): ${res.exceptionOrNull()!!.message}")
+            } else {
+                printer.printlnWithStackTrace("Sent HTTP request data ($size bytes)")
+            }
+            return res
+        }
+
+        override fun sendClose() {
+            printer.printlnWithStackTrace("Half-closing stream")
+            delegate.sendClose()
+        }
+
+        override fun receiveClose() {
+            printer.printlnWithStackTrace("Closing stream")
+            delegate.receiveClose()
+        }
+
+        override fun isClosed(): Boolean {
+            return delegate.isClosed()
+        }
+
+        override fun isSendClosed(): Boolean {
+            return delegate.isSendClosed()
+        }
+
+        override fun isReceiveClosed(): Boolean {
+            return delegate.isReceiveClosed()
+        }
     }
 }

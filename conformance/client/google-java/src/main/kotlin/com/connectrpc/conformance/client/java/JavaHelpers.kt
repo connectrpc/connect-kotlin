@@ -84,7 +84,9 @@ class JavaHelpers {
                     if (err != null) {
                         respBuilder.setError(toProtoError(err))
                     }
-                    builder.setResponse(respBuilder)
+                    val respMsg = respBuilder.build()
+                    result.response.raw = respMsg
+                    builder.setResponse(respMsg)
                 }
                 is ClientCompatResponse.Result.ErrorResult -> {
                     builder.setError(
@@ -166,6 +168,8 @@ class JavaHelpers {
     private class ClientCompatRequestImpl(
         private val msg: com.connectrpc.conformance.v1.ClientCompatRequest,
     ) : ClientCompatRequest {
+        override val raw: kotlin.Any
+            get() = msg
         override val testName: String
             get() = msg.testName
         override val service: String

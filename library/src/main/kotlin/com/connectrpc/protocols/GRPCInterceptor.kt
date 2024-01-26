@@ -24,6 +24,7 @@ import com.connectrpc.StreamResult
 import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.clone
 import okio.Buffer
 
 /**
@@ -46,16 +47,10 @@ internal class GRPCInterceptor(
                     requestHeaders[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
                         .map { compressionPool -> compressionPool.name() }
                 }
-                val requestMessage = Buffer().use { buffer ->
-                    if (request.message != null) {
-                        buffer.write(request.message)
-                    }
-                    buffer
-                }
                 val requestCompression = clientConfig.requestCompression
                 // GRPC unary payloads are enveloped.
                 val envelopedMessage = Envelope.pack(
-                    requestMessage,
+                    request.message,
                     requestCompression?.compressionPool,
                     requestCompression?.minBytes,
                 )
@@ -64,7 +59,7 @@ internal class GRPCInterceptor(
                     // The underlying content type is overridden here.
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
                     headers = requestHeaders.withGRPCRequestHeaders(),
-                    message = envelopedMessage.readByteArray(),
+                    message = envelopedMessage,
                 )
             },
             responseFunction = { response ->
@@ -128,7 +123,6 @@ internal class GRPCInterceptor(
                     url = request.url,
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
                     headers = request.headers.withGRPCRequestHeaders(),
-                    message = request.message,
                 )
             },
             requestBodyFunction = { buffer ->
@@ -163,19 +157,43 @@ internal class GRPCInterceptor(
                     onCompletion = { result ->
                         val trailers = result.trailers
                         val completion = completionParser.parse(emptyMap(), trailers)
+                        if (completion == null && result.cause != null) {
+                            // let error result propagate
+                            return@fold result
+                        }
+                        val exception: ConnectException?
                         if (completion != null) {
-                            val exception = completion.toConnectExceptionOrNull(
+                            exception = completion.toConnectExceptionOrNull(
                                 serializationStrategy,
                                 result.cause,
                             )
-                            StreamResult.Complete(
-                                code = exception?.code ?: Code.OK,
-                                cause = exception,
-                                trailers = trailers,
-                            )
                         } else {
-                            result
+                            exception = ConnectException(
+                                code = Code.INTERNAL_ERROR,
+                                errorDetailParser = serializationStrategy.errorDetailParser(),
+                                message = "protocol error: status is missing from trailers",
+                                metadata = trailers,
+                            )
                         }
+                        StreamResult.Complete(
+                            code = exception?.code ?: Code.OK,
+                            cause = exception,
+                            trailers = trailers,
+                        )
+
+//                        if (completion != null) {
+//                            val exception = completion.toConnectExceptionOrNull(
+//                                serializationStrategy,
+//                                result.cause,
+//                            )
+//                            StreamResult.Complete(
+//                                code = exception?.code ?: Code.OK,
+//                                cause = exception,
+//                                trailers = trailers,
+//                            )
+//                        } else {
+//                            result
+//                        }
                     },
                 )
             },
