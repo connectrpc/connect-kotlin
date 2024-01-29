@@ -34,7 +34,7 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.Pipe
-import okio.buffer
+import okio.withLock
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 
@@ -183,12 +183,26 @@ internal class PipeRequestBody(
     pipeMaxBufferSize: Long = 1024 * 1024,
 ) : RequestBody() {
     private val pipe = Pipe(pipeMaxBufferSize)
+
+    /**
+     * Lock used to provide extra synchronization so that fold, write, and
+     * close can work correctly in the face of concurrency.
+     *
+     * See https://github.com/square/okio/issues/1412
+     */
+    private val pipeLock = pipe.lock
+
+    /**
+     * Latch that signals when the pipe's sink is closed.
+     */
     private val closed = CountDownLatch(1)
 
     suspend fun write(buffer: Buffer) = withContext(Dispatchers.IO) {
         try {
-            pipe.sink.write(buffer, buffer.size)
-            pipe.sink.flush()
+            pipeLock.withLock {
+                pipe.sink.write(buffer, buffer.size)
+                pipe.sink.flush()
+            }
         } catch (e: Throwable) {
             close()
             throw e
@@ -198,7 +212,9 @@ internal class PipeRequestBody(
     override fun contentType() = contentType
 
     override fun writeTo(sink: BufferedSink) {
-        pipe.fold(sink)
+        pipeLock.withLock {
+            pipe.fold(sink)
+        }
         if (!duplex) {
             // For non-duplex request bodies, okhttp3
             // expects this method to return only when
@@ -213,9 +229,10 @@ internal class PipeRequestBody(
 
     fun close() {
         try {
-            pipe.sink.close()
+            pipeLock.withLock {
+                pipe.sink.close()
+            }
         } catch (ex: Throwable) {
-            ex.printStackTrace()
             // No-op
         } finally {
             closed.countDown()

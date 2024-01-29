@@ -24,7 +24,7 @@ import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
 
-class OkHttpEventTracer(
+internal class OkHttpEventTracer(
     private val printer: VerbosePrinter.Printer,
 ) : EventListener() {
     override fun connectStart(call: Call, inetSocketAddress: InetSocketAddress, proxy: Proxy) {
