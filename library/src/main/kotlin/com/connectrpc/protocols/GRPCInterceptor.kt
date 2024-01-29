@@ -180,20 +180,6 @@ internal class GRPCInterceptor(
                             cause = exception,
                             trailers = trailers,
                         )
-
-//                        if (completion != null) {
-//                            val exception = completion.toConnectExceptionOrNull(
-//                                serializationStrategy,
-//                                result.cause,
-//                            )
-//                            StreamResult.Complete(
-//                                code = exception?.code ?: Code.OK,
-//                                cause = exception,
-//                                trailers = trailers,
-//                            )
-//                        } else {
-//                            result
-//                        }
                     },
                 )
             },

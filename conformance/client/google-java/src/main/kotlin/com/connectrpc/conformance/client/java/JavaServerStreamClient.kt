@@ -29,6 +29,16 @@ class JavaServerStreamClient(
 ) {
     override suspend fun execute(req: ServerStreamRequest, headers: Headers): ResponseStream<ServerStreamResponse> {
         val stream = client.serverStream(headers)
+        val sendResult: Result<Unit>
+        try {
+            sendResult = stream.sendAndClose(req)
+            if (sendResult.isFailure) {
+                throw sendResult.exceptionOrNull()!!
+            }
+        } catch (ex: Throwable) {
+            stream.receiveClose()
+            throw ex
+        }
         stream.sendAndClose(req)
         return ResponseStream.new(stream)
     }

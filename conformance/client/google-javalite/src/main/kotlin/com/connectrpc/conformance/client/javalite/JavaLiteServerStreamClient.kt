@@ -32,12 +32,12 @@ class JavaLiteServerStreamClient(
         val sendResult: Result<Unit>
         try {
             sendResult = stream.sendAndClose(req)
+            if (sendResult.isFailure) {
+                throw sendResult.exceptionOrNull()!!
+            }
         } catch (ex: Throwable) {
             stream.receiveClose()
             throw ex
-        }
-        if (sendResult.isFailure) {
-            throw sendResult.exceptionOrNull()!!
         }
         return ResponseStream.new(stream)
     }
