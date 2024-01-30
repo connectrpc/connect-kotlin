@@ -34,7 +34,6 @@ import okio.BufferedSource
 import okio.Pipe
 import okio.buffer
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Extension function for OkHttpClient to initialize a stream.
@@ -47,12 +46,10 @@ internal fun OkHttpClient.initializeStream(
     duplex: Boolean,
     onResult: suspend (StreamResult<Buffer>) -> Unit,
 ): Stream {
-    val isSendClosed = AtomicBoolean(false)
-    val isReceiveClosed = AtomicBoolean(false)
-    val duplexRequestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
+    val requestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
-        .method(method, duplexRequestBody)
+        .method(method, requestBody)
     for (entry in request.headers) {
         for (values in entry.value) {
             builder.addHeader(entry.key, values)
@@ -63,19 +60,18 @@ internal fun OkHttpClient.initializeStream(
     call.enqueue(ResponseCallback(onResult))
     return Stream(
         onSend = { buffer ->
-            if (!isSendClosed.get()) {
-                duplexRequestBody.forConsume(buffer)
+            try {
+                requestBody.write(buffer)
+                Result.success(Unit)
+            } catch (ex: Throwable) {
+                Result.failure(ex)
             }
         },
         onSendClose = {
-            isSendClosed.set(true)
-            duplexRequestBody.close()
+            requestBody.close()
         },
         onReceiveClose = {
-            isReceiveClosed.set(true)
             call.cancel()
-            // cancelling implicitly closes send-side, too
-            isSendClosed.set(true)
         },
     )
 }
@@ -180,7 +176,7 @@ internal class PipeRequestBody(
 
     private val bufferedSink by lazy { pipe.sink.buffer() }
 
-    fun forConsume(buffer: Buffer) {
+    fun write(buffer: Buffer) {
         try {
             if (bufferedSink.isOpen) {
                 bufferedSink.writeAll(buffer)
