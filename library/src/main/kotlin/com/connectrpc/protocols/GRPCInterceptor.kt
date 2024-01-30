@@ -157,19 +157,29 @@ internal class GRPCInterceptor(
                     onCompletion = { result ->
                         val trailers = result.trailers
                         val completion = completionParser.parse(emptyMap(), trailers)
+                        if (completion == null && result.cause != null) {
+                            // let error result propagate
+                            return@fold result
+                        }
+                        val exception: ConnectException?
                         if (completion != null) {
-                            val exception = completion.toConnectExceptionOrNull(
+                            exception = completion.toConnectExceptionOrNull(
                                 serializationStrategy,
                                 result.cause,
                             )
-                            StreamResult.Complete(
-                                code = exception?.code ?: Code.OK,
-                                cause = exception,
-                                trailers = trailers,
-                            )
                         } else {
-                            result
+                            exception = ConnectException(
+                                code = Code.INTERNAL_ERROR,
+                                errorDetailParser = serializationStrategy.errorDetailParser(),
+                                message = "protocol error: status is missing from trailers",
+                                metadata = trailers,
+                            )
                         }
+                        StreamResult.Complete(
+                            code = exception?.code ?: Code.OK,
+                            cause = exception,
+                            trailers = trailers,
+                        )
                     },
                 )
             },

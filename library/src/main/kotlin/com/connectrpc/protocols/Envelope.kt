@@ -30,26 +30,23 @@ class Envelope {
          * @param compressionMinBytes The minimum bytes the source needs to be in order to be compressed.
          */
         fun pack(source: Buffer, compressionPool: CompressionPool? = null, compressionMinBytes: Int? = null): Buffer {
+            val flags: Int
+            val payload: Buffer
             if (compressionMinBytes == null ||
                 source.size < compressionMinBytes ||
                 compressionPool == null
             ) {
-                return source.use {
-                    val result = Buffer()
-                    result.writeByte(0)
-                    result.writeInt(source.buffer.size.toInt())
-                    result.writeAll(source)
-                    result
-                }
+                flags = 0
+                payload = source
+            } else {
+                flags = 1
+                payload = compressionPool.compress(source)
             }
-            return source.use { buffer ->
-                val result = Buffer()
-                result.writeByte(1)
-                val compressedBuffer = compressionPool.compress(buffer)
-                result.writeInt(compressedBuffer.size.toInt())
-                result.writeAll(compressedBuffer)
-                result
-            }
+            val result = Buffer()
+            result.writeByte(flags)
+            result.writeInt(payload.buffer.size.toInt())
+            result.writeAll(payload)
+            return result
         }
 
         /**

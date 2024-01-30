@@ -37,15 +37,15 @@ interface CompressionPool {
 
     /**
      * Compress an outbound request message.
-     * @param buffer: The uncompressed request message.
+     * @param input: The uncompressed request message.
      * @return The compressed request message.
      */
-    fun compress(buffer: Buffer): Buffer
+    fun compress(input: Buffer): Buffer
 
     /**
      * Decompress an inbound response message.
-     * @param buffer: The compressed response message.
+     * @param input: The compressed response message.
      * @return The uncompressed response message.
      */
-    fun decompress(buffer: Buffer): Buffer
+    fun decompress(input: Buffer): Buffer
 }
