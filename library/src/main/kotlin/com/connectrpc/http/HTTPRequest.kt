@@ -16,6 +16,7 @@ package com.connectrpc.http
 
 import com.connectrpc.Headers
 import com.connectrpc.MethodSpec
+import okio.Buffer
 import java.net.URL
 
 internal object HTTPMethod {
@@ -24,50 +25,89 @@ internal object HTTPMethod {
 }
 
 /**
- * HTTP request used for sending primitive data to the server.
+ * HTTP request used to initiate RPCs.
  */
-class HTTPRequest internal constructor(
+open class HTTPRequest internal constructor(
     // The URL for the request.
     val url: URL,
     // Value to assign to the `content-type` header.
     val contentType: String,
     // Additional outbound headers for the request.
     val headers: Headers,
-    // Body data to send with the request.
-    val message: ByteArray? = null,
     // The method spec associated with the request.
     val methodSpec: MethodSpec<*, *>,
     // HTTP method to use with the request.
     // Almost always POST, but side effect free unary RPCs may be made with GET.
     val httpMethod: String = HTTPMethod.POST,
-) {
-    /**
-     * Clones the [HTTPRequest] with override values.
-     *
-     * Intended to make mutations for [HTTPRequest] safe for
-     * [com.connectrpc.Interceptor] implementation.
-     */
-    fun clone(
-        // The URL for the request.
-        url: URL = this.url,
-        // Value to assign to the `content-type` header.
-        contentType: String = this.contentType,
-        // Additional outbound headers for the request.
-        headers: Headers = this.headers,
-        // Body data to send with the request.
-        message: ByteArray? = this.message,
-        // The method spec associated with the request.
-        methodSpec: MethodSpec<*, *> = this.methodSpec,
-        // The HTTP method to use with the request.
-        httpMethod: String = this.httpMethod,
-    ): HTTPRequest {
-        return HTTPRequest(
-            url,
-            contentType,
-            headers,
-            message,
-            methodSpec,
-            httpMethod,
-        )
-    }
+)
+
+/**
+ * Clones the [HTTPRequest] with override values.
+ *
+ * Intended to make mutations for [HTTPRequest] safe for
+ * [com.connectrpc.Interceptor] implementation.
+ */
+fun HTTPRequest.clone(
+    // The URL for the request.
+    url: URL = this.url,
+    // Value to assign to the `content-type` header.
+    contentType: String = this.contentType,
+    // Additional outbound headers for the request.
+    headers: Headers = this.headers,
+    // The method spec associated with the request.
+    methodSpec: MethodSpec<*, *> = this.methodSpec,
+    // The HTTP method to use with the request.
+    httpMethod: String = this.httpMethod,
+): HTTPRequest {
+    return HTTPRequest(
+        url,
+        contentType,
+        headers,
+        methodSpec,
+        httpMethod,
+    )
+}
+
+/**
+ * HTTP request used to initiate unary RPCs. In addition
+ * to RPC metadata, this also includes the request data.
+ */
+class UnaryHTTPRequest(
+    // The URL for the request.
+    url: URL,
+    // Value to assign to the `content-type` header.
+    contentType: String,
+    // Additional outbound headers for the request.
+    headers: Headers,
+    // The method spec associated with the request.
+    methodSpec: MethodSpec<*, *>,
+    // Body data for the request.
+    val message: Buffer,
+    // HTTP method to use with the request.
+    // Almost always POST, but side effect free unary RPCs may be made with GET.
+    httpMethod: String = HTTPMethod.POST,
+) : HTTPRequest(url, contentType, headers, methodSpec, httpMethod)
+
+fun UnaryHTTPRequest.clone(
+    // The URL for the request.
+    url: URL = this.url,
+    // Value to assign to the `content-type` header.
+    contentType: String = this.contentType,
+    // Additional outbound headers for the request.
+    headers: Headers = this.headers,
+    // The method spec associated with the request.
+    methodSpec: MethodSpec<*, *> = this.methodSpec,
+    // Body data for the request.
+    message: Buffer = this.message,
+    // The HTTP method to use with the request.
+    httpMethod: String = this.httpMethod,
+): UnaryHTTPRequest {
+    return UnaryHTTPRequest(
+        url,
+        contentType,
+        headers,
+        methodSpec,
+        message,
+        httpMethod,
+    )
 }

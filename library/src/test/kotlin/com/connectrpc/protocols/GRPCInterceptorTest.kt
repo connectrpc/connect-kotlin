@@ -28,10 +28,10 @@ import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.TracingInfo
+import com.connectrpc.http.UnaryHTTPRequest
 import com.squareup.moshi.Moshi
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import okio.internal.commonAsUtf8ToByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -65,10 +65,11 @@ class GRPCInterceptorTest {
         val unaryFunction = grpcInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
+                message = Buffer(),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -93,10 +94,11 @@ class GRPCInterceptorTest {
         val unaryFunction = grpcInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value"), "User-Agent" to listOf("my-custom-user-agent")),
+                message = Buffer(),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -120,11 +122,11 @@ class GRPCInterceptorTest {
         val unaryFunction = grpcInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
+                message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -133,7 +135,7 @@ class GRPCInterceptorTest {
                 ),
             ),
         )
-        val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
+        val (_, message) = Envelope.unpackWithHeaderByte(request.message)
         assertThat(message.readUtf8()).isEqualTo("message")
     }
 
@@ -149,11 +151,11 @@ class GRPCInterceptorTest {
         val unaryFunction = grpcInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
+                message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -162,7 +164,7 @@ class GRPCInterceptorTest {
                 ),
             ),
         )
-        val (_, message) = Envelope.unpackWithHeaderByte(Buffer().write(request.message!!))
+        val (_, message) = Envelope.unpackWithHeaderByte(request.message)
         val decompressed = GzipCompressionPool.decompress(message)
         assertThat(decompressed.readUtf8()).isEqualTo("message")
     }

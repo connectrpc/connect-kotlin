@@ -21,6 +21,7 @@ import com.connectrpc.SerializationStrategy
 import com.connectrpc.StreamType
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.UnaryHTTPRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -50,7 +51,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) { _ -> }
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
@@ -67,7 +68,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) { _ -> }
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
@@ -84,7 +85,7 @@ class ProtocolClientTest {
                 emptyMap(),
                 createMethodSpec(StreamType.BIDI),
             )
-            val captor = argumentCaptor<HTTPRequest>()
+            val captor = argumentCaptor<UnaryHTTPRequest>()
             verify(httpClient).stream(captor.capture(), true, any())
             assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
         }
@@ -119,7 +120,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) {}
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
@@ -135,7 +136,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) {}
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/com.connectrpc.SomeService/Service")
     }
@@ -151,7 +152,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) {}
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/api/com.connectrpc.SomeService/Service")
     }
@@ -167,7 +168,7 @@ class ProtocolClientTest {
             emptyMap(),
             createMethodSpec(StreamType.UNARY),
         ) {}
-        val captor = argumentCaptor<HTTPRequest>()
+        val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/api/com.connectrpc.SomeService/Service")
     }

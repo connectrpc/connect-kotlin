@@ -30,11 +30,10 @@ import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.TracingInfo
+import com.connectrpc.http.UnaryHTTPRequest
 import com.squareup.moshi.Moshi
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import okio.internal.commonAsUtf8ToByteArray
-import okio.internal.commonToUtf8String
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -71,10 +70,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
+                message = Buffer(),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -102,10 +102,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
+                message = Buffer(),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -129,11 +130,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
+                message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -142,7 +143,7 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        assertThat(request.message!!.commonToUtf8String()).isEqualTo("message")
+        assertThat(request.message.readUtf8()).isEqualTo("message")
     }
 
     @Test
@@ -157,11 +158,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "message".commonAsUtf8ToByteArray(),
+                message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -170,7 +171,7 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        val decompressed = GzipCompressionPool.decompress(Buffer().write(request.message!!))
+        val decompressed = GzipCompressionPool.decompress(request.message)
         assertThat(decompressed.readUtf8()).isEqualTo("message")
     }
 
@@ -186,11 +187,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = emptyMap(),
-                message = "".commonAsUtf8ToByteArray(),
+                message = Buffer(),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -199,7 +200,7 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        val decompressed = GzipCompressionPool.decompress(Buffer().write(request.message!!))
+        val decompressed = GzipCompressionPool.decompress(request.message)
         assertThat(decompressed.readUtf8()).isEqualTo("")
     }
 
@@ -679,11 +680,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
-                message = ByteArray(5_000),
+                message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -716,11 +717,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
-                message = ByteArray(5_000),
+                message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -745,11 +746,11 @@ class ConnectInterceptorTest {
         val connectInterceptor = ConnectInterceptor(config)
         val unaryFunction = connectInterceptor.unaryFunction()
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
-                message = ByteArray(5_000),
+                message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
@@ -779,11 +780,11 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
 
         val request = unaryFunction.requestFunction(
-            HTTPRequest(
+            UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
                 headers = mapOf("key" to listOf("value")),
-                message = ByteArray(5_000),
+                message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
                     path = "",
                     requestClass = Any::class,
