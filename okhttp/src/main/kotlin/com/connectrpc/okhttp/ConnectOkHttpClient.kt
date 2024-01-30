@@ -68,7 +68,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     // retrying it.
                     if (resp.code == 408 && isConnectUnary(chain.request())) {
                         val mediaType = resp.headers["Content-Type"]?.toMediaTypeOrNull()
-                        if (mediaType != null && mediaType.toString() == "application/json") {
+                        if (mediaType != null && mediaType.type == "application" && mediaType.subtype == "json") {
                             return resp
                                 .newBuilder()
                                 .code(499)
