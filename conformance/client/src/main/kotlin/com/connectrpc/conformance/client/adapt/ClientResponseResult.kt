@@ -31,4 +31,9 @@ class ClientResponseResult(
     val trailers: Headers = emptyMap(),
     val error: ConnectException? = null,
     val numUnsentRequests: Int = 0,
+
+    /**
+     * Set to underlying message or object during marshal.
+     */
+    var raw: Any? = null,
 )
