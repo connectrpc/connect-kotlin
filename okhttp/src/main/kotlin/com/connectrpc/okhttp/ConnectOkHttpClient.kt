@@ -31,6 +31,7 @@ import okhttp3.Callback
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -66,9 +67,13 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     // transform the error in a network interceptor to prevent okhttp from
                     // retrying it.
                     if (resp.code == 408 && isConnectUnary(chain.request())) {
-                        val contentType = resp.headers["Content-Type"]
-                        if (contentType == "application/json" || contentType == "application/json; charset=utf-8") {
-                            return resp.newBuilder().code(499).build()
+                        val mediaType = resp.headers["Content-Type"]?.toMediaTypeOrNull()
+                        if (mediaType != null && mediaType.toString() == "application/json") {
+                            return resp
+                                .newBuilder()
+                                .code(499)
+                                .message(resp.message + REVISED_CODE_SUFFIX)
+                                .build()
                         }
                     }
                     return resp
@@ -132,13 +137,14 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                             buffer.writeAll(bufferedSource)
                             buffer
                         }
+                        val originalStatus = response.originalCode()
                         onResult(
                             HTTPResponse(
-                                code = Code.fromHTTPStatus(response.code),
+                                code = Code.fromHTTPStatus(originalStatus),
                                 headers = response.headers.toLowerCaseKeysMultiMap(),
                                 message = responseBuffer ?: Buffer(),
                                 trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                                tracingInfo = TracingInfo(response.code),
+                                tracingInfo = TracingInfo(httpStatus = originalStatus),
                             ),
                         )
                     }
@@ -188,5 +194,18 @@ internal fun codeFromException(callCanceled: Boolean, e: Exception): Code {
         Code.CANCELED
     } else {
         Code.UNKNOWN
+    }
+}
+
+internal const val REVISED_CODE_SUFFIX = " |originally 408|"
+
+internal fun Response.originalCode() : Int {
+    // 499 code could have been translated from 408 on the wire
+    // (via network interceptor, to avoid okhttp's auto-retry on
+    // 408 status codes). If so, return the original 408.
+    return if (code == 499 && message.endsWith(REVISED_CODE_SUFFIX)) {
+        408
+    } else {
+        code
     }
 }

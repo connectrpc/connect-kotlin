@@ -94,7 +94,7 @@ private class ResponseCallback(
 
     override fun onResponse(call: Call, response: Response) {
         whenDone()
-        val code = Code.fromHTTPStatus(response.code)
+        val code = Code.fromHTTPStatus(response.originalCode())
         runBlocking {
             val headers = response.headers.toLowerCaseKeysMultiMap()
             onResult(StreamResult.Headers(headers = headers))
