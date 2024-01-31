@@ -56,6 +56,8 @@ interface ClientCompatRequest {
     val requestMessages: List<AnyMessage>
     val cancel: Cancel?
 
+    val raw: Any // the underlying message or object
+
     interface TlsCreds {
         val cert: ByteString
         val key: ByteString

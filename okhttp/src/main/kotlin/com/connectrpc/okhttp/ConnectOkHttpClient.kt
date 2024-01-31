@@ -216,7 +216,7 @@ internal fun codeFromException(callCanceled: Boolean, e: Exception): Code {
 
 internal const val REVISED_CODE_SUFFIX = " |originally 408|"
 
-internal fun Response.originalCode(): Int {
+fun Response.originalCode(): Int {
     // 499 code could have been translated from 408 on the wire
     // (via network interceptor, to avoid okhttp's auto-retry on
     // 408 status codes). If so, return the original 408.

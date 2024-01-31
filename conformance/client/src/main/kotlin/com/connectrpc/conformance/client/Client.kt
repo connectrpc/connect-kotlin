@@ -36,6 +36,7 @@ import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
+import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
@@ -45,6 +46,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import java.security.KeyFactory
@@ -172,6 +174,10 @@ class Client(
                 try {
                     stream.send(msg)
                 } catch (ex: Exception) {
+                    args.verbose.verbosity(2) {
+                        println("Failed to send request message:")
+                        indent().println(ex.stackTraceToString())
+                    }
                     numUnsent = req.requestMessages.size - i
                     break
                 }
@@ -277,6 +283,10 @@ class Client(
                 try {
                     stream.requests.send(msg)
                 } catch (ex: Exception) {
+                    args.verbose.verbosity(2) {
+                        println("Failed to send request message:")
+                        indent().println(ex.stackTraceToString())
+                    }
                     numUnsent = req.requestMessages.size - i
                     break
                 }
@@ -318,6 +328,10 @@ class Client(
                 try {
                     stream.requests.send(msg)
                 } catch (ex: Exception) {
+                    args.verbose.verbosity(2) {
+                        println("Failed to send request message:")
+                        indent().println(ex.stackTraceToString())
+                    }
                     // Ignore. We should see it again below when we receive the response.
                 }
 
@@ -447,6 +461,11 @@ class Client(
         var clientBuilder = OkHttpClient.Builder()
             .protocols(asOkHttpProtocols(req.httpVersion, useTls))
             .connectTimeout(Duration.ofMinutes(1))
+
+        args.verbose.withPrefix("okhttp3 events: ").verbosity(4) {
+            clientBuilder = clientBuilder.eventListener(OkHttpEventTracer(this))
+        }
+
         if (useTls) {
             val certs = certs(req)
             clientBuilder = clientBuilder.sslSocketFactory(certs.sslSocketFactory(), certs.trustManager)
@@ -469,10 +488,14 @@ class Client(
                 emptyList()
             }
         val httpClient = clientBuilder.build()
+        var connectHttpClient: HTTPClientInterface = ConnectOkHttpClient(httpClient)
+        args.verbose.withPrefix("http client interface: ").verbosity(3) {
+            connectHttpClient = TracingHTTPClient(connectHttpClient, this)
+        }
         return Pair(
             httpClient,
             ProtocolClient(
-                httpClient = ConnectOkHttpClient(httpClient),
+                httpClient = connectHttpClient,
                 ProtocolClientConfig(
                     host = host,
                     serializationStrategy = serializationStrategy,

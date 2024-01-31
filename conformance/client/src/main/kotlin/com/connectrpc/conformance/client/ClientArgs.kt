@@ -18,7 +18,7 @@ import com.connectrpc.conformance.client.adapt.UnaryClient.InvokeStyle
 
 data class ClientArgs(
     val invokeStyle: InvokeStyle,
-    val verbosity: Int,
+    val verbose: VerbosePrinter,
 ) {
     companion object {
         fun parseArgs(args: Array<String>): ClientArgs {
@@ -53,13 +53,16 @@ data class ClientArgs(
                         }
                     }
                     "-v" -> {
-                        verbosity = 1
-                    }
-                    "-vv" -> {
-                        verbosity = 2
-                    }
-                    "-vvv" -> {
-                        verbosity = 3
+                        if (i == args.size - 1) {
+                            throw RuntimeException("$arg option requires a value")
+                        }
+                        skip = true // consuming next string now
+                        val v = args[i + 1]
+                        val intVal = v.toIntOrNull()
+                        if (intVal == null || intVal < 1 || intVal > 5) {
+                            throw RuntimeException("value for $arg option should be an integer between 1 and 5; instead got '$v'")
+                        }
+                        verbosity = intVal
                     }
                     else -> {
                         if (arg.startsWith("-")) {
@@ -70,7 +73,7 @@ data class ClientArgs(
                     }
                 }
             }
-            return ClientArgs(invokeStyle, verbosity)
+            return ClientArgs(invokeStyle, VerbosePrinter(verbosity, "* client: "))
         }
     }
 }
