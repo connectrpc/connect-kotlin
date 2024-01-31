@@ -31,3 +31,17 @@ abstract class ServerStreamClient<Req : MessageLite, Resp : MessageLite>(
 ) {
     abstract suspend fun execute(req: Req, headers: Headers): ResponseStream<Resp>
 }
+
+/**
+ * Executes the server-stream call inside the given block. The block
+ * is used to consume the responses. The stream is automatically closed
+ * when the block returns or throws.
+ */
+suspend fun <Req : MessageLite, Resp : MessageLite, R> ServerStreamClient<Req, Resp>.execute(
+    req: Req,
+    headers: Headers,
+    block: suspend (ResponseStream<Resp>) -> R,
+): R {
+    val stream = execute(req, headers)
+    return stream.use(block)
+}

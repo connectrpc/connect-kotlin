@@ -43,9 +43,10 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface BidiStream<Req : MessageLite, Resp : MessageLite> {
+    interface BidiStream<Req : MessageLite, Resp : MessageLite> : Closeable {
         val requests: RequestStream<Req>
         val responses: ResponseStream<Resp>
+
         companion object {
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): BidiStream<Req, Resp> {
                 val reqStream = RequestStream.new(underlying)
@@ -56,8 +57,25 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
 
                     override val responses: ResponseStream<Resp>
                         get() = respStream
+
+                    override suspend fun close() {
+                        responses.close()
+                    }
                 }
             }
         }
     }
+}
+
+/**
+ * Executes the bidirectional-stream call inside the given block.
+ * The block is used to send requests and receive responses. The
+ * stream is automatically closed when the block returns or throws.
+ */
+suspend fun <Req : MessageLite, Resp : MessageLite, R> BidiStreamClient<Req, Resp>.execute(
+    headers: Headers,
+    block: suspend (BidiStreamClient.BidiStream<Req, Resp>) -> R,
+): R {
+    val stream = execute(headers)
+    return stream.use(block)
 }

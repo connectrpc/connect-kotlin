@@ -43,10 +43,9 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface ClientStream<Req : MessageLite, Resp : MessageLite> {
+    interface ClientStream<Req : MessageLite, Resp : MessageLite> : Closeable {
         suspend fun send(req: Req)
         suspend fun closeAndReceive(): ResponseMessage<Resp>
-        suspend fun cancel()
 
         companion object {
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: ClientOnlyStreamInterface<Req, Resp>): ClientStream<Req, Resp> {
@@ -83,11 +82,24 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                         }
                     }
 
-                    override suspend fun cancel() {
+                    override suspend fun close() {
                         underlying.cancel()
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Executes the client-stream call inside the given block. The block
+ * is used to send the requests and then retrieve the responses. The
+ * stream is automatically closed when the block returns or throws.
+ */
+suspend fun <Req : MessageLite, Resp : MessageLite, R> ClientStreamClient<Req, Resp>.execute(
+    headers: Headers,
+    block: suspend (ClientStreamClient.ClientStream<Req, Resp>) -> R,
+): R {
+    val stream = execute(headers)
+    return stream.use(block)
 }
