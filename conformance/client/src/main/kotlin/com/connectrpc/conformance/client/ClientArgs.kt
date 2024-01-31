@@ -53,24 +53,16 @@ data class ClientArgs(
                         }
                     }
                     "-v" -> {
-                        // see if there's a value
-                        if (i < args.size - 1 && !args[i + 1].startsWith("-")) {
-                            skip = true // consuming next string now
-                            val v = args[i + 1]
-                            val intVal = v.toIntOrNull()
-                            if (intVal == null || intVal < 1 || intVal > 5) {
-                                throw RuntimeException("value for $arg option should be an integer between 1 and 5; instead got '$v'")
-                            }
-                            verbosity = intVal
-                        } else {
-                            verbosity = 1
+                        if (i == args.size - 1) {
+                            throw RuntimeException("$arg option requires a value")
                         }
-                    }
-                    "-vv" -> {
-                        verbosity = 2
-                    }
-                    "-vvv" -> {
-                        verbosity = 3
+                        skip = true // consuming next string now
+                        val v = args[i + 1]
+                        val intVal = v.toIntOrNull()
+                        if (intVal == null || intVal < 1 || intVal > 5) {
+                            throw RuntimeException("value for $arg option should be an integer between 1 and 5; instead got '$v'")
+                        }
+                        verbosity = intVal
                     }
                     else -> {
                         if (arg.startsWith("-")) {

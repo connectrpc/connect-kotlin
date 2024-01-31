@@ -14,6 +14,7 @@
 
 package com.connectrpc.conformance.client
 
+import com.connectrpc.okhttp.originalCode
 import okhttp3.Call
 import okhttp3.Connection
 import okhttp3.EventListener
@@ -69,7 +70,7 @@ internal class OkHttpEventTracer(
         printer.printlnWithStackTrace("reading response headers...")
     }
     override fun responseHeadersEnd(call: Call, response: Response) {
-        printer.printlnWithStackTrace("response headers read: status code = ${response.code}")
+        printer.printlnWithStackTrace("response headers read: status code = ${response.originalCode()}")
     }
     override fun responseBodyStart(call: Call) {
         printer.printlnWithStackTrace("reading response body...")
