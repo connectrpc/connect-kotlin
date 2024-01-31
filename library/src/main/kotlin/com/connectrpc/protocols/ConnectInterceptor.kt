@@ -32,6 +32,8 @@ import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.UnaryHTTPRequest
+import com.connectrpc.http.clone
 import com.connectrpc.toLowercase
 import com.squareup.moshi.Moshi
 import okio.Buffer
@@ -67,15 +69,11 @@ internal class ConnectInterceptor(
                     requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
                 }
                 val requestCompression = clientConfig.requestCompression
-                val requestMessage = Buffer()
-                if (request.message != null) {
-                    requestMessage.write(request.message)
-                }
-                val finalRequestBody = if (requestCompression?.shouldCompress(requestMessage) == true) {
+                val finalRequestBody = if (requestCompression?.shouldCompress(request.message) == true) {
                     requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
-                    requestCompression.compressionPool.compress(requestMessage)
+                    requestCompression.compressionPool.compress(request.message)
                 } else {
-                    requestMessage
+                    request.message
                 }
                 if (shouldUseGETRequest(request, finalRequestBody)) {
                     constructGETRequest(request, finalRequestBody, requestCompression)
@@ -84,8 +82,8 @@ internal class ConnectInterceptor(
                         url = request.url,
                         contentType = request.contentType,
                         headers = requestHeaders,
-                        message = finalRequestBody.readByteArray(),
                         methodSpec = request.methodSpec,
+                        message = finalRequestBody,
                     )
                 }
             },
@@ -153,7 +151,6 @@ internal class ConnectInterceptor(
                     url = request.url,
                     contentType = request.contentType,
                     headers = requestHeaders,
-                    message = request.message,
                     methodSpec = request.methodSpec,
                 )
             },
@@ -196,10 +193,10 @@ internal class ConnectInterceptor(
     }
 
     private fun constructGETRequest(
-        request: HTTPRequest,
+        request: UnaryHTTPRequest,
         finalRequestBody: Buffer,
         requestCompression: RequestCompression?,
-    ): HTTPRequest {
+    ): UnaryHTTPRequest {
         val serializationStrategy = clientConfig.serializationStrategy
         val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
         val url = getUrlFromMethodSpec(

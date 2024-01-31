@@ -33,7 +33,7 @@ interface HTTPClientInterface {
      *
      * @return A function to cancel the underlying network call.
      */
-    fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
+    fun unary(request: UnaryHTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable
 
     /**
      * Initialize a new HTTP stream.

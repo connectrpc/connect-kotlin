@@ -28,20 +28,23 @@ object GzipCompressionPool : CompressionPool {
         return "gzip"
     }
 
-    override fun compress(buffer: Buffer): Buffer {
-        val gzippedSink = Buffer()
-        GzipSink(gzippedSink).use { source ->
-            source.write(buffer, buffer.size)
+    override fun compress(input: Buffer): Buffer {
+        val result = Buffer()
+        GzipSink(result).use { gzippedSink ->
+            gzippedSink.write(input, input.size)
         }
-        return gzippedSink
+        return result
     }
 
-    override fun decompress(buffer: Buffer): Buffer {
+    override fun decompress(input: Buffer): Buffer {
         val result = Buffer()
-        if (buffer.size == 0L) return result
+        // We're lenient and will allow an empty payload to be
+        // interpreted as a compressed empty payload (even though
+        // it's missing the gzip format preamble/metadata).
+        if (input.size == 0L) return result
 
-        GzipSource(buffer).use {
-            while (it.read(result, Int.MAX_VALUE.toLong()) != -1L) {
+        GzipSource(input).use { gzippedSource ->
+            while (gzippedSource.read(result, Int.MAX_VALUE.toLong()) != -1L) {
                 // continue reading.
             }
         }

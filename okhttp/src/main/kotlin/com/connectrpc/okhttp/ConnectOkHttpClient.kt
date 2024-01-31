@@ -23,6 +23,7 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.Stream
 import com.connectrpc.http.TracingInfo
+import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_KEY
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_VALUE
 import com.connectrpc.protocols.GETConstants
@@ -34,10 +35,11 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody
 import okhttp3.Response
 import okhttp3.internal.http.HttpMethod
 import okio.Buffer
+import okio.BufferedSink
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
@@ -91,16 +93,31 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         }
     }
 
-    override fun unary(request: HTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
+    override fun unary(request: UnaryHTTPRequest, onResult: (HTTPResponse) -> Unit): Cancelable {
         val builder = Request.Builder()
         for (entry in request.headers) {
             for (values in entry.value) {
                 builder.addHeader(entry.key, values)
             }
         }
-        val content = request.message ?: ByteArray(0)
-        val method = request.httpMethod
-        val requestBody = if (HttpMethod.requiresRequestBody(method)) content.toRequestBody(request.contentType.toMediaType()) else null
+        val content = request.message
+        val method = request.httpMethod.string
+        val requestBody = if (HttpMethod.requiresRequestBody(method)) {
+            object : RequestBody() {
+                override fun contentType() = request.contentType.toMediaType()
+                override fun contentLength() = content.size
+                override fun writeTo(sink: BufferedSink) {
+                    // We make a copy so that this body is not "one shot",
+                    // meaning that the okhttp library may automatically
+                    // retry the request under certain conditions. If we
+                    // didn't copy it, then reading it here would consume
+                    // it and then a retry would only see an empty body.
+                    content.copy().readAll(sink)
+                }
+            }
+        } else {
+            null
+        }
         val callRequest = builder
             .url(request.url)
             .method(method, requestBody)
@@ -174,7 +191,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         duplex: Boolean,
         onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
-        return streamClient.initializeStream(request.httpMethod, request, duplex, onResult)
+        return streamClient.initializeStream(request, duplex, onResult)
     }
 }
 

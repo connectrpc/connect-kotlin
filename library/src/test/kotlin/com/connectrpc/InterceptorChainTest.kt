@@ -17,6 +17,8 @@ package com.connectrpc
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.TracingInfo
+import com.connectrpc.http.UnaryHTTPRequest
+import com.connectrpc.http.clone
 import com.connectrpc.protocols.Envelope
 import com.connectrpc.protocols.NetworkProtocol
 import okio.Buffer
@@ -72,7 +74,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, UNARY_METHOD_SPEC))
+        val response = unaryChain.requestFunction(UnaryHTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), UNARY_METHOD_SPEC, Buffer()))
         assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -84,7 +86,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), null, STREAM_METHOD_SPEC))
+        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), STREAM_METHOD_SPEC))
         assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
     }
 
@@ -115,13 +117,7 @@ class InterceptorChainTest {
                     val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
                     sequence.add(id)
                     headers.put("id", sequence)
-                    HTTPRequest(
-                        it.url,
-                        it.contentType,
-                        headers,
-                        it.message,
-                        UNARY_METHOD_SPEC,
-                    )
+                    it.clone(headers = headers)
                 },
                 responseFunction = {
                     val headers = it.headers.toMutableMap()
@@ -147,13 +143,7 @@ class InterceptorChainTest {
                     val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
                     sequence.add(id)
                     headers.put("id", sequence)
-                    HTTPRequest(
-                        it.url,
-                        it.contentType,
-                        headers,
-                        it.message,
-                        STREAM_METHOD_SPEC,
-                    )
+                    it.clone(headers = headers)
                 },
                 requestBodyFunction = {
                     it.writeString(id, Charsets.UTF_8)

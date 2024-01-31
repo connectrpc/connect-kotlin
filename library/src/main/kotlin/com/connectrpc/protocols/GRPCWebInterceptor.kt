@@ -25,6 +25,7 @@ import com.connectrpc.Trailers
 import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.clone
 import okio.Buffer
 
 internal const val TRAILERS_BIT = 0b10000000
@@ -50,15 +51,9 @@ internal class GRPCWebInterceptor(
                         .map { compressionPool -> compressionPool.name() }
                 }
                 val requestCompressionPool = clientConfig.requestCompression
-                val requestMessage = Buffer().use { buffer ->
-                    if (request.message != null) {
-                        buffer.write(request.message)
-                    }
-                    buffer
-                }
                 // GRPC unary payloads are enveloped.
                 val envelopedMessage = Envelope.pack(
-                    requestMessage,
+                    request.message,
                     requestCompressionPool?.compressionPool,
                     requestCompressionPool?.minBytes,
                 )
@@ -68,7 +63,7 @@ internal class GRPCWebInterceptor(
                     // The underlying content type is overridden here.
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
                     headers = requestHeaders.withGRPCRequestHeaders(),
-                    message = envelopedMessage.readByteArray(),
+                    message = envelopedMessage,
                 )
             },
             responseFunction = { response ->
@@ -175,7 +170,6 @@ internal class GRPCWebInterceptor(
                     url = request.url,
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
                     headers = request.headers.withGRPCRequestHeaders(),
-                    message = request.message,
                 )
             },
             requestBodyFunction = { buffer ->

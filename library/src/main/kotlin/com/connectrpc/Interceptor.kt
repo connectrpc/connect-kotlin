@@ -16,6 +16,7 @@ package com.connectrpc
 
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.UnaryHTTPRequest
 import okio.Buffer
 
 /**
@@ -52,7 +53,7 @@ interface Interceptor {
 }
 
 class UnaryFunction(
-    val requestFunction: (HTTPRequest) -> HTTPRequest = { it },
+    val requestFunction: (UnaryHTTPRequest) -> UnaryHTTPRequest = { it },
     val responseFunction: (HTTPResponse) -> HTTPResponse = { it },
 )
 

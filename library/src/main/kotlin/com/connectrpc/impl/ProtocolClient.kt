@@ -30,6 +30,7 @@ import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.transform
 import com.connectrpc.protocols.GETConfiguration
 import kotlinx.coroutines.CompletableDeferred
@@ -79,12 +80,12 @@ class ProtocolClient(
             } else {
                 requestCodec.serialize(request)
             }
-            val unaryRequest = HTTPRequest(
+            val unaryRequest = UnaryHTTPRequest(
                 url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
                 headers = headers,
-                message = requestMessage.readByteArray(),
                 methodSpec = methodSpec,
+                message = requestMessage,
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
