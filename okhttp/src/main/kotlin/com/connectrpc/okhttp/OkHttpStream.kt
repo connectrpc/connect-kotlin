@@ -17,6 +17,7 @@ package com.connectrpc.okhttp
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
+import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
 import kotlinx.coroutines.runBlocking
@@ -42,7 +43,6 @@ import java.util.concurrent.CountDownLatch
  * This is responsible for creating a bidirectional stream with OkHttp.
  */
 internal fun OkHttpClient.initializeStream(
-    method: String,
     request: HTTPRequest,
     duplex: Boolean,
     onResult: suspend (StreamResult<Buffer>) -> Unit,
@@ -50,7 +50,7 @@ internal fun OkHttpClient.initializeStream(
     val requestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
-        .method(method, requestBody)
+        .method(HTTPMethod.POST.string, requestBody) // streams are always POSTs
     for (entry in request.headers) {
         for (values in entry.value) {
             builder.addHeader(entry.key, values)

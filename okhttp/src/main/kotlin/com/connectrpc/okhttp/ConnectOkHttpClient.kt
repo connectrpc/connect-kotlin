@@ -101,7 +101,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             }
         }
         val content = request.message
-        val method = request.httpMethod
+        val method = request.httpMethod.string
         val requestBody = if (HttpMethod.requiresRequestBody(method)) {
             object : RequestBody() {
                 override fun contentType() = request.contentType.toMediaType()
@@ -191,7 +191,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         duplex: Boolean,
         onResult: suspend (StreamResult<Buffer>) -> Unit,
     ): Stream {
-        return streamClient.initializeStream(request.httpMethod, request, duplex, onResult)
+        return streamClient.initializeStream(request, duplex, onResult)
     }
 }
 

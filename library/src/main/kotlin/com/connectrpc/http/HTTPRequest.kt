@@ -19,9 +19,11 @@ import com.connectrpc.MethodSpec
 import okio.Buffer
 import java.net.URL
 
-internal object HTTPMethod {
-    internal const val GET = "GET"
-    internal const val POST = "POST"
+enum class HTTPMethod(
+    val string: String,
+) {
+    GET("GET"),
+    POST("POST"),
 }
 
 /**
@@ -36,9 +38,6 @@ open class HTTPRequest internal constructor(
     val headers: Headers,
     // The method spec associated with the request.
     val methodSpec: MethodSpec<*, *>,
-    // HTTP method to use with the request.
-    // Almost always POST, but side effect free unary RPCs may be made with GET.
-    val httpMethod: String = HTTPMethod.POST,
 )
 
 /**
@@ -56,15 +55,12 @@ fun HTTPRequest.clone(
     headers: Headers = this.headers,
     // The method spec associated with the request.
     methodSpec: MethodSpec<*, *> = this.methodSpec,
-    // The HTTP method to use with the request.
-    httpMethod: String = this.httpMethod,
 ): HTTPRequest {
     return HTTPRequest(
         url,
         contentType,
         headers,
         methodSpec,
-        httpMethod,
     )
 }
 
@@ -85,8 +81,8 @@ class UnaryHTTPRequest(
     val message: Buffer,
     // HTTP method to use with the request.
     // Almost always POST, but side effect free unary RPCs may be made with GET.
-    httpMethod: String = HTTPMethod.POST,
-) : HTTPRequest(url, contentType, headers, methodSpec, httpMethod)
+    val httpMethod: HTTPMethod = HTTPMethod.POST,
+) : HTTPRequest(url, contentType, headers, methodSpec)
 
 fun UnaryHTTPRequest.clone(
     // The URL for the request.
@@ -100,7 +96,7 @@ fun UnaryHTTPRequest.clone(
     // Body data for the request.
     message: Buffer = this.message,
     // The HTTP method to use with the request.
-    httpMethod: String = this.httpMethod,
+    httpMethod: HTTPMethod = this.httpMethod,
 ): UnaryHTTPRequest {
     return UnaryHTTPRequest(
         url,
