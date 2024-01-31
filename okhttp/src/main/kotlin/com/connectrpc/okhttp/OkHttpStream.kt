@@ -32,9 +32,9 @@ import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.Pipe
-import okio.buffer
+import okio.withLock
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.CountDownLatch
 
 /**
  * Extension function for OkHttpClient to initialize a stream.
@@ -47,12 +47,10 @@ internal fun OkHttpClient.initializeStream(
     duplex: Boolean,
     onResult: suspend (StreamResult<Buffer>) -> Unit,
 ): Stream {
-    val isSendClosed = AtomicBoolean(false)
-    val isReceiveClosed = AtomicBoolean(false)
-    val duplexRequestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
+    val requestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
         .url(request.url)
-        .method(method, duplexRequestBody)
+        .method(method, requestBody)
     for (entry in request.headers) {
         for (values in entry.value) {
             builder.addHeader(entry.key, values)
@@ -60,37 +58,43 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
-    call.enqueue(ResponseCallback(onResult))
+    // For non-duplex bodies, the request is complete when the
+    // response arrives.
+    val whenDone = if (!duplex) requestBody::close else { -> }
+    call.enqueue(ResponseCallback(onResult, whenDone))
     return Stream(
         onSend = { buffer ->
-            if (!isSendClosed.get()) {
-                duplexRequestBody.forConsume(buffer)
+            try {
+                requestBody.write(buffer)
+                Result.success(Unit)
+            } catch (ex: Throwable) {
+                Result.failure(ex)
             }
         },
         onSendClose = {
-            isSendClosed.set(true)
-            duplexRequestBody.close()
+            requestBody.close()
         },
         onReceiveClose = {
-            isReceiveClosed.set(true)
             call.cancel()
-            // cancelling implicitly closes send-side, too
-            isSendClosed.set(true)
+            whenDone()
         },
     )
 }
 
 private class ResponseCallback(
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
+    private val whenDone: () -> Unit,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
+        whenDone()
         runBlocking {
             onResult(StreamResult.Complete(codeFromException(call.isCanceled(), e), cause = e))
         }
     }
 
     override fun onResponse(call: Call, response: Response) {
-        val code = Code.fromHTTPStatus(response.code)
+        whenDone()
+        val code = Code.fromHTTPStatus(response.originalCode())
         runBlocking {
             val headers = response.headers.toLowerCaseKeysMultiMap()
             onResult(StreamResult.Headers(headers = headers))
@@ -178,13 +182,24 @@ internal class PipeRequestBody(
 ) : RequestBody() {
     private val pipe = Pipe(pipeMaxBufferSize)
 
-    private val bufferedSink by lazy { pipe.sink.buffer() }
+    /**
+     * Lock used to provide extra synchronization so that fold, write, and
+     * close can work correctly in the face of concurrency.
+     *
+     * See https://github.com/square/okio/issues/1412
+     */
+    private val pipeLock = pipe.lock
 
-    fun forConsume(buffer: Buffer) {
+    /**
+     * Latch that signals when the pipe's sink is closed.
+     */
+    private val closed = CountDownLatch(1)
+
+    fun write(buffer: Buffer) {
         try {
-            if (bufferedSink.isOpen) {
-                bufferedSink.writeAll(buffer)
-                bufferedSink.flush()
+            pipeLock.withLock {
+                pipe.sink.write(buffer, buffer.size)
+                pipe.sink.flush()
             }
         } catch (e: Throwable) {
             close()
@@ -195,7 +210,15 @@ internal class PipeRequestBody(
     override fun contentType() = contentType
 
     override fun writeTo(sink: BufferedSink) {
-        pipe.fold(sink)
+        pipeLock.withLock {
+            pipe.fold(sink)
+        }
+        if (!duplex) {
+            // For non-duplex request bodies, okhttp3
+            // expects this method to return only when
+            // the request body is complete.
+            closed.await()
+        }
     }
 
     override fun isDuplex() = duplex
@@ -204,9 +227,13 @@ internal class PipeRequestBody(
 
     fun close() {
         try {
-            bufferedSink.close()
+            pipeLock.withLock {
+                pipe.sink.close()
+            }
         } catch (_: Throwable) {
             // No-op
+        } finally {
+            closed.countDown()
         }
     }
 }

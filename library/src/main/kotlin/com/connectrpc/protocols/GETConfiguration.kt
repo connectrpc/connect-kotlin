@@ -16,7 +16,7 @@ package com.connectrpc.protocols
 
 import okio.Buffer
 
-internal object GETConstants {
+object GETConstants {
     const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
     const val ENCODING_QUERY_PARAM_KEY = "encoding"
     const val BASE64_QUERY_PARAM_KEY = "base64"

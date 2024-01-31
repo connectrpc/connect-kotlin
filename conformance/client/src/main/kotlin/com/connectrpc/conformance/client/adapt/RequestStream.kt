@@ -30,7 +30,10 @@ interface RequestStream<Req : MessageLite> {
         fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): RequestStream<Req> {
             return object : RequestStream<Req> {
                 override suspend fun send(req: Req) {
-                    underlying.send(req)
+                    val result = underlying.send(req)
+                    if (result.isFailure) {
+                        throw result.exceptionOrNull()!!
+                    }
                 }
 
                 override fun close() {

@@ -56,7 +56,7 @@ internal class BidirectionalStream<Input, Output>(
     }
 
     override fun isClosed(): Boolean {
-        return stream.isClosed()
+        return stream.isReceiveClosed()
     }
 
     override fun sendClose() {

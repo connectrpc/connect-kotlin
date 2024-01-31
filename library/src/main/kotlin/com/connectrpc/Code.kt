@@ -55,6 +55,7 @@ enum class Code(val codeName: String, val value: Int) {
                 415 -> INTERNAL_ERROR
                 429 -> UNAVAILABLE
                 431 -> RESOURCE_EXHAUSTED
+                499 -> CANCELED
                 502, 503, 504 -> UNAVAILABLE
                 else -> UNKNOWN
             }

@@ -30,7 +30,7 @@ import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
-import com.connectrpc.http.Stream
+import com.connectrpc.http.transform
 import com.connectrpc.protocols.GETConfiguration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
@@ -259,17 +259,7 @@ class ProtocolClient(
         continuation.invokeOnCancellation {
             httpStream.receiveClose()
         }
-        val stream = Stream(
-            onSend = { buffer ->
-                httpStream.send(streamFunc.requestBodyFunction(buffer))
-            },
-            onReceiveClose = {
-                httpStream.receiveClose()
-            },
-            onSendClose = {
-                httpStream.sendClose()
-            },
-        )
+        val stream = httpStream.transform { streamFunc.requestBodyFunction(it) }
         channel.invokeOnClose {
             stream.receiveClose()
         }
