@@ -17,6 +17,8 @@ package com.connectrpc.conformance.client.adapt
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.Headers
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
 /**
  * The client of a bidi-stream RPC operation. A bidi-stream
@@ -35,7 +37,22 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,
 ) {
-    abstract suspend fun execute(headers: Headers): BidiStream<Req, Resp>
+    /**
+     * Executes the bidirectional-stream call inside the given block.
+     * The block is used to send requests and receive responses. The
+     * stream is automatically closed when the block returns or throws.
+     */
+    suspend fun <R> execute(
+        headers: Headers,
+        block: suspend CoroutineScope.(BidiStream<Req, Resp>) -> R,
+    ): R {
+        val stream = execute(headers)
+        return stream.use {
+            coroutineScope { block(this, it) }
+        }
+    }
+
+    protected abstract suspend fun execute(headers: Headers): BidiStream<Req, Resp>
 
     /**
      * A BidiStream combines a request stream and a response stream.
@@ -65,17 +82,4 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
             }
         }
     }
-}
-
-/**
- * Executes the bidirectional-stream call inside the given block.
- * The block is used to send requests and receive responses. The
- * stream is automatically closed when the block returns or throws.
- */
-suspend fun <Req : MessageLite, Resp : MessageLite, R> BidiStreamClient<Req, Resp>.execute(
-    headers: Headers,
-    block: suspend (BidiStreamClient.BidiStream<Req, Resp>) -> R,
-): R {
-    val stream = execute(headers)
-    return stream.use(block)
 }

@@ -36,14 +36,12 @@ import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
-import com.connectrpc.conformance.client.adapt.execute
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -153,7 +151,7 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-    ): ClientResponseResult = coroutineScope {
+    ): ClientResponseResult {
         if (req.streamType != StreamType.CLIENT_STREAM) {
             throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
         }
@@ -163,7 +161,7 @@ class Client(
         ) {
             throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
-        client.execute(req.requestHeaders) { stream ->
+        return client.execute(req.requestHeaders) { stream ->
             var numUnsent = 0
             for (i in req.requestMessages.indices) {
                 if (req.requestDelayMs > 0) {

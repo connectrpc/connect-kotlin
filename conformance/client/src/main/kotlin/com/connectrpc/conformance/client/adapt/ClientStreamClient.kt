@@ -20,6 +20,8 @@ import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
 /**
  * The client of a client-stream RPC operation. A client-stream
@@ -34,7 +36,22 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,
 ) {
-    abstract suspend fun execute(headers: Headers): ClientStream<Req, Resp>
+    /**
+     * Executes the client-stream call inside the given block. The block
+     * is used to send the requests and then retrieve the responses. The
+     * stream is automatically closed when the block returns or throws.
+     */
+    suspend fun <R> execute(
+        headers: Headers,
+        block: suspend CoroutineScope.(ClientStream<Req, Resp>) -> R,
+    ): R {
+        val stream = execute(headers)
+        return stream.use {
+            coroutineScope { block(this, it) }
+        }
+    }
+
+    protected abstract suspend fun execute(headers: Headers): ClientStream<Req, Resp>
 
     /**
      * A ClientStream is just like a RequestStream, except that closing
@@ -89,17 +106,4 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
             }
         }
     }
-}
-
-/**
- * Executes the client-stream call inside the given block. The block
- * is used to send the requests and then retrieve the responses. The
- * stream is automatically closed when the block returns or throws.
- */
-suspend fun <Req : MessageLite, Resp : MessageLite, R> ClientStreamClient<Req, Resp>.execute(
-    headers: Headers,
-    block: suspend (ClientStreamClient.ClientStream<Req, Resp>) -> R,
-): R {
-    val stream = execute(headers)
-    return stream.use(block)
 }
