@@ -28,30 +28,33 @@ internal class GRPCCompletionParser(
     private val errorDetailParser: ErrorDetailParser,
 ) {
     /**
-     * Parses the completion of a GRPC response from the Headers (for trailers-only responses) or Trailers.
+     * Parses the completion of a GRPC response from the headers
+     * (for trailers-only responses) or trailers.
      *
-     * Returns null when a completion is unable to be parsed.
+     * Returns an "absent" completion if unable to be parsed.
      */
-    internal fun parse(headers: Headers, trailers: Trailers): GRPCCompletion? {
+    internal fun parse(headers: Headers, trailers: Trailers): GRPCCompletion {
         val status: Int
         val metadata: Map<String, List<String>>
         val statusFromHeaders = parseStatus(headers)
         if (statusFromHeaders == null) {
-            status = parseStatus(trailers) ?: return null
+            status = parseStatus(trailers)
+                ?: return GRPCCompletion(
+                    present = false,
+                    code = Code.INTERNAL_ERROR,
+                    message = "protocol error: status is missing from trailers",
+                    metadata = trailers,
+                )
             metadata = trailers
         } else {
             status = statusFromHeaders
             metadata = headers
         }
-        val code = Code.fromValue(status)
-        val message = parseMessage(metadata)
-        val details = connectErrorDetails(metadata)
         return GRPCCompletion(
-            code,
-            status,
-            message,
-            details,
-            metadata,
+            code = Code.fromValue(status),
+            message = parseMessage(metadata).utf8(),
+            errorDetails = connectErrorDetails(metadata),
+            metadata = metadata,
         )
     }
 

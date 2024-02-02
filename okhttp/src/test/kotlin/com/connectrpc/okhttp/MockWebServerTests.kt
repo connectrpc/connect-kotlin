@@ -17,6 +17,7 @@ package com.connectrpc.okhttp
 import com.connectrpc.Code
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
+import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.eliza.v1.ElizaServiceClient
@@ -55,7 +56,8 @@ class MockWebServerTests {
         mockWebServerRule.server.takeRequest().apply {
             assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
-        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+        assertThat(response).isInstanceOf(ResponseMessage::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
     }
 
     @Test
@@ -72,7 +74,8 @@ class MockWebServerTests {
         mockWebServerRule.server.takeRequest().apply {
             assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
-        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+        assertThat(response).isInstanceOf(ResponseMessage::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
     }
 
     @Test
@@ -89,7 +92,8 @@ class MockWebServerTests {
         mockWebServerRule.server.takeRequest().apply {
             assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
-        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+        assertThat(response).isInstanceOf(ResponseMessage::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
     }
 
     @Test
@@ -106,7 +110,8 @@ class MockWebServerTests {
         mockWebServerRule.server.takeRequest().apply {
             assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
-        assertThat(response.code).isEqualTo(Code.INTERNAL_ERROR)
+        assertThat(response).isInstanceOf(ResponseMessage::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
     }
 
     private fun createClient(serializationStrategy: SerializationStrategy = GoogleJavaProtobufStrategy()): ElizaServiceClient {

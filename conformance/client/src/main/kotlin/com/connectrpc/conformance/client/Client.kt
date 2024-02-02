@@ -386,9 +386,6 @@ class Client(
     private fun unaryResult(numUnsent: Int, result: ResponseMessage<out MessageLite>): ClientResponseResult {
         return when (result) {
             is ResponseMessage.Success -> {
-                if (result.code != Code.OK) {
-                    throw RuntimeException("RPC was successful but ended with non-OK code ${result.code}")
-                }
                 ClientResponseResult(
                     headers = result.headers,
                     payloads = listOf(payloadExtractor(result.message)),
@@ -397,9 +394,6 @@ class Client(
                 )
             }
             is ResponseMessage.Failure -> {
-                if (result.code != result.cause.code) {
-                    throw RuntimeException("RPC result has mismatching codes: ${result.code} != ${result.cause.code}")
-                }
                 ClientResponseResult(
                     headers = result.headers,
                     error = result.cause,

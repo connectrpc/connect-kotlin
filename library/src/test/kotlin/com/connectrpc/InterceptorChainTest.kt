@@ -16,7 +16,6 @@ package com.connectrpc
 
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
-import com.connectrpc.http.TracingInfo
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.clone
 import com.connectrpc.protocols.Envelope
@@ -75,19 +74,19 @@ class InterceptorChainTest {
     @Test
     fun fifo_request_unary() {
         val response = unaryChain.requestFunction(UnaryHTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), UNARY_METHOD_SPEC, Buffer()))
-        assertThat(response.headers.get("id")).containsExactly("1", "2", "3", "4")
+        assertThat(response.headers["id"]).containsExactly("1", "2", "3", "4")
     }
 
     @Test
     fun lifo_response_unary() {
-        val response = unaryChain.responseFunction(HTTPResponse(Code.OK, emptyMap(), Buffer(), emptyMap(), null))
-        assertThat(response.headers.get("id")).containsExactly("4", "3", "2", "1")
+        val response = unaryChain.responseFunction(HTTPResponse(200, emptyMap(), Buffer(), emptyMap(), null))
+        assertThat(response.headers["id"]).containsExactly("4", "3", "2", "1")
     }
 
     @Test
     fun fifo_request_stream() {
         val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", emptyMap(), STREAM_METHOD_SPEC))
-        assertThat(request.headers.get("id")).containsExactly("1", "2", "3", "4")
+        assertThat(request.headers["id"]).containsExactly("1", "2", "3", "4")
     }
 
     @Test
@@ -100,13 +99,7 @@ class InterceptorChainTest {
     @Test
     fun lifo_stream_result() {
         val streamResult = streamingChain.streamResultFunction(StreamResult.Headers(emptyMap())) as StreamResult.Headers
-        assertThat(streamResult.headers.get("id")).containsExactly("4", "3", "2", "1")
-    }
-
-    @Test
-    fun unary_tracing_info() {
-        val response = unaryChain.responseFunction(HTTPResponse(Code.OK, emptyMap(), Buffer(), emptyMap(), TracingInfo(888)))
-        assertThat(response.tracingInfo!!.httpStatus).isEqualTo(888)
+        assertThat(streamResult.headers["id"]).containsExactly("4", "3", "2", "1")
     }
 
     private class SimpleInterceptor(val id: String) : Interceptor {
@@ -114,24 +107,17 @@ class InterceptorChainTest {
             return UnaryFunction(
                 requestFunction = {
                     val headers = it.headers.toMutableMap()
-                    val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
+                    val sequence = headers["id"]?.toMutableList() ?: mutableListOf()
                     sequence.add(id)
-                    headers.put("id", sequence)
+                    headers["id"] = sequence
                     it.clone(headers = headers)
                 },
                 responseFunction = {
                     val headers = it.headers.toMutableMap()
-                    val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
+                    val sequence = headers["id"]?.toMutableList() ?: mutableListOf()
                     sequence.add(id)
-                    headers.put("id", sequence)
-                    HTTPResponse(
-                        it.code,
-                        headers,
-                        it.message,
-                        it.trailers,
-                        it.tracingInfo,
-                        it.cause,
-                    )
+                    headers["id"] = sequence
+                    it.clone(headers = headers)
                 },
             )
         }
@@ -140,21 +126,21 @@ class InterceptorChainTest {
             return StreamFunction(
                 requestFunction = {
                     val headers = it.headers.toMutableMap()
-                    val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
+                    val sequence = headers["id"]?.toMutableList() ?: mutableListOf()
                     sequence.add(id)
-                    headers.put("id", sequence)
+                    headers["id"] = sequence
                     it.clone(headers = headers)
                 },
                 requestBodyFunction = {
                     it.writeString(id, Charsets.UTF_8)
                 },
-                streamResultFunction = {
-                    it.fold(
+                streamResultFunction = { result ->
+                    result.fold(
                         onHeaders = {
                             val headers = it.headers.toMutableMap()
-                            val sequence = headers.get("id")?.toMutableList() ?: mutableListOf()
+                            val sequence = headers["id"]?.toMutableList() ?: mutableListOf()
                             sequence.add(id)
-                            headers.put("id", sequence)
+                            headers["id"] = sequence
                             StreamResult.Headers(headers)
                         },
                         onMessage = { it },

@@ -14,8 +14,11 @@
 
 package com.connectrpc.protocols
 
+import com.connectrpc.Code
+import com.connectrpc.ConnectException
 import com.connectrpc.compression.CompressionPool
 import okio.Buffer
+import okio.Source
 
 /**
  * Provides functionality for packing and unpacking (headers and length prefixed) messages.
@@ -44,7 +47,7 @@ class Envelope {
             }
             val result = Buffer()
             result.writeByte(flags)
-            result.writeInt(payload.buffer.size.toInt())
+            result.writeInt(payload.size.toInt())
             result.writeAll(payload)
             return result
         }
@@ -59,21 +62,35 @@ class Envelope {
          * @return The header byte along with the resulting data. The header byte is used to communicate flags.
          */
         fun unpackWithHeaderByte(source: Buffer, compressionPool: CompressionPool? = null): Pair<Int, Buffer> {
-            return source.use { bufferSource ->
-                val result = Buffer()
-                if (bufferSource.exhausted()) {
-                    return@use 0 to result
+            if (source.exhausted()) {
+                return 0 to source
+            }
+            val headerByte = source.readByte().toInt()
+            val length = source.readInt().toLong()
+            val message = if (source.size > length) {
+                // extract relevant subset for this message
+                Buffer().write(source as Source, length)
+            } else if (source.size == length) {
+                source
+            } else {
+                throw ConnectException(
+                    code = Code.INTERNAL_ERROR,
+                    message = "stream message was incomplete: expecting $length bytes, got ${source.size}",
+                )
+            }
+            return headerByte to when (headerByte.and(1)) {
+                1 -> {
+                    if (compressionPool == null) {
+                        throw ConnectException(
+                            code = Code.INTERNAL_ERROR,
+                            message = "stream message was compressed but no known encoding",
+                        )
+                    }
+                    compressionPool.decompress(message)
                 }
-                val headerByte = bufferSource.readByte().toInt()
-                val length = bufferSource.readInt().toLong()
-                val message = Buffer()
-                bufferSource.read(message, length)
-                val decompressSource = when (headerByte.and(1)) {
-                    1 -> compressionPool?.decompress(message) ?: message
-                    else -> message
+                else -> {
+                    message
                 }
-                result.writeAll(decompressSource)
-                headerByte to result
             }
         }
     }

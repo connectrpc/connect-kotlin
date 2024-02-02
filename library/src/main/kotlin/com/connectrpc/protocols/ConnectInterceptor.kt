@@ -31,10 +31,8 @@ import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
-import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.clone
-import com.connectrpc.toLowercase
 import com.squareup.moshi.Moshi
 import okio.Buffer
 import okio.ByteString
@@ -48,6 +46,10 @@ import java.net.URL
 internal class ConnectInterceptor(
     private val clientConfig: ProtocolClientConfig,
 ) : Interceptor {
+    companion object {
+        internal const val TRAILERS_BIT = 0b10
+    }
+
     private val moshi = Moshi.Builder().build()
     private val serializationStrategy = clientConfig.serializationStrategy
     private var responseCompressionPool: CompressionPool? = null
@@ -59,18 +61,16 @@ internal class ConnectInterceptor(
                     mutableMapOf(CONNECT_PROTOCOL_VERSION_KEY to listOf(CONNECT_PROTOCOL_VERSION_VALUE))
                 requestHeaders.putAll(request.headers)
                 if (clientConfig.compressionPools().isNotEmpty()) {
-                    requestHeaders.put(
-                        ACCEPT_ENCODING,
-                        clientConfig.compressionPools()
-                            .map { compressionPool -> compressionPool.name() },
-                    )
+                    requestHeaders[ACCEPT_ENCODING] = clientConfig.compressionPools().map { compressionPool ->
+                        compressionPool.name()
+                    }
                 }
                 if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
                     requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
                 }
                 val requestCompression = clientConfig.requestCompression
                 val finalRequestBody = if (requestCompression?.shouldCompress(request.message) == true) {
-                    requestHeaders.put(CONTENT_ENCODING, listOf(requestCompression.compressionPool.name()))
+                    requestHeaders[CONTENT_ENCODING] = listOf(requestCompression.compressionPool.name())
                     requestCompression.compressionPool.compress(request.message)
                 } else {
                     request.message
@@ -88,6 +88,9 @@ internal class ConnectInterceptor(
                 }
             },
             responseFunction = { response ->
+                if (response.cause != null) {
+                    return@UnaryFunction response
+                }
                 val trailers = mutableMapOf<String, List<String>>()
                 trailers.putAll(response.headers.toTrailers())
                 trailers.putAll(response.trailers)
@@ -97,8 +100,7 @@ internal class ConnectInterceptor(
                 val responseBody = try {
                     compressionPool?.decompress(response.message.buffer) ?: response.message.buffer
                 } catch (e: Exception) {
-                    return@UnaryFunction HTTPResponse(
-                        code = Code.INTERNAL_ERROR,
+                    return@UnaryFunction response.clone(
                         message = Buffer(),
                         headers = responseHeaders,
                         trailers = trailers,
@@ -108,26 +110,23 @@ internal class ConnectInterceptor(
                             message = e.message,
                             exception = e,
                         ),
-                        tracingInfo = response.tracingInfo,
                     )
                 }
+                val exception: ConnectException?
                 val message: Buffer
-                val (code, exception) = if (response.code != Code.OK) {
-                    val error = parseConnectUnaryException(code = response.code, response.headers, responseBody)
+                if (response.status != 200) {
+                    exception = parseConnectUnaryException(response.status, response.headers, responseBody)
                     // We've already read the response body to parse an error - don't read again.
                     message = Buffer()
-                    error.code to error
                 } else {
+                    exception = null
                     message = responseBody
-                    response.code to null
                 }
-                HTTPResponse(
-                    code = code,
+                response.clone(
                     message = message,
                     headers = responseHeaders,
                     trailers = trailers,
-                    cause = response.cause ?: exception,
-                    tracingInfo = response.tracingInfo,
+                    cause = exception,
                 )
             },
         )
@@ -172,8 +171,7 @@ internal class ConnectInterceptor(
                             result.message,
                             responseCompressionPool,
                         )
-                        val isEndStream = headerByte.shr(1).and(1) == 1
-                        if (isEndStream) {
+                        if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             parseConnectEndStream(unpackedMessage)
                         } else {
                             StreamResult.Message(unpackedMessage)
@@ -215,21 +213,25 @@ internal class ConnectInterceptor(
     }
 
     private fun parseConnectEndStream(source: Buffer): StreamResult.Complete<Buffer> {
-        val adapter = moshi.adapter(EndStreamResponseJSON::class.java)
+        val adapter = moshi.adapter(EndStreamResponseJSON::class.java).nonNull()
         return source.use { bufferedSource ->
             val errorJSON = bufferedSource.readUtf8()
             val endStreamResponseJSON = try {
-                adapter.fromJson(errorJSON) ?: return StreamResult.Complete(Code.OK)
+                adapter.fromJson(errorJSON)
             } catch (e: Throwable) {
-                return StreamResult.Complete(Code.UNKNOWN, e)
+                return StreamResult.Complete(
+                    ConnectException(
+                        code = Code.UNKNOWN,
+                        exception = e,
+                    ),
+                )
             }
-            val metadata = endStreamResponseJSON.metadata?.toLowercase()
+            val metadata = endStreamResponseJSON!!.metadata?.toLowercase()
             if (endStreamResponseJSON.error == null) {
-                return StreamResult.Complete(Code.OK, trailers = metadata.orEmpty())
+                return StreamResult.Complete(trailers = metadata.orEmpty())
             }
             val code = Code.fromName(endStreamResponseJSON.error.code)
             StreamResult.Complete(
-                code = code,
                 cause = ConnectException(
                     code = code,
                     errorDetailParser = serializationStrategy.errorDetailParser(),
@@ -241,23 +243,20 @@ internal class ConnectInterceptor(
         }
     }
 
-    private fun parseConnectUnaryException(code: Code, headers: Headers, source: Buffer?): ConnectException {
+    private fun parseConnectUnaryException(httpStatus: Int?, headers: Headers, source: Buffer?): ConnectException {
+        val code = Code.fromHTTPStatus(httpStatus)
         if (source == null) {
-            return ConnectException(code, serializationStrategy.errorDetailParser(), "empty error message from source")
+            return ConnectException(code, serializationStrategy.errorDetailParser(), "unexpected status code: $httpStatus")
         }
         return source.use { bufferedSource ->
-            val adapter = moshi.adapter(ErrorPayloadJSON::class.java)
+            val adapter = moshi.adapter(ErrorPayloadJSON::class.java).nonNull()
             val errorJSON = bufferedSource.readUtf8()
             val errorPayloadJSON = try {
-                adapter.fromJson(errorJSON) ?: return ConnectException(
-                    code,
-                    serializationStrategy.errorDetailParser(),
-                    errorJSON,
-                )
+                adapter.fromJson(errorJSON)
             } catch (e: Exception) {
                 return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON, e)
             }
-            val errorDetails = parseErrorDetails(errorPayloadJSON)
+            val errorDetails = parseErrorDetails(errorPayloadJSON!!)
             ConnectException(
                 code = Code.fromName(errorPayloadJSON.code),
                 errorDetailParser = serializationStrategy.errorDetailParser(),
@@ -269,10 +268,10 @@ internal class ConnectInterceptor(
     }
 
     private fun parseErrorDetails(
-        jsonClass: ErrorPayloadJSON?,
+        jsonClass: ErrorPayloadJSON,
     ): List<ConnectErrorDetail> {
         val errorDetails = mutableListOf<ConnectErrorDetail>()
-        for (detail in jsonClass?.details.orEmpty()) {
+        for (detail in jsonClass.details.orEmpty()) {
             if (detail.type == null) {
                 continue
             }
@@ -318,4 +317,12 @@ private fun getUrlFromMethodSpec(
     val baseURI = baseURL.toURI()
         .resolve("/${methodSpec.path}?$queryParams")
     return baseURI.toURL()
+}
+
+fun Headers.toLowercase(): Headers {
+    return asSequence().groupingBy {
+        it.key.lowercase()
+    }.aggregate { _: String, accumulator: List<String>?, element: Map.Entry<String, List<String>>, _: Boolean ->
+        accumulator?.plus(element.value) ?: element.value
+    }
 }

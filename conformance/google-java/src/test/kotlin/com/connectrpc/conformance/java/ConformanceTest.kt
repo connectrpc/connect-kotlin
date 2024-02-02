@@ -16,6 +16,7 @@ package com.connectrpc.conformance.java
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
+import com.connectrpc.ResponseMessage
 import com.connectrpc.conformance.BaseConformanceTest
 import com.connectrpc.conformance.ServerType
 import com.connectrpc.conformance.v1.ErrorDetail
@@ -199,7 +200,6 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message, headers) { response ->
-            assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
             response.failure {
@@ -224,10 +224,9 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message) { response ->
-            assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.cause).isNotNull()
-                assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
+                assertThat(errorResponse.cause.code).isEqualTo(Code.UNKNOWN)
                 assertThat(errorResponse.cause.message).isEqualTo("test status message")
                 countDownLatch.countDown()
             }
@@ -292,7 +291,6 @@ class ConformanceTest(
             response.failure { errorResponse ->
                 val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.UNKNOWN)
-                assertThat(response.code).isEqualTo(Code.UNKNOWN)
                 assertThat(error.message).isEqualTo(statusMessage)
                 countDownLatch.countDown()
             }
@@ -308,7 +306,8 @@ class ConformanceTest(
     fun unimplementedMethod(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+            response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
             countDownLatch.countDown()
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
@@ -319,7 +318,8 @@ class ConformanceTest(
     fun unimplementedService(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         unimplementedServiceClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+            response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
             countDownLatch.countDown()
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
@@ -356,7 +356,6 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
-            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
@@ -419,7 +418,6 @@ class ConformanceTest(
             payload = payload { body = ByteString.copyFrom(ByteArray(size)) }
         }
         val response = testServiceConnectClient.unaryCallBlocking(message, headers).execute()
-        assertThat(response.code).isEqualTo(Code.OK)
         assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
         assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
         response.failure {
@@ -439,10 +437,9 @@ class ConformanceTest(
             }
         }
         val response = testServiceConnectClient.unaryCallBlocking(message).execute()
-        assertThat(response.code).isEqualTo(Code.UNKNOWN)
         response.failure { errorResponse ->
             assertThat(errorResponse.cause).isNotNull()
-            assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
+            assertThat(errorResponse.cause.code).isEqualTo(Code.UNKNOWN)
             assertThat(errorResponse.cause.message).isEqualTo("test status message")
         }
         response.success {
@@ -465,7 +462,6 @@ class ConformanceTest(
         response.failure { errorResponse ->
             val error = errorResponse.cause
             assertThat(error.code).isEqualTo(Code.UNKNOWN)
-            assertThat(response.code).isEqualTo(Code.UNKNOWN)
             assertThat(error.message).isEqualTo(statusMessage)
         }
         response.success {
@@ -476,13 +472,15 @@ class ConformanceTest(
     @Test
     fun unimplementedMethodBlocking(): Unit = runBlocking {
         val response = testServiceConnectClient.unimplementedCallBlocking(empty {}).execute()
-        assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+        assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
     }
 
     @Test
     fun unimplementedServiceBlocking(): Unit = runBlocking {
         val response = unimplementedServiceClient.unimplementedCallBlocking(empty {}).execute()
-        assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+        assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+        response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
     }
 
     @Test
@@ -492,7 +490,6 @@ class ConformanceTest(
             domain = "connect-conformance"
         }
         val response = testServiceConnectClient.failUnaryCallBlocking(simpleRequest {}).execute()
-        assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         response.failure { errorResponse ->
             val error = errorResponse.cause
             assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
@@ -562,7 +559,6 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message, headers) { response ->
-            assertThat(response.code).isEqualTo(Code.OK)
             assertThat(response.headers[leadingKey]).containsExactly(leadingValue)
             assertThat(response.trailers[trailingKey]).containsExactly(b64Encode(trailingValue))
             response.failure {
@@ -587,10 +583,9 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unaryCall(message) { response ->
-            assertThat(response.code).isEqualTo(Code.UNKNOWN)
             response.failure { errorResponse ->
                 assertThat(errorResponse.cause).isNotNull()
-                assertThat(errorResponse.code).isEqualTo(Code.UNKNOWN)
+                assertThat(errorResponse.cause.code).isEqualTo(Code.UNKNOWN)
                 assertThat(errorResponse.cause.message).isEqualTo("test status message")
                 countDownLatch.countDown()
             }
@@ -619,7 +614,6 @@ class ConformanceTest(
             response.failure { errorResponse ->
                 val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.UNKNOWN)
-                assertThat(response.code).isEqualTo(Code.UNKNOWN)
                 assertThat(error.message).isEqualTo(statusMessage)
                 countDownLatch.countDown()
             }
@@ -635,7 +629,8 @@ class ConformanceTest(
     fun unimplementedMethodCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+            response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
             countDownLatch.countDown()
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
@@ -646,7 +641,8 @@ class ConformanceTest(
     fun unimplementedServiceCallback(): Unit = runBlocking {
         val countDownLatch = CountDownLatch(1)
         unimplementedServiceClient.unimplementedCall(empty {}) { response ->
-            assertThat(response.code).isEqualTo(Code.UNIMPLEMENTED)
+            assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+            response.failure { assertThat(it.cause.code).isEqualTo(Code.UNIMPLEMENTED) }
             countDownLatch.countDown()
         }
         countDownLatch.await(500, TimeUnit.MILLISECONDS)
@@ -661,7 +657,6 @@ class ConformanceTest(
         }
         val countDownLatch = CountDownLatch(1)
         testServiceConnectClient.failUnaryCall(simpleRequest {}) { response ->
-            assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
             response.failure { errorResponse ->
                 val error = errorResponse.cause
                 assertThat(error.code).isEqualTo(Code.RESOURCE_EXHAUSTED)

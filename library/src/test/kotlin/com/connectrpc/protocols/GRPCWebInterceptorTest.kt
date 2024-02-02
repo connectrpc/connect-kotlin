@@ -26,7 +26,6 @@ import com.connectrpc.StreamType
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
-import com.connectrpc.http.TracingInfo
 import com.connectrpc.http.UnaryHTTPRequest
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
@@ -175,14 +174,13 @@ class GRPCWebInterceptorTest {
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
 
-        val envelopedMessage = Envelope.pack(Buffer().write("message".encodeUtf8()))
+        val envelopedMessage = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 0)
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
-                headers = emptyMap(),
+                status = 200,
+                headers = mapOf("grpc-encoding" to listOf("gzip")),
                 message = envelopedMessage,
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
@@ -201,11 +199,10 @@ class GRPCWebInterceptorTest {
         val envelopedMessage = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 1)
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
+                status = 200,
                 headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
                 message = envelopedMessage,
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
@@ -223,13 +220,12 @@ class GRPCWebInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
+                status = 200,
                 headers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}"),
                 ),
                 message = Buffer(),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
@@ -247,19 +243,18 @@ class GRPCWebInterceptorTest {
 
         val trailersPayload = "$GRPC_STATUS_TRAILER:${Code.RESOURCE_EXHAUSTED.value}".encodeUtf8()
         val trailers = Buffer()
-            .writeByte(TRAILERS_BIT)
+            .writeByte(GRPCWebInterceptor.TRAILERS_BIT)
             .writeInt(trailersPayload.size)
             .write(trailersPayload)
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
-                message = trailers,
+                status = 200,
                 headers = emptyMap(),
+                message = trailers,
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
-        assertThat(response.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
     }
 
     @Test
@@ -276,7 +271,7 @@ class GRPCWebInterceptorTest {
         val message = Envelope.pack(Buffer().write("message".encodeUtf8()))
         val trailersPayload = "$GRPC_STATUS_TRAILER:${Code.RESOURCE_EXHAUSTED.value}".encodeUtf8()
         val trailers = Buffer()
-            .writeByte(TRAILERS_BIT)
+            .writeByte(GRPCWebInterceptor.TRAILERS_BIT)
             .writeInt(trailersPayload.size)
             .write(trailersPayload)
         val responseBody = Buffer()
@@ -284,11 +279,10 @@ class GRPCWebInterceptorTest {
             .write(trailers.readByteArray())
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
-                message = responseBody,
+                status = 200,
                 headers = emptyMap(),
+                message = responseBody,
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
@@ -305,14 +299,14 @@ class GRPCWebInterceptorTest {
 
         val result = unaryFunction.responseFunction(
             HTTPResponse(
-                Code.UNKNOWN,
-                emptyMap(),
-                Buffer(),
-                emptyMap(),
-                TracingInfo(888),
+                status = null,
+                headers = emptyMap(),
+                message = Buffer(),
+                trailers = emptyMap(),
+                cause = ConnectException(code = Code.UNKNOWN),
             ),
         )
-        assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
+        assertThat(result.cause!!.code).isEqualTo(Code.UNKNOWN)
     }
 
     /*
@@ -520,7 +514,7 @@ class GRPCWebInterceptorTest {
         val trailersPayload =
             "$GRPC_STATUS_TRAILER:${Code.RESOURCE_EXHAUSTED.value}\r\n$GRPC_MESSAGE_TRAILER:no more resources!".encodeUtf8()
         val trailers = Buffer()
-            .writeByte(TRAILERS_BIT)
+            .writeByte(GRPCWebInterceptor.TRAILERS_BIT)
             .writeInt(trailersPayload.size)
             .write(trailersPayload)
 
@@ -529,9 +523,8 @@ class GRPCWebInterceptorTest {
         )
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        val exception = completion.connectException()!!
-        assertThat(exception.message).isEqualTo("no more resources!")
+        assertThat(completion.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
+        assertThat(completion.cause!!.message).isEqualTo("no more resources!")
     }
 
     @Test
@@ -545,7 +538,6 @@ class GRPCWebInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
-                code = Code.OK,
                 trailers = mapOf(
                     "key" to listOf("value"),
                 ),
@@ -554,7 +546,7 @@ class GRPCWebInterceptorTest {
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.OK)
+        assertThat(completion.cause).isNull()
         assertThat(completion.trailers["key"]).containsExactly("value")
     }
 
@@ -569,7 +561,6 @@ class GRPCWebInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
-                code = Code.UNKNOWN,
                 cause = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
@@ -579,6 +570,6 @@ class GRPCWebInterceptorTest {
 
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.UNKNOWN)
+        assertThat(completion.cause!!.code).isEqualTo(Code.UNKNOWN)
     }
 }

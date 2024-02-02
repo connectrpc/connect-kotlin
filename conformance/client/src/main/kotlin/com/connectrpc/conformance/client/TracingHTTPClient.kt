@@ -21,6 +21,7 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.Stream
 import com.connectrpc.http.UnaryHTTPRequest
+import com.connectrpc.http.clone
 import okio.Buffer
 
 internal class TracingHTTPClient(
@@ -36,18 +37,9 @@ internal class TracingHTTPClient(
                 printer.println("Failed to receive HTTP response (${buffer.size} bytes): ${response.cause!!.message.orEmpty()}")
                 printer.indent().println(response.cause!!.stackTraceToString())
             } else {
-                printer.println("Received HTTP response (${buffer.size} bytes): ${response.tracingInfo?.httpStatus ?: "???"}")
+                printer.println("Received HTTP response (${buffer.size} bytes): ${response.status ?: "???"}")
             }
-            onResult(
-                HTTPResponse(
-                    code = response.code,
-                    headers = response.headers,
-                    message = buffer,
-                    trailers = response.trailers,
-                    tracingInfo = response.tracingInfo,
-                    cause = response.cause,
-                ),
-            )
+            onResult(response.clone(message = buffer))
         }
         return {
             printer.println("Canceling HTTP request...")
@@ -71,9 +63,9 @@ internal class TracingHTTPClient(
                 }
                 is StreamResult.Complete -> {
                     if (result.cause != null) {
-                        printer.printlnWithStackTrace("Failed to complete HTTP response (code=${result.code}): ${result.cause!!.message.orEmpty()}")
+                        printer.printlnWithStackTrace("Failed to complete HTTP response (code=${result.cause!!.code}): ${result.cause!!.message.orEmpty()}")
                     } else {
-                        printer.printlnWithStackTrace("Received HTTP response completion: code=${result.code}")
+                        printer.printlnWithStackTrace("Received successful HTTP response completion")
                     }
                 }
             }

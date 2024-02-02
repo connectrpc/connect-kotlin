@@ -14,7 +14,6 @@
 
 package com.connectrpc.http
 
-import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.Trailers
@@ -24,19 +23,43 @@ import okio.BufferedSource
  * Unary HTTP response received from the server.
  */
 class HTTPResponse(
-    // The status code of the response.
-    val code: Code,
+    // The underlying http status code. If null,
+    // no response was ever received on the network
+    // and cause must be non-null.
+    val status: Int?,
     // Response headers specified by the server.
     val headers: Headers,
     // Body data provided by the server.
     val message: BufferedSource,
     // Trailers provided by the server.
     val trailers: Trailers,
-    // Tracing information that can be used for logging or debugging network-level details.
-    // This information is expected to change when switching protocols (i.e., from Connect to
-    // gRPC-Web), as each protocol has different HTTP semantics.
-    // null in cases where no response was received from the server.
-    val tracingInfo: TracingInfo?,
-    // The accompanying error, if the request failed.
+    // The accompanying exception, if the request failed.
     val cause: ConnectException? = null,
 )
+
+/**
+ * Clones the [HTTPResponse] with override values.
+ *
+ * Intended to make mutations for [HTTPResponse] safe for
+ * [com.connectrpc.Interceptor] implementation.
+ */
+fun HTTPResponse.clone(
+    // The status code of the response.
+    status: Int? = this.status,
+    // Response headers specified by the server.
+    headers: Headers = this.headers,
+    // Body data provided by the server.
+    message: BufferedSource = this.message,
+    // Trailers provided by the server.
+    trailers: Trailers = this.trailers,
+    // The accompanying error, if the request failed.
+    cause: ConnectException? = this.cause,
+): HTTPResponse {
+    return HTTPResponse(
+        status,
+        headers,
+        message,
+        trailers,
+        cause,
+    )
+}
