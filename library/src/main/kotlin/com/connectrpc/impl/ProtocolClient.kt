@@ -41,7 +41,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okio.Buffer
 import java.net.URI
-import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
 
 /**
@@ -167,18 +166,9 @@ class ProtocolClient(
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
     ): UnaryBlockingCall<Output> {
-        val countDownLatch = CountDownLatch(1)
-        val call = UnaryBlockingCall<Output>()
-        // Set the unary synchronous executable.
-        call.setExecute { callback: (ResponseMessage<Output>) -> Unit ->
-            val cancellationFn = unary(request, headers, methodSpec) { responseMessage ->
-                callback(responseMessage)
-                countDownLatch.countDown()
-            }
-            // Set the cancellation function .
-            call.setCancel(cancellationFn)
+        return UnaryCall { callback ->
+            unary(request, headers, methodSpec, callback)
         }
-        return call
     }
 
     override suspend fun <Input : Any, Output : Any> serverStream(

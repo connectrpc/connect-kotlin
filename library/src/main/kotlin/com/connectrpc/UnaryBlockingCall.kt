@@ -14,57 +14,18 @@
 
 package com.connectrpc
 
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
-
 /**
  * A [UnaryBlockingCall] contains the way to make a blocking RPC call and cancelling the RPC.
  */
-class UnaryBlockingCall<Output> {
-    private var executable: ((ResponseMessage<Output>) -> Unit) -> Unit = { }
-    private var cancelFn: () -> Unit = { }
-
+interface UnaryBlockingCall<Output> {
     /**
-     * Execute the underlying request.
-     * Subsequent calls will create a new request.
+     * Execute the underlying request. Can only be called once.
+     * Subsequent calls will throw IllegalStateException.
      */
-    fun execute(): ResponseMessage<Output> {
-        val countDownLatch = CountDownLatch(1)
-        val reference = AtomicReference<ResponseMessage<Output>>()
-        executable { responseMessage ->
-            reference.set(responseMessage)
-            countDownLatch.countDown()
-        }
-        countDownLatch.await()
-        return reference.get()
-    }
+    fun execute(): ResponseMessage<Output>
 
     /**
      * Cancel the underlying request.
      */
-    fun cancel() {
-        cancelFn()
-    }
-
-    /**
-     * Gives the blocking call a cancellation function to cancel the
-     * underlying request.
-     *
-     * @param cancel The function to call in order to cancel the
-     * underlying request.
-     */
-    internal fun setCancel(cancel: () -> Unit) {
-        this.cancelFn = cancel
-    }
-
-    /**
-     * Gives the blocking call the execution function to initiate
-     * the underlying request.
-     *
-     * @param executable The function to call in order to initiate
-     * a request.
-     */
-    internal fun setExecute(executable: ((ResponseMessage<Output>) -> Unit) -> Unit) {
-        this.executable = executable
-    }
+    fun cancel()
 }
