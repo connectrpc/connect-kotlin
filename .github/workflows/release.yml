@@ -20,7 +20,7 @@ jobs:
         with:
           github_token: ${{ github.token }}
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
       - name: Configure GPG signing & publish
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
@@ -55,7 +55,7 @@ jobs:
           java-version: '17'
           cache: 'gradle'
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
+        uses: gradle/wrapper-validation-action@v2
       - name: sha256
         run: |
           tag=$(git describe --tags --abbrev=0 --exact-match)
