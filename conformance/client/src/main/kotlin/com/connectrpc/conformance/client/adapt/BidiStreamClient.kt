@@ -18,6 +18,7 @@ import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.Headers
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.coroutineScope
 
 /**
@@ -60,12 +61,12 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface BidiStream<Req : MessageLite, Resp : MessageLite> : SuspendCloseable {
+    interface BidiStream<Req, Resp> : SuspendCloseable {
         val requests: RequestStream<Req>
         val responses: ResponseStream<Resp>
 
         companion object {
-            fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): BidiStream<Req, Resp> {
+            fun <Req, Resp> new(underlying: BidirectionalStreamInterface<Req, Resp>): BidiStream<Req, Resp> {
                 val reqStream = RequestStream.new(underlying)
                 val respStream = ResponseStream.new(underlying)
                 return object : BidiStream<Req, Resp> {
@@ -80,6 +81,45 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Copies the contents of the given channel to the given
+ * stream's requests, closing the request stream at the
+ * end (via half-closing the stream).
+ */
+suspend fun <Req, Resp> copyFromChannel(
+    stream: BidiStreamClient.BidiStream<Req, Resp>,
+    requests: ReceiveChannel<Req>,
+) {
+    copyFromChannel(stream, requests) { it }
+}
+
+/**
+ * Copies the contents of the given channel to the given
+ * stream's requests, transforming each element using the
+ * given lambda, closing the request stream at the end
+ * (via half-closing the stream).
+ */
+suspend fun <Req, Resp, T> copyFromChannel(
+    stream: BidiStreamClient.BidiStream<Req, Resp>,
+    requests: ReceiveChannel<T>,
+    toRequest: (T) -> Req,
+) {
+    stream.requests.use {
+        try {
+            for (req in requests) {
+                it.send(toRequest(req))
+            }
+        } catch (ex: Throwable) {
+            try {
+                stream.close()
+            } catch (closeEx: Throwable) {
+                ex.addSuppressed(closeEx)
+            }
+            throw ex
         }
     }
 }

@@ -15,7 +15,6 @@
 package com.connectrpc.conformance.client.adapt
 
 import com.connectrpc.BidirectionalStreamInterface
-import com.google.protobuf.MessageLite
 
 /**
  * RequestStream is a stream that allows a client to upload
@@ -28,7 +27,9 @@ import com.google.protobuf.MessageLite
  * requests "half-closes" the stream; closing the responses
  * "fully closes" it.
  */
-interface RequestStream<Req : MessageLite> : SuspendCloseable {
+interface RequestStream<Req> : SuspendCloseable {
+    val isClosedForSend: Boolean
+
     /**
      * Sends a message on the stream.
      * @throws Exception when the request cannot be sent
@@ -37,8 +38,11 @@ interface RequestStream<Req : MessageLite> : SuspendCloseable {
     suspend fun send(req: Req)
 
     companion object {
-        fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): RequestStream<Req> {
+        fun <Req, Resp> new(underlying: BidirectionalStreamInterface<Req, Resp>): RequestStream<Req> {
             return object : RequestStream<Req> {
+                override val isClosedForSend: Boolean
+                    get() = underlying.isSendClosed()
+
                 override suspend fun send(req: Req) {
                     val result = underlying.send(req)
                     if (result.isFailure) {
