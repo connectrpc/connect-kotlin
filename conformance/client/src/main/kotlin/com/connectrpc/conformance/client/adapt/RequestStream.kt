@@ -28,7 +28,7 @@ import com.google.protobuf.MessageLite
  * requests "half-closes" the stream; closing the responses
  * "fully closes" it.
  */
-interface RequestStream<Req : MessageLite> : Closeable {
+interface RequestStream<Req : MessageLite> : SuspendCloseable {
     /**
      * Sends a message on the stream.
      * @throws Exception when the request cannot be sent

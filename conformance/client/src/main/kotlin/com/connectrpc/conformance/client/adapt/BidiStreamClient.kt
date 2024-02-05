@@ -60,7 +60,7 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface BidiStream<Req : MessageLite, Resp : MessageLite> : Closeable {
+    interface BidiStream<Req : MessageLite, Resp : MessageLite> : SuspendCloseable {
         val requests: RequestStream<Req>
         val responses: ResponseStream<Resp>
 

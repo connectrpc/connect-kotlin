@@ -15,14 +15,14 @@
 package com.connectrpc.conformance.client.adapt
 
 // Like java.io.Closeable, but the close operation is suspendable.
-interface Closeable {
+interface SuspendCloseable {
     suspend fun close()
 }
 
 // Like the standard kotlin "use" extension function, but uses
 // a suspending Closeable instead of java.io.Closeable and accepts
 // a suspending block.
-internal suspend fun <T : Closeable, R> T.use(block: suspend (T) -> R): R {
+internal suspend fun <T : SuspendCloseable, R> T.use(block: suspend (T) -> R): R {
     var exception: Throwable? = null
     try {
         return block(this)

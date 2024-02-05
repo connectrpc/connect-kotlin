@@ -29,7 +29,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
  *
  * @param Resp The response message type
  */
-interface ResponseStream<Resp : MessageLite> : Closeable {
+interface ResponseStream<Resp : MessageLite> : SuspendCloseable {
     val messages: ReceiveChannel<Resp>
     suspend fun headers(): Headers
     suspend fun trailers(): Headers

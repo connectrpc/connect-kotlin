@@ -60,7 +60,7 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface ClientStream<Req : MessageLite, Resp : MessageLite> : Closeable {
+    interface ClientStream<Req : MessageLite, Resp : MessageLite> : SuspendCloseable {
         suspend fun send(req: Req)
         suspend fun closeAndReceive(): ResponseMessage<Resp>
 
