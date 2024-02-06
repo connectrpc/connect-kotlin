@@ -329,7 +329,7 @@ class Client(
                     stream.close()
                 }
                 try {
-                    val resp = stream.responses.messages.receive()
+                    val resp = stream.responses.receive()
                     payloads.add(payloadExtractor(resp))
                     if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
                         stream.close()
@@ -363,7 +363,7 @@ class Client(
             var connEx: ConnectException? = null
             var trailers: Headers
             try {
-                for (resp in stream.responses.messages) {
+                for (resp in stream.responses) {
                     payloads.add(payloadExtractor(resp))
                     if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
                         stream.close()
@@ -418,7 +418,7 @@ class Client(
             if (cancel is Cancel.AfterNumResponses && cancel.num == 0) {
                 stream.close()
             }
-            for (resp in stream.messages) {
+            for (resp in stream) {
                 payloads.add(payloadExtractor(resp))
                 if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
                     stream.close()

@@ -17,8 +17,13 @@ package com.connectrpc.conformance.client.adapt
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.Headers
 import com.connectrpc.ServerOnlyStreamInterface
-import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.ChannelIterator
+import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.selects.SelectClause1
 
 /**
  * ResponseStream is a stream that allows a client to download
@@ -29,17 +34,27 @@ import kotlinx.coroutines.channels.ReceiveChannel
  *
  * @param Resp The response message type
  */
-interface ResponseStream<Resp : MessageLite> : SuspendCloseable {
-    val messages: ReceiveChannel<Resp>
+interface ResponseStream<Resp> :
+    ReceiveChannel<Resp>,
+    SuspendCloseable {
+
     suspend fun headers(): Headers
     suspend fun trailers(): Headers
 
-    companion object {
-        fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): ResponseStream<Resp> {
-            return object : ResponseStream<Resp> {
-                override val messages: ReceiveChannel<Resp>
-                    get() = underlying.responseChannel()
+    @Deprecated(
+        """Prefer close() instead. Since response streams are not buffered,
+        there will not be undelivered items to discard. The close() method
+        will result in a ConnectException with a CANCELED code being thrown
+        by calls to receive, whereas this method results in the given
+        CancellationException being thrown.""",
+        ReplaceWith("stream.close()"),
+    )
+    override fun cancel(cause: CancellationException?)
 
+    companion object {
+        fun <Req, Resp> new(underlying: BidirectionalStreamInterface<Req, Resp>): ResponseStream<Resp> {
+            val channel = underlying.responseChannel()
+            return object : ResponseStream<Resp> {
                 override suspend fun headers(): Headers {
                     return underlying.responseHeaders().await()
                 }
@@ -50,15 +65,54 @@ interface ResponseStream<Resp : MessageLite> : SuspendCloseable {
 
                 override suspend fun close() {
                     underlying.receiveClose()
+                }
+
+                @OptIn(DelicateCoroutinesApi::class)
+                override val isClosedForReceive: Boolean
+                    get() = channel.isClosedForReceive
+
+                @ExperimentalCoroutinesApi
+                override val isEmpty: Boolean
+                    get() = channel.isEmpty
+
+                override val onReceive: SelectClause1<Resp>
+                    get() = channel.onReceive
+
+                override val onReceiveCatching: SelectClause1<ChannelResult<Resp>>
+                    get() = channel.onReceiveCatching
+
+                @Deprecated("Since 1.2.0, binary compatibility with versions <= 1.1.x", level = DeprecationLevel.HIDDEN)
+                override fun cancel(cause: Throwable?): Boolean {
+                    channel.cancel(CancellationException())
+                    return false
+                }
+
+                @Deprecated("Prefer close() instead.", ReplaceWith("stream.close()"))
+                override fun cancel(cause: CancellationException?) {
+                    channel.cancel(cause)
+                }
+
+                override fun iterator(): ChannelIterator<Resp> {
+                    return channel.iterator()
+                }
+
+                override suspend fun receive(): Resp {
+                    return channel.receive()
+                }
+
+                override suspend fun receiveCatching(): ChannelResult<Resp> {
+                    return channel.receiveCatching()
+                }
+
+                override fun tryReceive(): ChannelResult<Resp> {
+                    return channel.tryReceive()
                 }
             }
         }
 
-        fun <Req : MessageLite, Resp : MessageLite> new(underlying: ServerOnlyStreamInterface<Req, Resp>): ResponseStream<Resp> {
+        fun <Req, Resp> new(underlying: ServerOnlyStreamInterface<Req, Resp>): ResponseStream<Resp> {
+            val channel = underlying.responseChannel()
             return object : ResponseStream<Resp> {
-                override val messages: ReceiveChannel<Resp>
-                    get() = underlying.responseChannel()
-
                 override suspend fun headers(): Headers {
                     return underlying.responseHeaders().await()
                 }
@@ -69,6 +123,47 @@ interface ResponseStream<Resp : MessageLite> : SuspendCloseable {
 
                 override suspend fun close() {
                     underlying.receiveClose()
+                }
+
+                @OptIn(DelicateCoroutinesApi::class)
+                override val isClosedForReceive: Boolean
+                    get() = channel.isClosedForReceive
+
+                @ExperimentalCoroutinesApi
+                override val isEmpty: Boolean
+                    get() = channel.isEmpty
+
+                override val onReceive: SelectClause1<Resp>
+                    get() = channel.onReceive
+
+                override val onReceiveCatching: SelectClause1<ChannelResult<Resp>>
+                    get() = channel.onReceiveCatching
+
+                @Deprecated("Since 1.2.0, binary compatibility with versions <= 1.1.x", level = DeprecationLevel.HIDDEN)
+                override fun cancel(cause: Throwable?): Boolean {
+                    channel.cancel(CancellationException())
+                    return false
+                }
+
+                @Deprecated("Prefer close() instead.", ReplaceWith("stream.close()"))
+                override fun cancel(cause: CancellationException?) {
+                    channel.cancel(cause)
+                }
+
+                override fun iterator(): ChannelIterator<Resp> {
+                    return channel.iterator()
+                }
+
+                override suspend fun receive(): Resp {
+                    return channel.receive()
+                }
+
+                override suspend fun receiveCatching(): ChannelResult<Resp> {
+                    return channel.receiveCatching()
+                }
+
+                override fun tryReceive(): ChannelResult<Resp> {
+                    return channel.tryReceive()
                 }
             }
         }

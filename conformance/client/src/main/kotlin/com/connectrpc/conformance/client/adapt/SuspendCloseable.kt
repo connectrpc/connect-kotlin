@@ -16,13 +16,18 @@ package com.connectrpc.conformance.client.adapt
 
 // Like java.io.Closeable, but the close operation is suspendable.
 interface SuspendCloseable {
+    // Closes this resource, suspending the current coroutine if
+    // necessary. Suspension is used in case the close operation
+    // needs to do anything blocking, including I/O: in such a
+    // case, the blocking implementation can be executed in a
+    // coroutine context where blocking is appropriate, and the
+    // calling coroutine can resume after it finishes.
     suspend fun close()
 }
 
 // Like the standard kotlin "use" extension function, but uses
-// a suspending Closeable instead of java.io.Closeable and accepts
-// a suspending block.
-internal suspend fun <T : SuspendCloseable, R> T.use(block: suspend (T) -> R): R {
+// a SuspendingCloseable instead of java.io.Closeable.
+suspend inline fun <T : SuspendCloseable, R> T.use(block: (T) -> R): R {
     var exception: Throwable? = null
     try {
         return block(this)

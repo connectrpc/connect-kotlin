@@ -21,6 +21,7 @@ import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.coroutineScope
 
 /**
@@ -60,13 +61,29 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface ClientStream<Req : MessageLite, Resp : MessageLite> : SuspendCloseable {
-        suspend fun send(req: Req)
+    interface ClientStream<Req, Resp> :
+        RequestStream<Req>,
+        SuspendCloseable {
+
+        /**
+         * Closes the request stream **and** cancels the RPC. To close
+         * the request stream normally, without canceling the RPC,
+         * call closeAndReceive() instead.
+         */
+        override suspend fun close()
+
+        /**
+         * Closes the request stream and then awaits and returns
+         * the RPC result.
+         */
         suspend fun closeAndReceive(): ResponseMessage<Resp>
 
         companion object {
-            fun <Req : MessageLite, Resp : MessageLite> new(underlying: ClientOnlyStreamInterface<Req, Resp>): ClientStream<Req, Resp> {
+            fun <Req, Resp> new(underlying: ClientOnlyStreamInterface<Req, Resp>): ClientStream<Req, Resp> {
                 return object : ClientStream<Req, Resp> {
+                    override val isClosedForSend: Boolean
+                        get() = underlying.isSendClosed()
+
                     override suspend fun send(req: Req) {
                         val result = underlying.send(req)
                         if (result.isFailure) {
@@ -84,11 +101,10 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                                 trailers = underlying.responseTrailers().await(),
                             )
                         } catch (e: Exception) {
-                            val connectException: ConnectException
-                            if (e is ConnectException) {
-                                connectException = e
+                            val connectException = if (e is ConnectException) {
+                                e
                             } else {
-                                connectException = ConnectException(code = Code.UNKNOWN, exception = e)
+                                ConnectException(code = Code.UNKNOWN, exception = e)
                             }
                             return ResponseMessage.Failure(
                                 cause = connectException,
@@ -104,6 +120,45 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Copies the contents of the given channel to the given
+ * stream, closing the stream at the end and returning
+ * the RPC result.
+ */
+suspend fun <Req, Resp> copyFromChannel(
+    stream: ClientStreamClient.ClientStream<Req, Resp>,
+    requests: ReceiveChannel<Req>,
+): ResponseMessage<Resp> {
+    return copyFromChannel(stream, requests) { it }
+}
+
+/**
+ * Copies the contents of the given channel to the given
+ * stream, transforming each element using the given lambda,
+ * closing the stream at the end and returning the RPC result.
+ */
+suspend fun <Req, Resp, T> copyFromChannel(
+    stream: ClientStreamClient.ClientStream<Req, Resp>,
+    requests: ReceiveChannel<T>,
+    toRequest: (T) -> Req,
+): ResponseMessage<Resp> {
+    stream.use {
+        try {
+            for (req in requests) {
+                it.send(toRequest(req))
+            }
+            return it.closeAndReceive()
+        } catch (ex: Throwable) {
+            try {
+                stream.close()
+            } catch (closeEx: Throwable) {
+                ex.addSuppressed(closeEx)
+            }
+            throw ex
         }
     }
 }
