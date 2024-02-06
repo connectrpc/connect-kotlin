@@ -62,7 +62,7 @@ interface ServerOnlyStreamInterface<Input, Output> {
     /**
      * Close the receive stream.
      */
-    fun receiveClose()
+    suspend fun receiveClose()
 
     /**
      * Determine if the underlying client receive stream is closed.

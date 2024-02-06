@@ -59,11 +59,11 @@ internal class BidirectionalStream<Input, Output>(
         return stream.isReceiveClosed()
     }
 
-    override fun sendClose() {
+    override suspend fun sendClose() {
         stream.sendClose()
     }
 
-    override fun receiveClose() {
+    override suspend fun receiveClose() {
         stream.receiveClose()
     }
 

@@ -54,11 +54,11 @@ internal class ClientOnlyStream<Input, Output>(
         return messageStream.responseTrailers()
     }
 
-    override fun sendClose() {
+    override suspend fun sendClose() {
         return messageStream.sendClose()
     }
 
-    override fun cancel() {
+    override suspend fun cancel() {
         return messageStream.receiveClose()
     }
 

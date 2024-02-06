@@ -31,11 +31,14 @@ import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.UnaryHTTPRequest
+import com.connectrpc.http.dispatchIn
 import com.connectrpc.http.transform
 import com.connectrpc.protocols.GETConfiguration
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.net.URI
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
@@ -139,6 +142,19 @@ class ProtocolClient(
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output> {
+        if (config.ioCoroutineContext != null) {
+            return withContext(config.ioCoroutineContext) {
+                suspendUnary(request, headers, methodSpec)
+            }
+        }
+        return suspendUnary(request, headers, methodSpec)
+    }
+
+    private suspend fun <Input : Any, Output : Any> suspendUnary(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): ResponseMessage<Output> {
         return suspendCancellableCoroutine { continuation ->
             val cancelable = unary(request, headers, methodSpec) { responseMessage ->
                 continuation.resume(responseMessage)
@@ -168,18 +184,11 @@ class ProtocolClient(
         return call
     }
 
-    override suspend fun <Input : Any, Output : Any> stream(
-        headers: Headers,
-        methodSpec: MethodSpec<Input, Output>,
-    ): BidirectionalStreamInterface<Input, Output> {
-        return bidirectionalStream(methodSpec, headers)
-    }
-
     override suspend fun <Input : Any, Output : Any> serverStream(
         headers: Headers,
         methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output> {
-        val stream = bidirectionalStream(methodSpec, headers)
+        val stream = stream(headers, methodSpec)
         return ServerOnlyStream(stream)
     }
 
@@ -191,10 +200,10 @@ class ProtocolClient(
         return ClientOnlyStream(stream)
     }
 
-    private suspend fun <Input : Any, Output : Any> bidirectionalStream(
-        methodSpec: MethodSpec<Input, Output>,
+    override suspend fun <Input : Any, Output : Any> stream(
         headers: Headers,
-    ): BidirectionalStream<Input, Output> = suspendCancellableCoroutine { continuation ->
+        methodSpec: MethodSpec<Input, Output>,
+    ): BidirectionalStreamInterface<Input, Output> {
         val channel = Channel<Output>(1)
         val responseHeaders = CompletableDeferred<Headers>()
         val responseTrailers = CompletableDeferred<Headers>()
@@ -209,10 +218,13 @@ class ProtocolClient(
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
         var isComplete = false
-        val httpStream = httpClient.stream(finalRequest, methodSpec.streamType == StreamType.BIDI) { initialResult ->
+        val httpStream = httpClient.stream(
+            finalRequest,
+            methodSpec.streamType == StreamType.BIDI,
+        ) httpStream@{ initialResult ->
             if (isComplete) {
                 // No-op on remaining handlers after a completion.
-                return@stream
+                return@httpStream
             }
             // Pass through the interceptor chain.
             when (val streamResult = streamFunc.streamResultFunction(initialResult)) {
@@ -257,22 +269,27 @@ class ProtocolClient(
                 }
             }
         }
-        continuation.invokeOnCancellation {
-            httpStream.receiveClose()
-        }
-        val stream = httpStream.transform { streamFunc.requestBodyFunction(it) }
-        channel.invokeOnClose {
-            stream.receiveClose()
-        }
-        continuation.resume(
-            BidirectionalStream(
+        try {
+            channel.invokeOnClose {
+                runBlocking { httpStream.receiveClose() }
+            }
+            var stream = httpStream.transform { streamFunc.requestBodyFunction(it) }
+            if (config.ioCoroutineContext != null) {
+                stream = stream.dispatchIn(config.ioCoroutineContext)
+            }
+            return BidirectionalStream(
                 stream,
                 requestCodec,
                 channel,
                 responseHeaders,
                 responseTrailers,
-            ),
-        )
+            )
+        } catch (ex: Throwable) {
+            // If something in these last steps prevents us
+            // from returning, don't leak the stream.
+            httpStream.receiveClose()
+            throw ex
+        }
     }
 
     private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>) = baseURIWithTrailingSlash.resolve(methodSpec.path).toURL()

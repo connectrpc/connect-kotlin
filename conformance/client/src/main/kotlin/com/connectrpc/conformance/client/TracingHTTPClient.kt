@@ -97,12 +97,12 @@ internal class TracingHTTPClient(
             return res
         }
 
-        override fun sendClose() {
+        override suspend fun sendClose() {
             printer.printlnWithStackTrace("Half-closing stream")
             delegate.sendClose()
         }
 
-        override fun receiveClose() {
+        override suspend fun receiveClose() {
             printer.printlnWithStackTrace("Closing stream")
             delegate.receiveClose()
         }
