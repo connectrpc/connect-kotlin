@@ -42,11 +42,9 @@ import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.tls.HandshakeCertificates
 import okhttp3.tls.HeldCertificate
 import java.security.KeyFactory
@@ -153,7 +151,7 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-    ): ClientResponseResult = coroutineScope {
+    ): ClientResponseResult {
         if (req.streamType != StreamType.CLIENT_STREAM) {
             throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
         }
@@ -163,8 +161,7 @@ class Client(
         ) {
             throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
-        val stream = client.execute(req.requestHeaders)
-        try {
+        return client.execute(req.requestHeaders) { stream ->
             var numUnsent = 0
             for (i in req.requestMessages.indices) {
                 if (req.requestDelayMs > 0) {
@@ -184,12 +181,12 @@ class Client(
             }
             when (val cancel = req.cancel) {
                 is Cancel.BeforeCloseSend -> {
-                    stream.cancel()
+                    stream.close()
                 }
                 is Cancel.AfterCloseSendMs -> {
                     launch {
                         delay(cancel.millis.toLong())
-                        stream.cancel()
+                        stream.close()
                     }
                 }
                 else -> {
@@ -197,9 +194,7 @@ class Client(
                     // So this case means no cancellation.
                 }
             }
-            return@coroutineScope unaryResult(numUnsent, stream.closeAndReceive())
-        } finally {
-            stream.cancel()
+            unaryResult(numUnsent, stream.closeAndReceive())
         }
     }
 
@@ -220,37 +215,34 @@ class Client(
             throw RuntimeException("server stream calls can only support `AfterCloseSendMs` and 'AfterNumResponses' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
         val msg = fromAny(req.requestMessages[0], client.reqTemplate, SERVER_STREAM_REQUEST_NAME)
-        val stream: ResponseStream<Resp>
+        var sent = false
         try {
-            // TODO: should this throw? Maybe not...
-            // An alternative would be to have it return a
-            // stream that throws the relevant exception in
-            // calls to receive.
-            stream = client.execute(msg, req.requestHeaders)
+            return client.execute(msg, req.requestHeaders) { stream ->
+                sent = true
+                val cancel = req.cancel
+                if (cancel is Cancel.AfterCloseSendMs) {
+                    delay(cancel.millis.toLong())
+                    stream.close()
+                }
+                streamResult(0, stream, cancel)
+            }
         } catch (ex: Throwable) {
-            val connEx = if (ex is ConnectException) {
-                ex
-            } else {
-                ConnectException(
-                    code = Code.UNKNOWN,
-                    message = ex.message,
-                    exception = ex,
+            if (!sent) {
+                val connEx = if (ex is ConnectException) {
+                    ex
+                } else {
+                    ConnectException(
+                        code = Code.UNKNOWN,
+                        message = ex.message,
+                        exception = ex,
+                    )
+                }
+                return ClientResponseResult(
+                    error = connEx,
+                    numUnsentRequests = 1,
                 )
             }
-            return ClientResponseResult(
-                error = connEx,
-                numUnsentRequests = 1,
-            )
-        }
-        try {
-            val cancel = req.cancel
-            if (cancel is Cancel.AfterCloseSendMs) {
-                delay(cancel.millis.toLong())
-                stream.close()
-            }
-            return streamResult(0, stream, cancel)
-        } finally {
-            stream.close()
+            throw ex
         }
     }
 
@@ -272,8 +264,7 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        val stream = client.execute(req.requestHeaders)
-        try {
+        return client.execute(req.requestHeaders) { stream ->
             var numUnsent = 0
             for (i in req.requestMessages.indices) {
                 if (req.requestDelayMs > 0) {
@@ -294,21 +285,19 @@ class Client(
             val cancel = req.cancel
             when (cancel) {
                 is Cancel.BeforeCloseSend -> {
-                    stream.responses.close() // cancel
+                    stream.close() // cancel
                     stream.requests.close() // close send
                 }
                 is Cancel.AfterCloseSendMs -> {
                     stream.requests.close() // close send
                     delay(cancel.millis.toLong())
-                    stream.responses.close() // cancel
+                    stream.close() // cancel
                 }
                 else -> {
                     stream.requests.close() // close send
                 }
             }
-            return streamResult(numUnsent, stream.responses, cancel)
-        } finally {
-            stream.responses.close()
+            streamResult(numUnsent, stream.responses, cancel)
         }
     }
 
@@ -316,8 +305,7 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        val stream = client.execute(req.requestHeaders)
-        try {
+        return client.execute(req.requestHeaders) { stream ->
             val cancel = req.cancel
             val payloads: MutableList<MessageLite> = mutableListOf()
             for (i in req.requestMessages.indices) {
@@ -338,16 +326,16 @@ class Client(
                 // In full-duplex mode, we read the response after writing request,
                 // to interleave the requests and responses.
                 if (i == 0 && cancel is Cancel.AfterNumResponses && cancel.num == 0) {
-                    stream.responses.close()
+                    stream.close()
                 }
                 try {
                     val resp = stream.responses.messages.receive()
                     payloads.add(payloadExtractor(resp))
                     if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
-                        stream.responses.close()
+                        stream.close()
                     }
                 } catch (ex: ConnectException) {
-                    return ClientResponseResult(
+                    return@execute ClientResponseResult(
                         headers = stream.responses.headers(),
                         payloads = payloads,
                         error = ex,
@@ -358,13 +346,13 @@ class Client(
             }
             when (cancel) {
                 is Cancel.BeforeCloseSend -> {
-                    stream.responses.close() // cancel
+                    stream.close() // cancel
                     stream.requests.close() // close send
                 }
                 is Cancel.AfterCloseSendMs -> {
                     stream.requests.close() // close send
                     delay(cancel.millis.toLong())
-                    stream.responses.close() // cancel
+                    stream.close() // cancel
                 }
                 else -> {
                     stream.requests.close() // close send
@@ -378,7 +366,7 @@ class Client(
                 for (resp in stream.responses.messages) {
                     payloads.add(payloadExtractor(resp))
                     if (cancel is Cancel.AfterNumResponses && cancel.num == payloads.size) {
-                        stream.responses.close()
+                        stream.close()
                     }
                 }
                 trailers = stream.responses.trailers()
@@ -386,14 +374,12 @@ class Client(
                 connEx = ex
                 trailers = ex.metadata
             }
-            return ClientResponseResult(
+            ClientResponseResult(
                 headers = stream.responses.headers(),
                 payloads = payloads,
                 error = connEx,
                 trailers = trailers,
             )
-        } finally {
-            stream.responses.close()
         }
     }
 

@@ -17,8 +17,8 @@ package com.connectrpc.conformance.client.adapt
 /**
  * An RPC stub that allows for invoking RPC methods.
  * Each method of Invoker corresponds to an RPC method
- * and returns a client stub that can be used to actually
- * invoke that RPC.
+ * of the conformance service and returns a client
+ * object that can be used to actually invoke that RPC.
  */
 interface Invoker {
     fun unaryClient(): UnaryClient<*, *>

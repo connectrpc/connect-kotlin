@@ -21,10 +21,20 @@ import com.google.protobuf.MessageLite
  * RequestStream is a stream that allows a client to upload
  * zero or more request messages. When the client is done
  * sending messages, it must close the stream.
+ *
+ * Note that closing the request stream is not strictly
+ * required if the RPC is cancelled or fails prematurely
+ * or if the response stream is closed first. Closing the
+ * requests "half-closes" the stream; closing the responses
+ * "fully closes" it.
  */
-interface RequestStream<Req : MessageLite> {
+interface RequestStream<Req : MessageLite> : SuspendCloseable {
+    /**
+     * Sends a message on the stream.
+     * @throws Exception when the request cannot be sent
+     *         because of an error with the streaming call
+     */
     suspend fun send(req: Req)
-    fun close()
 
     companion object {
         fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): RequestStream<Req> {
@@ -36,7 +46,7 @@ interface RequestStream<Req : MessageLite> {
                     }
                 }
 
-                override fun close() {
+                override suspend fun close() {
                     underlying.sendClose()
                 }
             }

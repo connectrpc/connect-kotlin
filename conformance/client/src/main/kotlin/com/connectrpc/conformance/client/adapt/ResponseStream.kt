@@ -29,14 +29,10 @@ import kotlinx.coroutines.channels.ReceiveChannel
  *
  * @param Resp The response message type
  */
-interface ResponseStream<Resp : MessageLite> {
+interface ResponseStream<Resp : MessageLite> : SuspendCloseable {
     val messages: ReceiveChannel<Resp>
-
     suspend fun headers(): Headers
-
     suspend fun trailers(): Headers
-
-    fun close()
 
     companion object {
         fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): ResponseStream<Resp> {
@@ -52,7 +48,7 @@ interface ResponseStream<Resp : MessageLite> {
                     return underlying.responseTrailers().await()
                 }
 
-                override fun close() {
+                override suspend fun close() {
                     underlying.receiveClose()
                 }
             }
@@ -71,7 +67,7 @@ interface ResponseStream<Resp : MessageLite> {
                     return underlying.responseTrailers().await()
                 }
 
-                override fun close() {
+                override suspend fun close() {
                     underlying.receiveClose()
                 }
             }

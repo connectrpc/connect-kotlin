@@ -17,6 +17,8 @@ package com.connectrpc.conformance.client.adapt
 import com.connectrpc.BidirectionalStreamInterface
 import com.connectrpc.Headers
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
 /**
  * The client of a bidi-stream RPC operation. A bidi-stream
@@ -35,7 +37,22 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,
 ) {
-    abstract suspend fun execute(headers: Headers): BidiStream<Req, Resp>
+    /**
+     * Executes the bidirectional-stream call inside the given block.
+     * The block is used to send requests and receive responses. The
+     * stream is automatically closed when the block returns or throws.
+     */
+    suspend fun <R> execute(
+        headers: Headers,
+        block: suspend CoroutineScope.(BidiStream<Req, Resp>) -> R,
+    ): R {
+        val stream = execute(headers)
+        return stream.use {
+            coroutineScope { block(this, it) }
+        }
+    }
+
+    protected abstract suspend fun execute(headers: Headers): BidiStream<Req, Resp>
 
     /**
      * A BidiStream combines a request stream and a response stream.
@@ -43,9 +60,10 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
      * @param Req The request message type
      * @param Resp The response message type
      */
-    interface BidiStream<Req : MessageLite, Resp : MessageLite> {
+    interface BidiStream<Req : MessageLite, Resp : MessageLite> : SuspendCloseable {
         val requests: RequestStream<Req>
         val responses: ResponseStream<Resp>
+
         companion object {
             fun <Req : MessageLite, Resp : MessageLite> new(underlying: BidirectionalStreamInterface<Req, Resp>): BidiStream<Req, Resp> {
                 val reqStream = RequestStream.new(underlying)
@@ -56,6 +74,10 @@ abstract class BidiStreamClient<Req : MessageLite, Resp : MessageLite>(
 
                     override val responses: ResponseStream<Resp>
                         get() = respStream
+
+                    override suspend fun close() {
+                        responses.close()
+                    }
                 }
             }
         }

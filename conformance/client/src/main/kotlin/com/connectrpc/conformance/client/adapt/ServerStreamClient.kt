@@ -16,6 +16,8 @@ package com.connectrpc.conformance.client.adapt
 
 import com.connectrpc.Headers
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 
 /**
  * The client of a server-stream RPC operation. A server-stream
@@ -29,5 +31,21 @@ abstract class ServerStreamClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,
 ) {
-    abstract suspend fun execute(req: Req, headers: Headers): ResponseStream<Resp>
+    /**
+     * Executes the server-stream call inside the given block. The block
+     * is used to consume the responses. The stream is automatically closed
+     * when the block returns or throws.
+     */
+    suspend fun <R> execute(
+        req: Req,
+        headers: Headers,
+        block: suspend CoroutineScope.(ResponseStream<Resp>) -> R,
+    ): R {
+        val stream = execute(req, headers)
+        return stream.use {
+            coroutineScope { block(this, it) }
+        }
+    }
+
+    protected abstract suspend fun execute(req: Req, headers: Headers): ResponseStream<Resp>
 }
