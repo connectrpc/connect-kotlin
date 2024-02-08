@@ -48,10 +48,10 @@ class ProtocolClientConfig @JvmOverloads constructor(
     compressionPools: List<CompressionPool> = listOf(GzipCompressionPool),
     // The coroutine context to use for I/O, such as sending RPC messages.
     // If null, the current/calling coroutine context is used. So the caller
-    // may need explicitly dispatch send calls using contexts where I/O is
-    // appropriate (using the withContext extension function). If non-null
-    // (such as Dispatchers.IO), operations that involve I/O pr other
-    // blocking will automatically be dispatched using the biven context,
+    // may need to explicitly dispatch send calls using contexts where I/O
+    // is appropriate (using the withContext extension function). If non-null
+    // (such as Dispatchers.IO), operations that involve I/O or other
+    // blocking will automatically be dispatched using the given context,
     // so the caller does not need to worry about it.
     val ioCoroutineContext: CoroutineContext? = null,
 ) {
