@@ -67,12 +67,12 @@ interface BidirectionalStreamInterface<Input, Output> {
     /**
      * Close the send stream. No calls to [send] are valid after calling [sendClose].
      */
-    fun sendClose()
+    suspend fun sendClose()
 
     /**
      * Close the receive stream.
      */
-    fun receiveClose()
+    suspend fun receiveClose()
 
     /**
      * Determine if the underlying client send stream is closed.

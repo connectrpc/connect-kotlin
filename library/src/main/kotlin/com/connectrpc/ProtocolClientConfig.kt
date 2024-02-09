@@ -22,6 +22,7 @@ import com.connectrpc.protocols.GRPCInterceptor
 import com.connectrpc.protocols.GRPCWebInterceptor
 import com.connectrpc.protocols.NetworkProtocol
 import java.net.URI
+import kotlin.coroutines.CoroutineContext
 
 /**
  *  Set of configuration used to set up clients.
@@ -45,6 +46,14 @@ class ProtocolClientConfig @JvmOverloads constructor(
     // Compression pools that provide support for the provided `compressionName`, as well as any
     // other compression methods that need to be supported for inbound responses.
     compressionPools: List<CompressionPool> = listOf(GzipCompressionPool),
+    // The coroutine context to use for I/O, such as sending RPC messages.
+    // If null, the current/calling coroutine context is used. So the caller
+    // may need to explicitly dispatch send calls using contexts where I/O
+    // is appropriate (using the withContext extension function). If non-null
+    // (such as Dispatchers.IO), operations that involve I/O or other
+    // blocking will automatically be dispatched using the given context,
+    // so the caller does not need to worry about it.
+    val ioCoroutineContext: CoroutineContext? = null,
 ) {
     private val internalInterceptorFactoryList = mutableListOf<(ProtocolClientConfig) -> Interceptor>()
     private val compressionPools = mutableMapOf<String, CompressionPool>()

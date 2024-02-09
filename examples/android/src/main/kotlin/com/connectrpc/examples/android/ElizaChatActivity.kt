@@ -86,6 +86,9 @@ class ElizaChatActivity : AppCompatActivity() {
                 host = host,
                 serializationStrategy = GoogleJavaLiteProtobufStrategy(),
                 networkProtocol = selectedNetworkProtocolOption,
+                // RPC operations that involve network I/O will
+                // use this coroutine context.
+                ioCoroutineContext = Dispatchers.IO,
             ),
         )
         // Create the Eliza service client.
@@ -113,7 +116,7 @@ class ElizaChatActivity : AppCompatActivity() {
             adapter.add(MessageData(sentence, false))
             editTextView.setText("")
             // Ensure IO context for unary requests.
-            lifecycleScope.launch(Dispatchers.IO) {
+            lifecycleScope.launch {
                 // Make a unary request to Eliza.
                 val response = elizaServiceClient.say(SayRequest.newBuilder().setSentence(sentence).build())
                 response.success { success ->
@@ -133,7 +136,7 @@ class ElizaChatActivity : AppCompatActivity() {
 
     private fun setupStreamingChat(elizaServiceClient: ElizaServiceClient) {
         // On stream result, this callback can be called multiple times.
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch {
             // Initialize a bidi stream with Eliza.
             val stream = elizaServiceClient.converse()
             try {
@@ -156,15 +159,13 @@ class ElizaChatActivity : AppCompatActivity() {
             } catch (e: ConnectException) {
                 adapter.add(MessageData("Session failed with code ${e.code}", true))
             }
-            lifecycleScope.launch(Dispatchers.Main) {
-                buttonView.setOnClickListener {
-                    val sentence = editTextView.text.toString()
-                    adapter.add(MessageData(sentence, false))
-                    editTextView.setText("")
-                    // Send will be streaming a message to Eliza.
-                    lifecycleScope.launch(Dispatchers.IO) {
-                        stream.send(ConverseRequest.newBuilder().setSentence(sentence).build())
-                    }
+            buttonView.setOnClickListener {
+                val sentence = editTextView.text.toString()
+                adapter.add(MessageData(sentence, false))
+                editTextView.setText("")
+                // Send will be streaming a message to Eliza.
+                lifecycleScope.launch {
+                    stream.send(ConverseRequest.newBuilder().setSentence(sentence).build())
                 }
             }
         }

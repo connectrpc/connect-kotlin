@@ -22,7 +22,6 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.time.Duration
 
@@ -44,6 +43,9 @@ class Main {
                     ProtocolClientConfig(
                         host = host,
                         serializationStrategy = GoogleJavaLiteProtobufStrategy(),
+                        // RPC operations that involve network I/O will
+                        // use this coroutine context.
+                        ioCoroutineContext = Dispatchers.IO,
                     ),
                 )
                 val elizaServiceClient = ElizaServiceClient(client)
@@ -57,13 +59,11 @@ class Main {
 
         private suspend fun connectStreaming(elizaServiceClient: ElizaServiceClient) {
             val stream = elizaServiceClient.converse()
-            withContext(Dispatchers.IO) {
-                // Add the message the user is sending to the views.
-                stream.send(converseRequest { sentence = "hello" })
-                stream.sendClose()
-                for (response in stream.responseChannel()) {
-                    println(response.sentence)
-                }
+            // Add the message the user is sending to the views.
+            stream.send(converseRequest { sentence = "hello" })
+            stream.sendClose()
+            for (response in stream.responseChannel()) {
+                println(response.sentence)
             }
         }
     }

@@ -46,7 +46,7 @@ internal class ServerOnlyStream<Input, Output>(
         }
     }
 
-    override fun receiveClose() {
+    override suspend fun receiveClose() {
         messageStream.receiveClose()
     }
 

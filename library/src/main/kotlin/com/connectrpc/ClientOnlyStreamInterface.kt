@@ -57,13 +57,13 @@ interface ClientOnlyStreamInterface<Input, Output> {
     /**
      * Close the stream. No calls to [send] are valid after calling [sendClose].
      */
-    fun sendClose()
+    suspend fun sendClose()
 
     /**
      * Cancels the stream. This closes both send and receive sides of the stream
      * without awaiting any server reply.
      */
-    fun cancel()
+    suspend fun cancel()
 
     /**
      * Determine if the underlying client send stream is closed.
