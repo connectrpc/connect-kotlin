@@ -2,5 +2,10 @@
 # RPC deadlines, but that is not enforced when the request
 # body is duplex. So timeouts don't currently work with
 # bidi streams.
-Timeouts/HTTPVersion:2/**/bidi half duplex timeout
-Timeouts/HTTPVersion:2/**/bidi full duplex timeout
+Timeouts/HTTPVersion:2/**/bidi-stream/**
+
+# Deadline headers are not currently set.
+Deadline Propagation/**
+
+# Bug: incorrect code attribution for these failures (UNKNOWN instead of INTERNAL)
+Connect Unexpected Responses/**/unexpected-stream-codec

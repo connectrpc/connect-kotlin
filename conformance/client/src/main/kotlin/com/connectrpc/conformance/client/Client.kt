@@ -14,13 +14,13 @@
 
 package com.connectrpc.conformance.client
 
-import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.asConnectException
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
@@ -228,17 +228,8 @@ class Client(
             }
         } catch (ex: Throwable) {
             if (!sent) {
-                val connEx = if (ex is ConnectException) {
-                    ex
-                } else {
-                    ConnectException(
-                        code = Code.UNKNOWN,
-                        message = ex.message,
-                        exception = ex,
-                    )
-                }
                 return ClientResponseResult(
-                    error = connEx,
+                    error = asConnectException(ex),
                     numUnsentRequests = 1,
                 )
             }
