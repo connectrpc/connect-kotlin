@@ -18,12 +18,6 @@ package com.connectrpc
  * Typed unary response from an RPC.
  */
 sealed class ResponseMessage<Output>(
-    // TODO: remove code as its redundant with the code inside of
-    //       ConnectException in the error case and is always OK
-    //       in the success case.
-
-    // The status code of the response.
-    open val code: Code,
     // Response headers specified by the server.
     open val headers: Headers,
     // Trailers provided by the server.
@@ -32,30 +26,26 @@ sealed class ResponseMessage<Output>(
     class Success<Output>(
         // The message.
         val message: Output,
-        // The status code of the response.
-        override val code: Code,
         // Response headers specified by the server.
-        override val headers: Headers,
+        headers: Headers,
         // Trailers provided by the server.
-        override val trailers: Trailers,
-    ) : ResponseMessage<Output>(code, headers, trailers) {
+        trailers: Trailers,
+    ) : ResponseMessage<Output>(headers, trailers) {
         override fun toString(): String {
-            return "Success{message=$message,code=$code,headers=$headers,trailers=$trailers}"
+            return "Success{message=$message,headers=$headers,trailers=$trailers}"
         }
     }
 
     class Failure<Output>(
         // The problem.
         val cause: ConnectException,
-        // The status code of the response.
-        override val code: Code,
         // Response headers specified by the server.
-        override val headers: Headers,
+        headers: Headers,
         // Trailers provided by the server.
-        override val trailers: Trailers,
-    ) : ResponseMessage<Output>(code, headers, trailers) {
+        trailers: Trailers,
+    ) : ResponseMessage<Output>(headers, trailers) {
         override fun toString(): String {
-            return "Failure{cause=$cause,code=$code,headers=$headers,trailers=$trailers}"
+            return "Failure{cause=$cause,headers=$headers,trailers=$trailers}"
         }
     }
 

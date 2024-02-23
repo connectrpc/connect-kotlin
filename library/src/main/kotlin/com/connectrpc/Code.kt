@@ -14,13 +14,16 @@
 
 package com.connectrpc
 
-// The zero code in gRPC is OK, which indicates that the operation was a
-// success. We don't define a constant for it because it overlaps awkwardly
-// with Go's error semantics: what does it mean to have a non-nil error with
-// an OK status? (Also, the Connect protocol doesn't use a code for
-// successes.)
+/**
+ * Enumeration of RPC error codes.
+ *
+ * In gRPC, there is a zero value for "OK",
+ * but we don't define one because these are only used in the face of errors.
+ * Successful operations don't need an "OK" code since they are otherwise
+ * identified by their not having an exception. So only exceptions need a
+ * code (in which case "OK" is not valid).
+ */
 enum class Code(val codeName: String, val value: Int) {
-    OK("ok", 0),
     CANCELED("canceled", 1),
     UNKNOWN("unknown", 2),
     INVALID_ARGUMENT("invalid_argument", 3),
@@ -41,9 +44,9 @@ enum class Code(val codeName: String, val value: Int) {
 
     companion object {
         // https://connectrpc.com/docs/protocol#http-to-error-code
-        fun fromHTTPStatus(status: Int): Code {
+        fun fromHTTPStatus(status: Int?): Code {
             return when (status) {
-                200 -> OK
+                null -> UNKNOWN
                 400 -> INVALID_ARGUMENT
                 401 -> UNAUTHENTICATED
                 403 -> PERMISSION_DENIED
@@ -71,9 +74,12 @@ enum class Code(val codeName: String, val value: Int) {
             }
             return UNKNOWN
         }
-        fun fromValue(value: Int?): Code {
+        fun fromValue(value: Int?): Code? {
             if (value == null) {
                 return UNKNOWN
+            }
+            if (value == 0) {
+                return null // 0 means OK, so no error code
             }
             val code = values().firstOrNull { code -> code.value == value }
             return code ?: UNKNOWN

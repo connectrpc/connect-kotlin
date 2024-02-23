@@ -87,22 +87,31 @@ private class ResponseCallback(
     override fun onFailure(call: Call, e: IOException) {
         whenDone()
         runBlocking {
-            onResult(StreamResult.Complete(codeFromException(call.isCanceled(), e), cause = e))
+            onResult(
+                StreamResult.Complete(
+                    cause = ConnectException(
+                        code = codeFromException(call.isCanceled(), e),
+                        exception = e,
+                    ),
+                ),
+            )
         }
     }
 
     override fun onResponse(call: Call, response: Response) {
         whenDone()
-        val code = Code.fromHTTPStatus(response.originalCode())
+        val httpStatus = response.originalCode()
         runBlocking {
             val headers = response.headers.toLowerCaseKeysMultiMap()
             onResult(StreamResult.Headers(headers = headers))
-            if (code != Code.OK) {
+            if (httpStatus != 200) {
                 // TODO: This is not quite exercised yet. Validate if this is exercised in another test case.
                 val finalResult = StreamResult.Complete<Buffer>(
-                    code = code,
                     trailers = response.safeTrailers() ?: emptyMap(),
-                    cause = ConnectException(code = code),
+                    cause = ConnectException(
+                        code = Code.fromHTTPStatus(httpStatus),
+                        message = "unexpected HTTP status: $httpStatus ${response.originalMessage()}",
+                    ),
                 )
                 onResult(finalResult)
                 return@runBlocking
@@ -112,7 +121,7 @@ private class ResponseCallback(
                     var exception: Exception? = null
                     try {
                         while (!sourceBuffer.exhausted()) {
-                            val buffer = readStream(sourceBuffer)
+                            val buffer = readStreamElement(sourceBuffer)
                             val streamResult = StreamResult.Message(
                                 message = buffer,
                             )
@@ -123,10 +132,17 @@ private class ResponseCallback(
                     } finally {
                         // If trailers are not yet communicated.
                         // This is the final chance to notify trailers to the consumer.
+                        val connectEx = when (exception) {
+                            null -> null
+                            is ConnectException -> exception
+                            else -> ConnectException(
+                                code = codeFromException(call.isCanceled(), exception),
+                                exception = exception,
+                            )
+                        }
                         val finalResult = StreamResult.Complete<Buffer>(
-                            code = if (exception != null) codeFromException(call.isCanceled(), exception) else code,
                             trailers = response.safeTrailers() ?: emptyMap(),
-                            cause = exception,
+                            cause = connectEx,
                         )
                         onResult(finalResult)
                     }
@@ -163,7 +179,7 @@ private class ResponseCallback(
      * This does not do anything related to the first part of
      * the envelope header.
      */
-    private fun readStream(bufferSource: BufferedSource): Buffer {
+    private fun readStreamElement(bufferSource: BufferedSource): Buffer {
         val compressionHeader = bufferSource.readByte()
         val messageLength = bufferSource.readInt()
         val result = Buffer()

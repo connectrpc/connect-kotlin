@@ -22,7 +22,6 @@ import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.Stream
-import com.connectrpc.http.TracingInfo
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_KEY
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_VALUE
@@ -133,7 +132,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                         val code = codeFromException(newCall.isCanceled(), e)
                         onResult(
                             HTTPResponse(
-                                code = code,
+                                status = null,
                                 headers = emptyMap(),
                                 message = Buffer(),
                                 trailers = emptyMap(),
@@ -142,7 +141,6 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                     message = e.message,
                                     exception = e,
                                 ),
-                                tracingInfo = null,
                             ),
                         )
                     }
@@ -154,14 +152,12 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                             buffer.writeAll(bufferedSource)
                             buffer
                         }
-                        val originalStatus = response.originalCode()
                         onResult(
                             HTTPResponse(
-                                code = Code.fromHTTPStatus(originalStatus),
+                                status = response.originalCode(),
                                 headers = response.headers.toLowerCaseKeysMultiMap(),
                                 message = responseBuffer ?: Buffer(),
                                 trailers = response.trailers().toLowerCaseKeysMultiMap(),
-                                tracingInfo = TracingInfo(httpStatus = originalStatus),
                             ),
                         )
                     }
@@ -170,7 +166,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
         } catch (e: Throwable) {
             onResult(
                 HTTPResponse(
-                    code = Code.UNKNOWN,
+                    status = null,
                     headers = emptyMap(),
                     message = Buffer(),
                     trailers = emptyMap(),
@@ -179,7 +175,6 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                         message = e.message,
                         exception = e,
                     ),
-                    tracingInfo = null,
                 ),
             )
         }
@@ -196,7 +191,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
 }
 
 internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
-    return this.asSequence().groupBy(
+    return this.groupBy(
         { it.first.lowercase() },
         { it.second },
     )
@@ -224,5 +219,16 @@ fun Response.originalCode(): Int {
         408
     } else {
         code
+    }
+}
+
+fun Response.originalMessage(): String {
+    // Message could have been modified during translation of a
+    // 408 code to 499 (to avoid okhttp's auto-retry on 408
+    // status codes). If so, return the original message.
+    return if (code == 499 && message.endsWith(REVISED_CODE_SUFFIX)) {
+        message.substring(0, message.length - REVISED_CODE_SUFFIX.length)
+    } else {
+        message
     }
 }

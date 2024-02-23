@@ -96,7 +96,6 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                             val resp = underlying.receiveAndClose()
                             return ResponseMessage.Success(
                                 message = resp,
-                                code = Code.OK,
                                 headers = underlying.responseHeaders().await(),
                                 trailers = underlying.responseTrailers().await(),
                             )
@@ -108,7 +107,6 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                             }
                             return ResponseMessage.Failure(
                                 cause = connectException,
-                                code = connectException.code,
                                 headers = underlying.responseHeaders().await(),
                                 trailers = connectException.metadata,
                             )

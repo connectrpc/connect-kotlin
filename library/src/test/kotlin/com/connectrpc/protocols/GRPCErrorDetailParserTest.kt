@@ -38,8 +38,9 @@ class GRPCErrorDetailParserTest {
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
             ),
         )
-        assertThat(completion!!.code).isEqualTo(Code.UNAUTHENTICATED)
-        assertThat(completion.message.utf8()).isEqualTo("str")
+        assertThat(completion.present).isTrue()
+        assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
+        assertThat(completion.message).isEqualTo("str")
         verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
     }
 
@@ -53,7 +54,7 @@ class GRPCErrorDetailParserTest {
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
             ),
         )
-        assertThat(completion).isNull()
+        assertThat(completion.present).isFalse()
     }
 
     @Test
@@ -66,7 +67,8 @@ class GRPCErrorDetailParserTest {
             ),
             trailers = emptyMap(),
         )
-        assertThat(completion!!.code).isEqualTo(Code.UNAUTHENTICATED)
+        assertThat(completion.present).isTrue()
+        assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
     }
 
     @Test
@@ -79,6 +81,7 @@ class GRPCErrorDetailParserTest {
                 GRPC_MESSAGE_TRAILER to listOf("str"),
             ),
         )
-        assertThat(completion!!.errorDetails).isEmpty()
+        assertThat(completion.present).isTrue()
+        assertThat(completion.errorDetails).isEmpty()
     }
 }

@@ -39,6 +39,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okio.Buffer
 import java.net.URI
 import java.util.concurrent.CountDownLatch
 import kotlin.coroutines.resume
@@ -94,13 +95,11 @@ class ProtocolClient(
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
             val cancelable = httpClient.unary(finalRequest) httpClientUnary@{ httpResponse ->
                 val finalResponse = unaryFunc.responseFunction(httpResponse)
-                val code = finalResponse.code
                 val exception = finalResponse.cause?.setErrorParser(serializationStrategy.errorDetailParser())
                 if (exception != null) {
                     onResult(
                         ResponseMessage.Failure(
                             exception,
-                            code,
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),
@@ -115,7 +114,6 @@ class ProtocolClient(
                     onResult(
                         ResponseMessage.Failure(
                             ConnectException(code = Code.INTERNAL_ERROR, exception = e),
-                            Code.INTERNAL_ERROR,
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),
@@ -125,7 +123,6 @@ class ProtocolClient(
                 onResult(
                     ResponseMessage.Success(
                         responseMessage,
-                        code,
                         finalResponse.headers,
                         finalResponse.trailers,
                     ),
@@ -219,15 +216,26 @@ class ProtocolClient(
         val finalRequest = streamFunc.requestFunction(request)
         var isComplete = false
         val httpStream = httpClient.stream(
-            finalRequest,
-            methodSpec.streamType == StreamType.BIDI,
+            request = finalRequest,
+            duplex = methodSpec.streamType == StreamType.BIDI,
         ) httpStream@{ initialResult ->
             if (isComplete) {
                 // No-op on remaining handlers after a completion.
                 return@httpStream
             }
             // Pass through the interceptor chain.
-            when (val streamResult = streamFunc.streamResultFunction(initialResult)) {
+            var streamResult: StreamResult<Buffer>
+            try {
+                streamResult = streamFunc.streamResultFunction(initialResult)
+            } catch (ex: Throwable) {
+                val connEx = if (ex is ConnectException) {
+                    ex
+                } else {
+                    ConnectException(code = Code.UNKNOWN, exception = ex)
+                }
+                streamResult = StreamResult.Complete(connEx)
+            }
+            when (streamResult) {
                 is StreamResult.Headers -> {
                     // If this is incorrectly called 2x, only the first result is used.
                     // Subsequent calls to complete will be ignored.
@@ -259,10 +267,7 @@ class ProtocolClient(
                     responseHeaders.complete(emptyMap())
                     isComplete = true
                     try {
-                        when (streamResult.code) {
-                            Code.OK -> channel.close()
-                            else -> channel.close(streamResult.connectException() ?: ConnectException(code = streamResult.code, exception = streamResult.cause))
-                        }
+                        channel.close(streamResult.cause)
                     } finally {
                         responseTrailers.complete(streamResult.trailers)
                     }

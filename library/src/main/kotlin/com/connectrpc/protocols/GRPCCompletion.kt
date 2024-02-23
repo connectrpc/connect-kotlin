@@ -19,43 +19,38 @@ import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.SerializationStrategy
-import okio.ByteString
 
 /**
  * Represents the parsed data structure from the GRPC trailers.
  */
 internal data class GRPCCompletion(
-    // The status code of the response.
-    val code: Code,
-    // The numerical status parsed from trailers.
-    val status: Int?,
+    // The status code of the response. If null, the response indicated
+    // "OK". Non-null indicates an error code.
+    val code: Code?,
     // Message data.
-    val message: ByteString,
+    val message: String,
     // List of error details.
-    val errorDetails: List<ConnectErrorDetail>,
+    val errorDetails: List<ConnectErrorDetail> = emptyList(),
     // Set to either message headers (or trailers) where the gRPC status was found.
     val metadata: Headers,
+    // If false, this completion was synthesized and not actually present in metadata.
+    val present: Boolean = true,
 ) {
     /**
-     * Converts a completion into a [ConnectException] if the completion failed or if a throwable is passed
+     * Converts a completion into a [ConnectException] if the completion failed
      * @return a ConnectException on failure, null otherwise
      */
-    fun toConnectExceptionOrNull(serializationStrategy: SerializationStrategy, cause: Throwable? = null): ConnectException? {
-        if (cause is ConnectException) {
-            return cause
-        }
-
-        if (cause != null || code != Code.OK) {
-            return ConnectException(
-                code = if (code == Code.OK) Code.UNKNOWN else code,
+    fun toConnectExceptionOrNull(serializationStrategy: SerializationStrategy): ConnectException? {
+        return if (code == null) {
+            null
+        } else {
+            ConnectException(
+                code = code,
                 errorDetailParser = serializationStrategy.errorDetailParser(),
-                message = message.utf8(),
-                exception = cause,
+                message = message,
                 details = errorDetails,
                 metadata = metadata,
             )
         }
-        // Successful call.
-        return null
     }
 }

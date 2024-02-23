@@ -35,16 +35,9 @@ sealed class StreamResult<Output> {
     }
 
     // Stream is complete. Provides the end status code and optionally an error and trailers.
-    class Complete<Output>(val code: Code, val cause: Throwable? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
-        /**
-         * Get the ConnectException from the result.
-         *
-         * @return The [ConnectException] if present, null otherwise.
-         */
-        fun connectException() = cause as? ConnectException
-
+    class Complete<Output>(val cause: ConnectException? = null, val trailers: Trailers = emptyMap()) : StreamResult<Output>() {
         override fun toString(): String {
-            return "Complete{code=$code,cause=$cause,trailers=$trailers}"
+            return "Complete{cause=$cause,trailers=$trailers}"
         }
     }
 
@@ -55,7 +48,7 @@ sealed class StreamResult<Output> {
      * @param onMessage Transform a Message result.
      * @param onCompletion Transform a Completion result.
      */
-    fun <Result> fold(
+    inline fun <Result> fold(
         onHeaders: (Headers<Output>) -> Result,
         onMessage: (Message<Output>) -> Result,
         onCompletion: (Complete<Output>) -> Result,
@@ -71,22 +64,5 @@ sealed class StreamResult<Output> {
                 onCompletion(this)
             }
         }
-    }
-
-    /**
-     * Fold the different results into a nullable single type.
-     * Unlike `fold`, the caller can omit some transformations,
-     * which default to returning null.
-     *
-     * @param onHeaders Transform a Header result.
-     * @param onMessage Transform a Message result.
-     * @param onCompletion Transform a Completion result.
-     */
-    fun <Result> maybeFold(
-        onHeaders: (Headers<Output>) -> Result? = { null },
-        onMessage: (Message<Output>) -> Result? = { null },
-        onCompletion: (Complete<Output>) -> Result? = { null },
-    ): Result? {
-        return fold(onHeaders, onMessage, onCompletion)
     }
 }

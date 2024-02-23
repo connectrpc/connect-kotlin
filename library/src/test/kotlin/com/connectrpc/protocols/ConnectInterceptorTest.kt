@@ -29,7 +29,6 @@ import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
-import com.connectrpc.http.TracingInfo
 import com.connectrpc.http.UnaryHTTPRequest
 import com.squareup.moshi.Moshi
 import okio.Buffer
@@ -216,11 +215,10 @@ class ConnectInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
+                status = 200,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
@@ -238,11 +236,10 @@ class ConnectInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
+                status = 200,
                 headers = mapOf(CONTENT_ENCODING to listOf(GzipCompressionPool.name())),
                 message = GzipCompressionPool.compress(Buffer().write("message".encodeUtf8())),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("message")
@@ -260,11 +257,10 @@ class ConnectInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.OK,
+                status = 200,
                 headers = mapOf(CONTENT_ENCODING to listOf(GzipCompressionPool.name())),
                 message = Buffer(),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.message.readUtf8()).isEqualTo("")
@@ -294,11 +290,11 @@ class ConnectInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.UNAVAILABLE,
-                message = Buffer().write(json.encodeUtf8()),
+                // body contents override status code
+                status = 503,
                 headers = emptyMap(),
+                message = Buffer().write(json.encodeUtf8()),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.cause!!.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
@@ -320,11 +316,10 @@ class ConnectInterceptorTest {
 
         val response = unaryFunction.responseFunction(
             HTTPResponse(
-                code = Code.UNAVAILABLE,
-                message = Buffer().write("garbage json".encodeUtf8()),
+                status = 503,
                 headers = emptyMap(),
+                message = Buffer().write("garbage json".encodeUtf8()),
                 trailers = emptyMap(),
-                tracingInfo = null,
             ),
         )
         assertThat(response.cause!!.code).isEqualTo(Code.UNAVAILABLE)
@@ -336,19 +331,18 @@ class ConnectInterceptorTest {
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
         )
-        val grpcWebInterceptor = ConnectInterceptor(config)
-        val unaryFunction = grpcWebInterceptor.unaryFunction()
+        val unaryFunction = ConnectInterceptor(config).unaryFunction()
 
-        val result = unaryFunction.responseFunction(
+        val response = unaryFunction.responseFunction(
             HTTPResponse(
-                Code.UNKNOWN,
-                emptyMap(),
-                Buffer(),
-                emptyMap(),
-                TracingInfo(888),
+                status = null,
+                headers = emptyMap(),
+                message = Buffer(),
+                trailers = emptyMap(),
+                cause = ConnectException(code = Code.UNKNOWN),
             ),
         )
-        assertThat(result.tracingInfo!!.httpStatus).isEqualTo(888)
+        assertThat(response.cause!!.code).isEqualTo(Code.UNKNOWN)
     }
 
     /*
@@ -494,7 +488,7 @@ class ConnectInterceptorTest {
             ),
         )
 
-        assertThat(result).isOfAnyClassIn(StreamResult.Headers::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Headers::class.java)
         val headerResult = result as StreamResult.Headers
         assertThat(headerResult.headers).isEqualTo(mapOf(CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")))
     }
@@ -518,7 +512,7 @@ class ConnectInterceptorTest {
             ),
         )
 
-        assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Message::class.java)
         val streamMessage = result as StreamResult.Message
         assertThat(streamMessage.message.readUtf8()).isEqualTo("hello")
     }
@@ -549,7 +543,7 @@ class ConnectInterceptorTest {
             ),
         )
 
-        assertThat(result).isOfAnyClassIn(StreamResult.Message::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Message::class.java)
         val streamMessage = result as StreamResult.Message
         assertThat(streamMessage.message.readUtf8()).isEqualTo("hello")
     }
@@ -579,8 +573,7 @@ class ConnectInterceptorTest {
         val adapter = moshi.adapter(EndStreamResponseJSON::class.java)
         val json = adapter.toJson(endStream)
         val endStreamMessage = Buffer()
-        val endStreamHeaderByte = 1
-        endStreamMessage.writeByte(endStreamHeaderByte.shl(1))
+        endStreamMessage.writeByte(ConnectInterceptor.TRAILERS_BIT)
         endStreamMessage.writeInt(json.length)
         endStreamMessage.write(json.encodeUtf8())
 
@@ -589,10 +582,10 @@ class ConnectInterceptorTest {
                 Buffer().write(endStreamMessage.readByteString()),
             ),
         )
-        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
-        val exception = completion.connectException()!!
+        val exception = completion.cause!!
+        assertThat(exception.code).isEqualTo(Code.RESOURCE_EXHAUSTED)
         assertThat(exception.message).isEqualTo("no more resources!")
         val errorDetail = exception.details.single()
         assertThat(errorDetail.type).isEqualTo("type")
@@ -608,14 +601,17 @@ class ConnectInterceptorTest {
         val connectInterceptor = ConnectInterceptor(config)
         val streamFunction = connectInterceptor.streamFunction()
 
+        val badData = "some garbage json".encodeUtf8()
         val result = streamFunction.streamResultFunction(
             StreamResult.Message(
-                Buffer().write("some garbage json".encodeUtf8()),
+                Buffer().writeByte(ConnectInterceptor.TRAILERS_BIT)
+                    .writeInt(badData.size)
+                    .write(badData),
             ),
         )
-        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.UNKNOWN)
+        assertThat(completion.cause!!.code).isEqualTo(Code.UNKNOWN)
     }
 
     @Test
@@ -629,16 +625,15 @@ class ConnectInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
-                code = Code.OK,
                 trailers = mapOf(
                     "key" to listOf("value"),
                 ),
             ),
         )
 
-        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.OK)
+        assertThat(completion.cause).isNull()
         assertThat(completion.trailers["key"]).containsExactly("value")
     }
 
@@ -653,7 +648,6 @@ class ConnectInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Complete(
-                code = Code.UNKNOWN,
                 cause = ConnectException(
                     Code.UNKNOWN,
                     message = "error_message",
@@ -661,9 +655,9 @@ class ConnectInterceptorTest {
             ),
         )
 
-        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        assertThat(result).isInstanceOf(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.code).isEqualTo(Code.UNKNOWN)
+        assertThat(completion.cause!!.code).isEqualTo(Code.UNKNOWN)
     }
 
     @Test

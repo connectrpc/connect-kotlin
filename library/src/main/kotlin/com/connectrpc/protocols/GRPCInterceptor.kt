@@ -23,7 +23,6 @@ import com.connectrpc.StreamFunction
 import com.connectrpc.StreamResult
 import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
-import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.clone
 import okio.Buffer
 
@@ -63,55 +62,37 @@ internal class GRPCInterceptor(
                 )
             },
             responseFunction = { response ->
-                val headers = response.headers
-                val trailers = response.trailers
-                val completion = completionParser.parse(headers, trailers)
-                val code = completion?.code ?: Code.UNKNOWN
-                if (response.code != Code.OK) {
-                    return@UnaryFunction HTTPResponse(
-                        code = response.code,
-                        headers = headers,
+                if (response.cause != null) {
+                    return@UnaryFunction response.clone(message = Buffer())
+                }
+                if (response.status != 200) {
+                    return@UnaryFunction response.clone(
                         message = Buffer(),
-                        trailers = trailers,
-                        cause = response.cause,
-                        tracingInfo = response.tracingInfo,
+                        cause = ConnectException(
+                            code = Code.fromHTTPStatus(response.status),
+                            message = "unexpected status code: ${response.status}",
+                        ),
                     )
                 }
-                val compressionPool =
-                    clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
-                if (code == Code.OK) {
-                    val (_, message) = Envelope.unpackWithHeaderByte(
+                val headers = response.headers
+                val trailers = response.trailers
+                val exception = completionParser
+                    .parse(headers, trailers)
+                    .toConnectExceptionOrNull(serializationStrategy)
+                val (_, message) = if (exception == null) {
+                    val compressionPool =
+                        clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
+                    Envelope.unpackWithHeaderByte(
                         response.message.buffer,
                         compressionPool,
                     )
-                    HTTPResponse(
-                        code = code,
-                        headers = headers,
-                        message = message,
-                        trailers = trailers,
-                        cause = response.cause,
-                        tracingInfo = response.tracingInfo,
-                    )
                 } else {
-                    val result = Buffer()
-                    if (completion != null) {
-                        val errorMessage = completion.message
-                        result.write(errorMessage)
-                    }
-                    HTTPResponse(
-                        code = code,
-                        headers = headers,
-                        message = result,
-                        trailers = trailers,
-                        cause = ConnectException(
-                            code = code,
-                            errorDetailParser = serializationStrategy.errorDetailParser(),
-                            message = completion?.message?.utf8(),
-                            details = completion?.errorDetails ?: emptyList(),
-                        ),
-                        tracingInfo = response.tracingInfo,
-                    )
+                    0 to Buffer()
                 }
+                response.clone(
+                    message = message,
+                    cause = exception,
+                )
             },
         )
     }
@@ -134,11 +115,9 @@ internal class GRPCInterceptor(
                     onHeaders = { result ->
                         val headers = result.headers
                         val completion = completionParser.parse(headers, emptyMap())
-                        if (completion != null) {
-                            val exception = completion.toConnectExceptionOrNull(serializationStrategy)
+                        if (completion.present) {
                             StreamResult.Complete(
-                                code = exception?.code ?: Code.OK,
-                                cause = exception,
+                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
                                 trailers = headers,
                             )
                         } else {
@@ -155,28 +134,14 @@ internal class GRPCInterceptor(
                         StreamResult.Message(unpackedMessage)
                     },
                     onCompletion = { result ->
-                        val trailers = result.trailers
-                        val completion = completionParser.parse(emptyMap(), trailers)
-                        if (completion == null && result.cause != null) {
-                            // let error result propagate
+                        if (result.cause != null) {
                             return@fold result
                         }
-                        val exception: ConnectException?
-                        if (completion != null) {
-                            exception = completion.toConnectExceptionOrNull(
-                                serializationStrategy,
-                                result.cause,
-                            )
-                        } else {
-                            exception = ConnectException(
-                                code = Code.INTERNAL_ERROR,
-                                errorDetailParser = serializationStrategy.errorDetailParser(),
-                                message = "protocol error: status is missing from trailers",
-                                metadata = trailers,
-                            )
-                        }
+                        val trailers = result.trailers
+                        val exception = completionParser
+                            .parse(emptyMap(), trailers)
+                            .toConnectExceptionOrNull(serializationStrategy)
                         StreamResult.Complete(
-                            code = exception?.code ?: Code.OK,
                             cause = exception,
                             trailers = trailers,
                         )
