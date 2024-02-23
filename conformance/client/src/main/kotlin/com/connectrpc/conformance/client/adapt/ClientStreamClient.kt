@@ -17,6 +17,7 @@ package com.connectrpc.conformance.client.adapt
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
+import com.connectrpc.asConnectException
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -97,16 +98,12 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                                 headers = underlying.responseHeaders().await(),
                                 trailers = underlying.responseTrailers().await(),
                             )
-                        } catch (e: Exception) {
-                            val connectException = if (e is ConnectException) {
-                                e
-                            } else {
-                                ConnectException(code = Code.UNKNOWN, exception = e)
-                            }
+                        } catch (ex: Exception) {
+                            val connEx = asConnectException(ex)
                             return ResponseMessage.Failure(
-                                cause = connectException,
+                                cause = connEx,
                                 headers = underlying.responseHeaders().await(),
-                                trailers = connectException.metadata,
+                                trailers = connEx.metadata,
                             )
                         }
                     }

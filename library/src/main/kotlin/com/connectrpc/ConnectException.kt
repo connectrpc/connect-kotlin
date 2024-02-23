@@ -64,3 +64,16 @@ data class ConnectException(
         )
     }
 }
+
+/**
+ * Returns a ConnectException for the given cause. If ex is a ConnectException
+ * then it is returned. Otherwise, it is wrapped in a ConnectException with
+ * the given code.
+ */
+fun asConnectException(ex: Throwable, code: Code = Code.UNKNOWN): ConnectException {
+    return if (ex is ConnectException) {
+        ex
+    } else {
+        ConnectException(code = code, exception = ex)
+    }
+}

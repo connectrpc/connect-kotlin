@@ -17,6 +17,7 @@ package com.connectrpc.okhttp
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
+import com.connectrpc.asConnectException
 import com.connectrpc.http.HTTPMethod
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.Stream
@@ -134,11 +135,7 @@ private class ResponseCallback(
                         // This is the final chance to notify trailers to the consumer.
                         val connectEx = when (exception) {
                             null -> null
-                            is ConnectException -> exception
-                            else -> ConnectException(
-                                code = codeFromException(call.isCanceled(), exception),
-                                exception = exception,
-                            )
+                            else -> asConnectException(exception, codeFromException(call.isCanceled(), exception))
                         }
                         val finalResult = StreamResult.Complete<Buffer>(
                             trailers = response.safeTrailers() ?: emptyMap(),

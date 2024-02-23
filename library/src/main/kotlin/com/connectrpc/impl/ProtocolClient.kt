@@ -27,9 +27,11 @@ import com.connectrpc.ServerOnlyStreamInterface
 import com.connectrpc.StreamResult
 import com.connectrpc.StreamType
 import com.connectrpc.UnaryBlockingCall
+import com.connectrpc.asConnectException
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.dispatchIn
 import com.connectrpc.http.transform
@@ -94,7 +96,20 @@ class ProtocolClient(
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
             val cancelable = httpClient.unary(finalRequest) httpClientUnary@{ httpResponse ->
-                val finalResponse = unaryFunc.responseFunction(httpResponse)
+                val finalResponse: HTTPResponse
+                try {
+                    finalResponse = unaryFunc.responseFunction(httpResponse)
+                } catch (ex: Throwable) {
+                    val connEx = asConnectException(ex)
+                    onResult(
+                        ResponseMessage.Failure(
+                            connEx,
+                            emptyMap(),
+                            connEx.metadata,
+                        ),
+                    )
+                    return@httpClientUnary
+                }
                 val exception = finalResponse.cause?.setErrorParser(serializationStrategy.errorDetailParser())
                 if (exception != null) {
                     onResult(
@@ -110,10 +125,10 @@ class ProtocolClient(
                 val responseMessage: Output
                 try {
                     responseMessage = responseCodec.deserialize(finalResponse.message)
-                } catch (e: Exception) {
+                } catch (ex: Exception) {
                     onResult(
                         ResponseMessage.Failure(
-                            ConnectException(code = Code.INTERNAL_ERROR, exception = e),
+                            asConnectException(ex, Code.INTERNAL_ERROR),
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),
@@ -129,8 +144,16 @@ class ProtocolClient(
                 )
             }
             return cancelable
-        } catch (e: Exception) {
-            throw e
+        } catch (ex: Exception) {
+            val connEx = asConnectException(ex)
+            onResult(
+                ResponseMessage.Failure(
+                    connEx,
+                    emptyMap(),
+                    connEx.metadata,
+                ),
+            )
+            return { }
         }
     }
 
@@ -228,12 +251,7 @@ class ProtocolClient(
             try {
                 streamResult = streamFunc.streamResultFunction(initialResult)
             } catch (ex: Throwable) {
-                val connEx = if (ex is ConnectException) {
-                    ex
-                } else {
-                    ConnectException(code = Code.UNKNOWN, exception = ex)
-                }
-                streamResult = StreamResult.Complete(connEx)
+                streamResult = StreamResult.Complete(asConnectException(ex))
             }
             when (streamResult) {
                 is StreamResult.Headers -> {

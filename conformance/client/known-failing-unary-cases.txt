@@ -1,1 +1,32 @@
-# No known failing test cases at this time.
+# If error body is JSON null, it is interpreted as an unknown error
+# instead of falling back to basing code on the HTTP status.
+Connect Error and End-Stream/**/error/null
+
+# Deadline headers are not currently set.
+Deadline Propagation/**
+
+# This response doesn't look like a normal Connect response, so it
+# goes through okhttp's default 408 code handling, which retries.
+# The retry triggers an error:
+#     client sent another request (#2) for the same test case
+HTTP to Connect Code Mapping/**/request-timeout
+
+# Bug: response content-type is not correctly checked
+Unexpected Responses/**/unexpected-content-type
+
+# Bug: "trailers-only" responses are not correctly identified.
+# If headers contain "grpc-status", this client assumes it is a
+# trailers-only response. However, a trailers-only response should
+# instead be identified by lack of body or HTTP trailers.
+gRPC Unexpected Responses/**/trailers-only/*
+
+# Bug: if gRPC unary response contains zero messages or
+# more than one message, client does not complain if
+# status trailers says "ok"
+gRPC Unexpected Responses/**/unary-multiple-responses
+gRPC Unexpected Responses/**/unary-ok-but-no-response
+gRPC-Web Unexpected Responses/**/unary-ok-but-no-response
+
+# Bug: incorrect code attribution for these failures (INTERNAL instead of UNKNOWN)
+gRPC-Web Unexpected Responses/**/missing-status
+gRPC-Web Unexpected Responses/**/trailers-in-body/unary-multiple-responses
