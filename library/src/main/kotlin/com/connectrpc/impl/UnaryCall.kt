@@ -22,10 +22,25 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Concrete implementation of [UnaryBlockingCall].
+ * Callback that handles asynchronous response.
  */
-class UnaryCall<Output>(
-    private val block: ((ResponseMessage<Output>) -> Unit) -> Cancelable,
+internal typealias ResponseCallback<T> = (ResponseMessage<T>) -> Unit
+
+/**
+ * Represents a cancelable asynchronous operation. When the function
+ * is invoked, the operation is initiated. When that operation completes
+ * it MUST invoke the callback, even when canceled. The value returned
+ * from the function can be called to abort the operation and have it
+ * return early.
+ */
+internal typealias AsyncOperation<T> = (callback: ResponseCallback<T>) -> Cancelable
+
+/**
+ * Concrete implementation of [UnaryBlockingCall] which transforms
+ * the given async operation into a synchronous/blocking one.
+ */
+internal class UnaryCall<Output>(
+    private val block: AsyncOperation<Output>,
 ) : UnaryBlockingCall<Output> {
     private val executed = AtomicBoolean()
 
@@ -36,7 +51,7 @@ class UnaryCall<Output>(
     private var cancelFunc = AtomicReference<Cancelable>()
 
     /**
-     * Execute the underlying request.
+     * Execute the underlying operation and block until it completes.
      */
     override fun execute(): ResponseMessage<Output> {
         check(executed.compareAndSet(false, true)) { "already executed" }
