@@ -50,57 +50,26 @@ class UnaryCallTest {
     }
 
     @Test
-    fun testCancel() {
+    fun testCancelAfterExecute() {
+        testCancel(false)
+    }
+
+    @Test
+    fun testCancelBeforeExecute() {
+        testCancel(true)
+    }
+
+    private fun testCancel(cancelFirst: Boolean) {
         val executor = Executors.newFixedThreadPool(2)
         try {
             // Indicates when the async task has begun.
             val taskRunning = CountDownLatch(1)
-
-            val call = UnaryCall<Any> { callback ->
-                val future = executor.submit {
-                    taskRunning.countDown()
-                    try {
-                        // Block until interrupted
-                        while (true) {
-                            Thread.sleep(1_000L)
-                        }
-                    } catch (ex: InterruptedException) {
-                        callback.invoke(
-                            ResponseMessage.Failure(
-                                headers = emptyMap(),
-                                trailers = emptyMap(),
-                                cause = ConnectException(code = Code.CANCELED, exception = ex),
-                            ),
-                        )
-                        return@submit
-                    }
-                }
-                return@UnaryCall {
-                    future.cancel(true)
-                }
-            }
-            executor.execute {
-                taskRunning.await()
-                call.cancel()
-            }
-            val resp = call.execute()
-            assertThat(resp).isInstanceOf(ResponseMessage.Failure::class.java)
-            val connEx = resp.failure { it.cause }!!
-            assertThat(connEx.code).isEqualTo(Code.CANCELED)
-        } finally {
-            assertThat(executor.shutdownNow()).isEmpty()
-        }
-    }
-
-    @Test
-    fun testCanceledFirst() {
-        val executor = Executors.newSingleThreadExecutor()
-        try {
             // Indicates when the async task has been canceled.
             val taskCanceled = CountDownLatch(1)
 
             val call = UnaryCall<Any> { callback ->
                 executor.execute {
+                    taskRunning.countDown()
                     taskCanceled.await()
                     callback.invoke(
                         ResponseMessage.Failure(
@@ -114,11 +83,18 @@ class UnaryCallTest {
                     taskCanceled.countDown()
                 }
             }
-            // We cancel first.
-            call.cancel()
-            // When we execute the task, the call will observe
-            // that it has already been canceled and immediately
-            // cancel the just-started task.
+            if (cancelFirst) {
+                // When we execute the task below, the call will observe
+                // that it has already been canceled and immediately
+                // cancel the just-started task.
+                call.cancel()
+            } else {
+                // This will cancel the task right after it has started running.
+                executor.execute {
+                    taskRunning.await()
+                    call.cancel()
+                }
+            }
             val resp = call.execute()
             assertThat(resp).isInstanceOf(ResponseMessage.Failure::class.java)
             val connEx = resp.failure { it.cause }!!
