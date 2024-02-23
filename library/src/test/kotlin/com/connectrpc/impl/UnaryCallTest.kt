@@ -19,33 +19,17 @@ import com.connectrpc.ConnectException
 import com.connectrpc.ResponseMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 class UnaryCallTest {
     @Test
     fun testExecute() {
-        val executor = Executors.newSingleThreadExecutor {
-            val t = Thread(it)
-            t.isDaemon = true
-            t
-        }
+        val executor = Executors.newSingleThreadExecutor()
         try {
             val result = Object()
             val call = UnaryCall<Any> { callback ->
-                val future = executor.submit {
-                    try {
-                        Thread.sleep(250L)
-                    } catch (ex: InterruptedException) {
-                        callback.invoke(
-                            ResponseMessage.Failure(
-                                headers = emptyMap(),
-                                trailers = emptyMap(),
-                                cause = ConnectException(code = Code.CANCELED, exception = ex),
-                            ),
-                        )
-                        return@submit
-                    }
+                executor.execute {
                     callback.invoke(
                         ResponseMessage.Success(
                             result,
@@ -54,9 +38,7 @@ class UnaryCallTest {
                         ),
                     )
                 }
-                return@UnaryCall {
-                    future.cancel(true)
-                }
+                return@UnaryCall { }
             }
             val resp = call.execute()
             assertThat(resp).isInstanceOf(ResponseMessage.Success::class.java)
@@ -69,17 +51,19 @@ class UnaryCallTest {
 
     @Test
     fun testCancel() {
-        val executor = Executors.newFixedThreadPool(2) {
-            val t = Thread(it)
-            t.isDaemon = true
-            t
-        }
+        val executor = Executors.newFixedThreadPool(2)
         try {
-            val start = System.nanoTime()
+            // Indicates when the async task has begun.
+            val taskRunning = CountDownLatch(1)
+
             val call = UnaryCall<Any> { callback ->
                 val future = executor.submit {
+                    taskRunning.countDown()
                     try {
-                        Thread.sleep(1_000L)
+                        // Block until interrupted
+                        while (true) {
+                            Thread.sleep(1_000L)
+                        }
                     } catch (ex: InterruptedException) {
                         callback.invoke(
                             ResponseMessage.Failure(
@@ -90,34 +74,55 @@ class UnaryCallTest {
                         )
                         return@submit
                     }
-                    callback.invoke(
-                        ResponseMessage.Success(
-                            Object(),
-                            headers = emptyMap(),
-                            trailers = emptyMap(),
-                        ),
-                    )
                 }
                 return@UnaryCall {
                     future.cancel(true)
                 }
             }
-            // Cancel should happen before normal completion
-            // and should interrupt the above task.
             executor.execute {
-                Thread.sleep(250L)
+                taskRunning.await()
                 call.cancel()
             }
             val resp = call.execute()
-            val duration = System.nanoTime() - start
-
             assertThat(resp).isInstanceOf(ResponseMessage.Failure::class.java)
             val connEx = resp.failure { it.cause }!!
             assertThat(connEx.code).isEqualTo(Code.CANCELED)
+        } finally {
+            assertThat(executor.shutdownNow()).isEmpty()
+        }
+    }
 
-            val millis = TimeUnit.MILLISECONDS.convert(duration, TimeUnit.NANOSECONDS)
-            // we give extra 250ms grace period to avoid flaky failures
-            assertThat(millis).isLessThan(500L)
+    @Test
+    fun testCanceledFirst() {
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            // Indicates when the async task has been canceled.
+            val taskCanceled = CountDownLatch(1)
+
+            val call = UnaryCall<Any> { callback ->
+                executor.execute {
+                    taskCanceled.await()
+                    callback.invoke(
+                        ResponseMessage.Failure(
+                            headers = emptyMap(),
+                            trailers = emptyMap(),
+                            cause = ConnectException(code = Code.CANCELED),
+                        ),
+                    )
+                }
+                return@UnaryCall {
+                    taskCanceled.countDown()
+                }
+            }
+            // We cancel first.
+            call.cancel()
+            // When we execute the task, the call will observe
+            // that it has already been canceled and immediately
+            // cancel the just-started task.
+            val resp = call.execute()
+            assertThat(resp).isInstanceOf(ResponseMessage.Failure::class.java)
+            val connEx = resp.failure { it.cause }!!
+            assertThat(connEx.code).isEqualTo(Code.CANCELED)
         } finally {
             assertThat(executor.shutdownNow()).isEmpty()
         }
