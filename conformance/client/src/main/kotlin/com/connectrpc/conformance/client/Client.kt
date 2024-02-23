@@ -14,7 +14,6 @@
 
 package com.connectrpc.conformance.client
 
-import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig

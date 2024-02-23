@@ -10,7 +10,7 @@ BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.28.1
-CONFORMANCE_VERSION := v1.0.0-rc2
+CONFORMANCE_VERSION := v1.0.0-rc3
 PROTOC_VERSION ?= 25.3
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
@@ -46,34 +46,34 @@ runconformance: runcrosstests runconformancenew
 runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style blocking
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style blocking
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
-		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
-		--known-failing conformance/client/known-failing-stream-cases.txt -- \
+		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java
 
 .PHONY: runcrosstests
@@ -125,13 +125,20 @@ $(CONNECT_CONFORMANCE): $(CONNECT_CONFORMANCE_DOWNLOAD)
 
 .PHONY: generate
 generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.
+	rm -rf protoc-gen-connect-kotlin/build/generated/sources/bufgen || true
 	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin protoc-gen-connect-kotlin/proto
+	rm -rf extensions/google-java/build/generated/sources/bufgen || true
+	rm -rf extensions/google-javalite/build/generated/sources/bufgen || true
 	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
 	make licenseheaders
 
 .PHONY: generateconformance
 generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
+	rm -rf conformance/google-java/build/generated/sources/bufgen || true
+	rm -rf conformance/google-javalite/build/generated/sources/bufgen || true
 	buf generate --template conformance/buf.gen.yaml -o conformance conformance/proto
+	rm -rf conformance/client/google-java/build/generated/sources/bufgen || true
+	rm -rf conformance/client/google-javalite/build/generated/sources/bufgen || true
 	buf generate --template conformance/buf.gen.yaml -o conformance/client buf.build/connectrpc/conformance:$(CONFORMANCE_VERSION)
 
 .PHONY: generateexamples

@@ -1,3 +1,1 @@
-# Test runner is overly strict in asserting the contents
-# of the message query param, so these tests currently fail.
-Idempotency/**
+# No known failing test cases at this time.

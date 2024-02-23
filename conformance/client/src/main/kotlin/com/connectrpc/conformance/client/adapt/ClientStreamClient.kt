@@ -15,8 +15,6 @@
 package com.connectrpc.conformance.client.adapt
 
 import com.connectrpc.ClientOnlyStreamInterface
-import com.connectrpc.Code
-import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 import com.google.protobuf.MessageLite

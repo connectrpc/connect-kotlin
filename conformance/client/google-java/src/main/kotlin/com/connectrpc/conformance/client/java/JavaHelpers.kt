@@ -28,6 +28,7 @@ import com.connectrpc.conformance.v1.ClientCompatRequest.Cancel.CancelTimingCase
 import com.connectrpc.conformance.v1.ClientErrorResult
 import com.connectrpc.conformance.v1.ClientResponseResult
 import com.connectrpc.conformance.v1.ClientStreamResponse
+import com.connectrpc.conformance.v1.Code
 import com.connectrpc.conformance.v1.Codec
 import com.connectrpc.conformance.v1.Compression
 import com.connectrpc.conformance.v1.ConfigProto
@@ -137,7 +138,7 @@ class JavaHelpers {
 
         private fun toProtoError(ex: ConnectException): Error {
             return Error.newBuilder()
-                .setCode(ex.code.value)
+                .setCode(toProtoCode(ex.code))
                 .setMessage(ex.message ?: ex.code.codeName)
                 .addAllDetails(
                     ex.details.map {
@@ -148,6 +149,10 @@ class JavaHelpers {
                     },
                 )
                 .build()
+        }
+
+        private fun toProtoCode(code: com.connectrpc.Code): Code {
+            return Code.forNumber(code.value) ?: Code.CODE_UNKNOWN
         }
 
         private fun toTypeUrl(typeName: String): String {
