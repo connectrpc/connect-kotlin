@@ -3,9 +3,6 @@ rootProject.name = "connect-kotlin"
 include(":conformance:client")
 include(":conformance:client:google-java")
 include(":conformance:client:google-javalite")
-include(":conformance:common")
-include(":conformance:google-java")
-include(":conformance:google-javalite")
 if (extra.has("skipAndroid") && extra.get("skipAndroid").toString().toBoolean()) {
     println("Skipping Android build (skipAndroid=true)")
 } else {
