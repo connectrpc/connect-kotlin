@@ -1,4 +1,3 @@
 version: v1
 directories:
-  - conformance/proto
   - protoc-gen-connect-kotlin/proto
