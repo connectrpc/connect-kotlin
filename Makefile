@@ -40,10 +40,7 @@ clean: ## Cleans the underlying build.
 
 # TODO: remove the cross-tests and rely solely on new conformance suite
 .PHONY: runconformance
-runconformance: runcrosstests runconformancenew
-
-.PHONY: runconformancenew
-runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
+runconformance: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
 		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
@@ -75,10 +72,6 @@ runconformancenew: generate $(CONNECT_CONFORMANCE) ## Run the new conformance te
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
 		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java
-
-.PHONY: runcrosstests
-runcrosstests: generate ## Run the old cross-test suite.
-	./gradlew $(GRADLE_ARGS) conformance:google-java:test conformance:google-javalite:test
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
@@ -134,9 +127,6 @@ generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate
 
 .PHONY: generateconformance
 generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformance tests.
-	rm -rf conformance/google-java/build/generated/sources/bufgen || true
-	rm -rf conformance/google-javalite/build/generated/sources/bufgen || true
-	buf generate --template conformance/buf.gen.yaml -o conformance conformance/proto
 	rm -rf conformance/client/google-java/build/generated/sources/bufgen || true
 	rm -rf conformance/client/google-javalite/build/generated/sources/bufgen || true
 	buf generate --template conformance/buf.gen.yaml -o conformance/client buf.build/connectrpc/conformance:$(CONFORMANCE_VERSION)
