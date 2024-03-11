@@ -66,7 +66,7 @@ jobs:
           mv ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar .
           sha256sum protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
       - name: Publish GitHub artifacts
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           append_body: true
