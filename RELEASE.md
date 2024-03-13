@@ -50,5 +50,7 @@ After the GitHub release has been created, you can verify that the rest of the p
 completes successfully by following the corresponding run of the "release" GitHub
 workflow: https://github.com/connectrpc/connect-kotlin/actions/workflows/release.yml
 
-Once the workflow is complete, the release is complete and artifacts have been
-successfully published to Maven Central.
+Once the workflow is complete, the artifacts have been uploaded to
+https://s01.oss.sonatype.org/content/repositories/releases/com/connectrpc/.
+After some delay, they will be asynchronously published to Maven Central:
+https://repo1.maven.org/maven2/com/connectrpc/.
