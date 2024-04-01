@@ -53,6 +53,7 @@ internal class ConnectInterceptor(
     private val moshi = Moshi.Builder().build()
     private val serializationStrategy = clientConfig.serializationStrategy
     private var responseCompressionPool: CompressionPool? = null
+    private var responseHeaders: Headers = emptyMap()
 
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
@@ -159,8 +160,7 @@ internal class ConnectInterceptor(
             streamResultFunction = { res ->
                 val streamResult: StreamResult<Buffer> = res.fold(
                     onHeaders = { result ->
-                        val responseHeaders =
-                            result.headers.filter { entry -> !entry.key.startsWith("trailer-") }
+                        responseHeaders = result.headers
                         responseCompressionPool =
                             clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())
                         StreamResult.Headers(responseHeaders)
@@ -171,7 +171,7 @@ internal class ConnectInterceptor(
                             responseCompressionPool,
                         )
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
-                            parseConnectEndStream(unpackedMessage)
+                            parseConnectEndStream(responseHeaders, unpackedMessage)
                         } else {
                             StreamResult.Message(unpackedMessage)
                         }
@@ -211,7 +211,7 @@ internal class ConnectInterceptor(
         )
     }
 
-    private fun parseConnectEndStream(source: Buffer): StreamResult.Complete<Buffer> {
+    private fun parseConnectEndStream(headers: Headers, source: Buffer): StreamResult.Complete<Buffer> {
         val adapter = moshi.adapter(EndStreamResponseJSON::class.java).nonNull()
         return source.use { bufferedSource ->
             val errorJSON = bufferedSource.readUtf8()
@@ -234,11 +234,12 @@ internal class ConnectInterceptor(
                 cause = ConnectException(
                     code = code,
                     message = endStreamResponseJSON.error.message,
-                    metadata = metadata.orEmpty(),
+                    metadata = headers.plus(metadata.orEmpty()),
                 ).withErrorDetails(
                     serializationStrategy.errorDetailParser(),
                     parseErrorDetails(endStreamResponseJSON.error),
                 ),
+                trailers = metadata.orEmpty(),
             )
         }
     }
