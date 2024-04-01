@@ -10,7 +10,7 @@ BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.30.0
-CONFORMANCE_VERSION := v1.0.0-rc3
+CONFORMANCE_VERSION := v1.0.0-rc4
 PROTOC_VERSION ?= 26.1
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
@@ -43,34 +43,34 @@ clean: ## Cleans the underlying build.
 runconformance: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style blocking
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style suspend
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style callback
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
+		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style blocking
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
+		--known-failing @conformance/client/known-failing-stream-cases.txt --trace -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
 	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
+		--known-failing @conformance/client/known-failing-stream-cases.txt --trace -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java
 
 ifeq ($(UNAME_OS),Darwin)

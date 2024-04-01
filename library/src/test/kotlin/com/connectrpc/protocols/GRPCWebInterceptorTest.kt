@@ -174,12 +174,17 @@ class GRPCWebInterceptorTest {
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
 
-        val envelopedMessage = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 0)
+        val responseBody = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 0)
+        // And add end-stream message w/ trailers, too
+        val endStreamMessageContents = "grpc-status: 0\r\n".encodeUtf8()
+        responseBody.writeByte(GRPCWebInterceptor.TRAILERS_BIT)
+        responseBody.writeInt(endStreamMessageContents.size)
+        responseBody.write(endStreamMessageContents)
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = mapOf("grpc-encoding" to listOf("gzip")),
-                message = envelopedMessage,
+                headers = mapOf(GRPC_ENCODING to listOf("gzip")),
+                message = responseBody,
                 trailers = emptyMap(),
             ),
         )
@@ -196,12 +201,17 @@ class GRPCWebInterceptorTest {
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val unaryFunction = grpcWebInterceptor.unaryFunction()
 
-        val envelopedMessage = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 1)
+        val responseBody = Envelope.pack(Buffer().write("message".encodeUtf8()), GzipCompressionPool, 1)
+        // And add end-stream message w/ trailers, too
+        val endStreamMessageContents = "grpc-status: 0\r\n".encodeUtf8()
+        responseBody.writeByte(GRPCWebInterceptor.TRAILERS_BIT)
+        responseBody.writeInt(endStreamMessageContents.size)
+        responseBody.write(endStreamMessageContents)
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
                 headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
-                message = envelopedMessage,
+                message = responseBody,
                 trailers = emptyMap(),
             ),
         )

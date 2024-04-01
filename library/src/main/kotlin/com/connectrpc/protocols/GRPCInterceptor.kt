@@ -36,6 +36,7 @@ internal class GRPCInterceptor(
     private val serializationStrategy = clientConfig.serializationStrategy
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
     private var responseCompressionPool: CompressionPool? = null
+    private var responseHeaders: Headers = emptyMap()
 
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
@@ -79,15 +80,34 @@ internal class GRPCInterceptor(
                 val exception = completionParser
                     .parse(headers, trailers)
                     .toConnectExceptionOrNull(serializationStrategy)
-                val (_, message) = if (exception == null) {
+                val message = if (exception == null) {
+                    if (response.message.buffer.exhausted()) {
+                        return@UnaryFunction response.clone(
+                            message = Buffer(),
+                            cause = ConnectException(
+                                code = Code.UNIMPLEMENTED,
+                                message = "unary stream has no messages",
+                            ),
+                        )
+                    }
                     val compressionPool =
                         clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
-                    Envelope.unpackWithHeaderByte(
+                    val (_, buffer) = Envelope.unpackWithHeaderByte(
                         response.message.buffer,
                         compressionPool,
                     )
+                    if (!response.message.buffer.exhausted()) {
+                        return@UnaryFunction response.clone(
+                            message = Buffer(),
+                            cause = ConnectException(
+                                code = Code.UNIMPLEMENTED,
+                                message = "unary stream has multiple messages",
+                            ),
+                        )
+                    }
+                    buffer
                 } else {
-                    0 to Buffer()
+                    Buffer()
                 }
                 response.clone(
                     message = message,
@@ -121,6 +141,7 @@ internal class GRPCInterceptor(
                                 trailers = headers,
                             )
                         } else {
+                            responseHeaders = headers
                             responseCompressionPool = clientConfig
                                 .compressionPool(headers[GRPC_ENCODING]?.first())
                             StreamResult.Headers(headers)
@@ -139,7 +160,7 @@ internal class GRPCInterceptor(
                         }
                         val trailers = result.trailers
                         val exception = completionParser
-                            .parse(emptyMap(), trailers)
+                            .parse(responseHeaders, trailers)
                             .toConnectExceptionOrNull(serializationStrategy)
                         StreamResult.Complete(
                             cause = exception,

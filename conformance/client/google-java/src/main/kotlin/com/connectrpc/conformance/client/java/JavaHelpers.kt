@@ -251,7 +251,7 @@ class JavaHelpers {
     }
 
     private class TlsCredsImpl(
-        private val msg: com.connectrpc.conformance.v1.ClientCompatRequest.TLSCreds,
+        private val msg: com.connectrpc.conformance.v1.TLSCreds,
     ) : TlsCreds {
         override val cert: ByteString
             get() = msg.cert

@@ -47,32 +47,24 @@ enum class Code(val codeName: String, val value: Int) {
         fun fromHTTPStatus(status: Int?): Code {
             return when (status) {
                 null -> UNKNOWN
-                400 -> INVALID_ARGUMENT
+                400 -> INTERNAL_ERROR
                 401 -> UNAUTHENTICATED
                 403 -> PERMISSION_DENIED
                 404 -> UNIMPLEMENTED
-                408 -> DEADLINE_EXCEEDED
-                409 -> ABORTED
-                412 -> FAILED_PRECONDITION
-                413 -> RESOURCE_EXHAUSTED
-                415 -> INTERNAL_ERROR
-                429 -> UNAVAILABLE
-                431 -> RESOURCE_EXHAUSTED
-                499 -> CANCELED
-                502, 503, 504 -> UNAVAILABLE
+                429, 502, 503, 504 -> UNAVAILABLE
                 else -> UNKNOWN
             }
         }
-        fun fromName(name: String?): Code {
+        fun fromName(name: String?, ifNotKnown: Code = UNKNOWN): Code {
             if (name == null) {
-                return UNKNOWN
+                return ifNotKnown
             }
             for (value in values()) {
                 if (value.codeName == name) {
                     return value
                 }
             }
-            return UNKNOWN
+            return ifNotKnown
         }
         fun fromValue(value: Int?): Code? {
             if (value == null) {

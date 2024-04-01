@@ -67,11 +67,9 @@ class Envelope {
             }
             val headerByte = source.readByte().toInt()
             val length = source.readInt().toLong()
-            val message = if (source.size > length) {
+            val message = if (source.size >= length) {
                 // extract relevant subset for this message
                 Buffer().write(source as Source, length)
-            } else if (source.size == length) {
-                source
             } else {
                 throw ConnectException(
                     code = Code.INTERNAL_ERROR,
