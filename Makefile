@@ -15,6 +15,7 @@ PROTOC_VERSION ?= 26.1
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
 CONNECT_CONFORMANCE := $(BIN)/connectconformance
+CONNECT_CONFORMANCE_ARGS ?= -v --mode client --trace
 
 UNAME_OS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -m)
@@ -42,35 +43,35 @@ clean: ## Cleans the underlying build.
 .PHONY: runconformance
 runconformance: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style suspend
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style callback
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
 		--style blocking
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style suspend
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style callback
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
+		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java \
 		--style blocking
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/lite-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-stream-config.yaml \
+		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
 		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
-	$(CONNECT_CONFORMANCE) -v --mode client --conf conformance/client/standard-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt --trace -- \
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-stream-config.yaml \
+		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
 		conformance/client/google-java/build/install/google-java/bin/google-java
 
 ifeq ($(UNAME_OS),Darwin)
