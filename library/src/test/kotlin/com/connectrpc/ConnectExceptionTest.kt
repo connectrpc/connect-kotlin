@@ -32,30 +32,14 @@ class ConnectExceptionTest {
         whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
         val connectException = ConnectException(
             code = Code.UNKNOWN,
+        ).withErrorDetails(
+            errorParser = errorDetailParser,
             details = listOf(
                 errorDetail,
-                errorDetail,
-            ),
-            errorDetailParser = errorDetailParser,
-        )
-        val parsedResult = connectException.unpackedDetails(String::class)
-        assertThat(parsedResult).contains("unpacked_value", "unpacked_value")
-    }
-
-    @Test
-    fun completionParsingUnset() {
-        val errorDetail = ConnectErrorDetail(
-            "type",
-            "value".encodeUtf8(),
-        )
-        whenever(errorDetailParser.unpack(errorDetail.pb, String::class)).thenReturn("unpacked_value")
-        val connectException = ConnectException(
-            code = Code.UNKNOWN,
-            details = listOf(
                 errorDetail,
             ),
         )
         val parsedResult = connectException.unpackedDetails(String::class)
-        assertThat(parsedResult).isEmpty()
+        assertThat(parsedResult).contains("unpacked_value", "unpacked_value")
     }
 }

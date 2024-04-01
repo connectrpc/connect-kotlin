@@ -106,7 +106,6 @@ internal class ConnectInterceptor(
                         trailers = trailers,
                         cause = ConnectException(
                             code = Code.INTERNAL_ERROR,
-                            errorDetailParser = serializationStrategy.errorDetailParser(),
                             message = e.message,
                             exception = e,
                         ),
@@ -234,10 +233,11 @@ internal class ConnectInterceptor(
             StreamResult.Complete(
                 cause = ConnectException(
                     code = code,
-                    errorDetailParser = serializationStrategy.errorDetailParser(),
                     message = endStreamResponseJSON.error.message,
-                    details = parseErrorDetails(endStreamResponseJSON.error),
                     metadata = metadata.orEmpty(),
+                ).withErrorDetails(
+                    serializationStrategy.errorDetailParser(),
+                    parseErrorDetails(endStreamResponseJSON.error),
                 ),
             )
         }
@@ -246,7 +246,7 @@ internal class ConnectInterceptor(
     private fun parseConnectUnaryException(httpStatus: Int?, headers: Headers, source: Buffer?): ConnectException {
         val code = Code.fromHTTPStatus(httpStatus)
         if (source == null) {
-            return ConnectException(code, serializationStrategy.errorDetailParser(), "unexpected status code: $httpStatus")
+            return ConnectException(code, "unexpected status code: $httpStatus")
         }
         return source.use { bufferedSource ->
             val adapter = moshi.adapter(ErrorPayloadJSON::class.java).nonNull()
@@ -254,15 +254,16 @@ internal class ConnectInterceptor(
             val errorPayloadJSON = try {
                 adapter.fromJson(errorJSON)
             } catch (e: Exception) {
-                return ConnectException(code, serializationStrategy.errorDetailParser(), errorJSON, e)
+                return ConnectException(code, errorJSON, e)
             }
             val errorDetails = parseErrorDetails(errorPayloadJSON!!)
             ConnectException(
-                code = Code.fromName(errorPayloadJSON.code),
-                errorDetailParser = serializationStrategy.errorDetailParser(),
+                code = Code.fromName(errorPayloadJSON.code, code),
                 message = errorPayloadJSON.message,
-                details = errorDetails,
                 metadata = headers,
+            ).withErrorDetails(
+                serializationStrategy.errorDetailParser(),
+                errorDetails,
             )
         }
     }

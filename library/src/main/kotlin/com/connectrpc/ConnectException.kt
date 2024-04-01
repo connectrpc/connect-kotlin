@@ -20,19 +20,30 @@ import kotlin.reflect.KClass
  * Typed error provided by Connect RPCs that may optionally wrap additional typed custom errors
  * using [details].
  */
-data class ConnectException(
+class ConnectException private constructor(
     // The resulting status code.
     val code: Code,
-    private val errorDetailParser: ErrorDetailParser? = null,
     // User-readable error message.
-    override val message: String? = null,
+    override val message: String?,
     // Client-side exception that occurred, resulting in the error.
-    val exception: Throwable? = null,
-    // List of typed errors that were provided by the server.
-    val details: List<ConnectErrorDetail> = emptyList(),
+    val exception: Throwable?,
     // Additional key-values that were provided by the server.
-    val metadata: Headers = emptyMap(),
+    val metadata: Headers,
+    // Optional parser for messages in details. Will be non-null if
+    // details is non-empty.
+    private val errorDetailParser: ErrorDetailParser?,
+    // List of typed errors that were provided by the server.
+    val details: List<ConnectErrorDetail>,
 ) : Exception(message, exception) {
+    /**
+     * Constructs a new ConnectException.
+     */
+    constructor (
+        code: Code,
+        message: String? = null,
+        exception: Throwable? = null,
+        metadata: Headers = emptyMap(),
+    ) : this(code, message, exception, metadata, null, emptyList())
 
     /**
      * Unpacks values from [details] and returns the first matching error, if any.
@@ -51,16 +62,31 @@ data class ConnectException(
     }
 
     /**
-     * Creates a new [ConnectException] with the specified [ErrorDetailParser].
+     * Creates a new [ConnectException] with the specified error details and
+     * accompanying (non-null) detail parser.
      */
-    fun setErrorParser(errorParser: ErrorDetailParser): ConnectException {
+    fun withErrorDetails(errorParser: ErrorDetailParser, details: List<ConnectErrorDetail>): ConnectException {
         return ConnectException(
             code,
-            errorParser,
             message,
             exception,
-            details,
             metadata,
+            errorParser,
+            details,
+        )
+    }
+
+    /**
+     * Creates a new [ConnectException] with the specified metadata.
+     */
+    fun withMetadata(metadata: Headers): ConnectException {
+        return ConnectException(
+            code,
+            message,
+            exception,
+            metadata,
+            errorDetailParser,
+            details,
         )
     }
 }

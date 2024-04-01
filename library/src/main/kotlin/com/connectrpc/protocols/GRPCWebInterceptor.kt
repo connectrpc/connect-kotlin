@@ -41,6 +41,7 @@ internal class GRPCWebInterceptor(
     private val serializationStrategy = clientConfig.serializationStrategy
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
     private var responseCompressionPool: CompressionPool? = null
+    private var responseHeaders: Headers = emptyMap()
 
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
@@ -91,9 +92,16 @@ internal class GRPCWebInterceptor(
                 // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-WEB.md
                 if (response.message.exhausted()) {
                     // There was no response body. Read status within the headers.
-                    val exception = completionParser
+                    var exception = completionParser
                         .parse(headers, emptyMap())
                         .toConnectExceptionOrNull(serializationStrategy)
+                    if (exception == null) {
+                        // No response data and no error code?
+                        exception = ConnectException(
+                            code = Code.UNIMPLEMENTED,
+                            message = "unary stream has no messages",
+                        )
+                    }
                     response.clone(
                         message = Buffer(),
                         cause = exception,
@@ -101,28 +109,62 @@ internal class GRPCWebInterceptor(
                 } else {
                     // Unpack the current message and trailers.
                     val responseBuffer = response.message.buffer
-                    // currentMessage will contain remaining bytes unread by unpackWithHeaderByte.
                     val (headerByte, unpacked) = Envelope.unpackWithHeaderByte(
                         responseBuffer,
                         compressionPool,
                     )
                     // Check if the current message contains only trailers.
-                    val trailerBuffer = if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
-                        unpacked
+                    val (currentMessage, trailerBuffer) = if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
+                        null to unpacked
+                    } else if (response.message.exhausted()) {
+                        return@UnaryFunction response.clone(
+                            message = Buffer(),
+                            cause = ConnectException(
+                                code = Code.INTERNAL_ERROR,
+                                message = "response did not include an end of stream message",
+                            ),
+                        )
                     } else {
                         // The previous chunk is the message which means this is the trailers.
-                        val (_, trailerBuffer) = Envelope.unpackWithHeaderByte(
+                        val (trailerHeaderByte, trailerBuffer) = Envelope.unpackWithHeaderByte(
                             responseBuffer,
                             compressionPool,
                         )
-                        trailerBuffer
+                        if (trailerHeaderByte.and(TRAILERS_BIT) != TRAILERS_BIT) {
+                            // Another message instead of trailers?
+                            return@UnaryFunction response.clone(
+                                message = Buffer(),
+                                cause = ConnectException(
+                                    code = Code.UNIMPLEMENTED,
+                                    message = "unary stream has multiple messages",
+                                ),
+                            )
+                        }
+                        unpacked to trailerBuffer
+                    }
+                    if (!responseBuffer.exhausted()) {
+                        // More after the trailers message?
+                        return@UnaryFunction response.clone(
+                            message = Buffer(),
+                            cause = ConnectException(
+                                code = Code.INTERNAL_ERROR,
+                                message = "response stream contains data after end-of-stream message",
+                            ),
+                        )
                     }
                     val finalTrailers = parseGrpcWebTrailer(trailerBuffer)
-                    val exception = completionParser
-                        .parse(emptyMap(), finalTrailers)
+                    var exception = completionParser
+                        .parse(headers, finalTrailers)
                         .toConnectExceptionOrNull(serializationStrategy)
+                    if (exception == null && currentMessage == null) {
+                        // No response message, and trailers indicated no error?
+                        exception = ConnectException(
+                            code = Code.UNIMPLEMENTED,
+                            message = "unary stream has multiple messages",
+                        )
+                    }
                     response.clone(
-                        message = unpacked,
+                        message = currentMessage ?: Buffer(),
                         trailers = finalTrailers,
                         cause = exception,
                     )
@@ -155,6 +197,7 @@ internal class GRPCWebInterceptor(
                                 trailers = headers,
                             )
                         } else {
+                            responseHeaders = headers
                             responseCompressionPool = clientConfig
                                 .compressionPool(headers[GRPC_ENCODING]?.first())
                             StreamResult.Headers(headers)
@@ -168,7 +211,7 @@ internal class GRPCWebInterceptor(
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val exception = completionParser
-                                .parse(emptyMap(), streamTrailers)
+                                .parse(responseHeaders, streamTrailers)
                                 .toConnectExceptionOrNull(serializationStrategy)
                             StreamResult.Complete(
                                 cause = exception,
