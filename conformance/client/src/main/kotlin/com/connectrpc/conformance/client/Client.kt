@@ -385,10 +385,15 @@ class Client(
                 )
             }
             is ResponseMessage.Failure -> {
+                // TODO: report result.headers and result.trailers independently
+                //       once reference server can report send them independently.
+                //       https://github.com/connectrpc/conformance/pull/840.
+                // Until then, always report trailers as exception metadata (which
+                // may include headers).
                 ClientResponseResult(
                     headers = result.headers,
                     error = result.cause,
-                    trailers = result.trailers,
+                    trailers = result.cause.metadata,
                     numUnsentRequests = numUnsent,
                 )
             }

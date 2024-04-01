@@ -19,7 +19,9 @@ import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
+import com.connectrpc.asConnectException
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 
 /**
  * Concrete implementation of [ClientOnlyStreamInterface].
@@ -35,12 +37,23 @@ internal class ClientOnlyStream<Input, Output>(
         val resultChannel = messageStream.responseChannel()
         try {
             messageStream.sendClose()
-            val message = resultChannel.receive()
+            val message = resultChannel.receiveCatching()
+            if (message.isFailure) {
+                val ex = message.exceptionOrNull()
+                if (ex == null || ex is ClosedReceiveChannelException) {
+                    throw ConnectException(
+                        code = Code.UNIMPLEMENTED,
+                        message = "unary stream has no messages",
+                        exception = ex,
+                    )
+                }
+                throw asConnectException(ex)
+            }
             val additionalMessage = resultChannel.receiveCatching()
             if (additionalMessage.isSuccess) {
-                throw ConnectException(code = Code.UNKNOWN, message = "unary stream has multiple messages")
+                throw ConnectException(code = Code.UNIMPLEMENTED, message = "unary stream has multiple messages")
             }
-            return message
+            return message.getOrThrow()
         } finally {
             resultChannel.cancel()
         }

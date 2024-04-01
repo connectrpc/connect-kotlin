@@ -46,10 +46,11 @@ internal data class GRPCCompletion(
         } else {
             ConnectException(
                 code = code,
-                errorDetailParser = serializationStrategy.errorDetailParser(),
                 message = message,
-                details = errorDetails,
                 metadata = metadata,
+            ).withErrorDetails(
+                serializationStrategy.errorDetailParser(),
+                errorDetails,
             )
         }
     }

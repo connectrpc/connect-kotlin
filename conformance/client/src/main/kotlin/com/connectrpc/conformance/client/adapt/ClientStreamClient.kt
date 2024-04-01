@@ -103,7 +103,7 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
                             return ResponseMessage.Failure(
                                 cause = connEx,
                                 headers = underlying.responseHeaders().await(),
-                                trailers = connEx.metadata,
+                                trailers = underlying.responseTrailers().await(),
                             )
                         }
                     }

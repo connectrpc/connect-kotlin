@@ -109,11 +109,10 @@ class ProtocolClient(
                     )
                     return@httpClientUnary
                 }
-                val exception = finalResponse.cause?.setErrorParser(serializationStrategy.errorDetailParser())
-                if (exception != null) {
+                if (finalResponse.cause != null) {
                     onResult(
                         ResponseMessage.Failure(
-                            exception,
+                            finalResponse.cause,
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),
