@@ -490,7 +490,12 @@ class ConnectInterceptorTest {
 
         assertThat(result).isInstanceOf(StreamResult.Headers::class.java)
         val headerResult = result as StreamResult.Headers
-        assertThat(headerResult.headers).isEqualTo(mapOf(CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip")))
+        assertThat(headerResult.headers).isEqualTo(
+            mapOf(
+                "trailer-x-some-key" to listOf("some_value"),
+                CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
+            ),
+        )
     }
 
     @Test

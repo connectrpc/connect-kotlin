@@ -108,7 +108,7 @@ private class ResponseCallback(
             if (httpStatus != 200) {
                 // TODO: This is not quite exercised yet. Validate if this is exercised in another test case.
                 val finalResult = StreamResult.Complete<Buffer>(
-                    trailers = response.safeTrailers() ?: emptyMap(),
+                    trailers = response.safeTrailers(),
                     cause = ConnectException(
                         code = Code.fromHTTPStatus(httpStatus),
                         message = "unexpected HTTP status: $httpStatus ${response.originalMessage()}",
@@ -119,7 +119,7 @@ private class ResponseCallback(
             }
             response.use { resp ->
                 resp.body!!.source().use { sourceBuffer ->
-                    var exception: Exception? = null
+                    var connEx: ConnectException? = null
                     try {
                         while (!sourceBuffer.exhausted()) {
                             val buffer = readStreamElement(sourceBuffer)
@@ -128,42 +128,19 @@ private class ResponseCallback(
                             )
                             onResult(streamResult)
                         }
-                    } catch (e: Exception) {
-                        exception = e
+                    } catch (ex: Exception) {
+                        connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
                     } finally {
                         // If trailers are not yet communicated.
                         // This is the final chance to notify trailers to the consumer.
-                        val connectEx = when (exception) {
-                            null -> null
-                            else -> asConnectException(exception, codeFromException(call.isCanceled(), exception))
-                        }
                         val finalResult = StreamResult.Complete<Buffer>(
-                            trailers = response.safeTrailers() ?: emptyMap(),
-                            cause = connectEx,
+                            trailers = response.safeTrailers(),
+                            cause = connEx,
                         )
                         onResult(finalResult)
                     }
                 }
             }
-        }
-    }
-
-    private fun Response.safeTrailers(): Map<String, List<String>>? {
-        try {
-            if (body?.source()?.exhausted() == false) {
-                // Assuming this means that trailers are not available.
-                // Returning null to signal trailers are "missing".
-                return null
-            }
-        } catch (e: Exception) {
-            return null
-        }
-
-        return try {
-            trailers().toLowerCaseKeysMultiMap()
-        } catch (_: Throwable) {
-            // Something went terribly wrong.
-            emptyMap()
         }
     }
 

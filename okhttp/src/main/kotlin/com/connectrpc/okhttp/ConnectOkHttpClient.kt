@@ -17,6 +17,7 @@ package com.connectrpc.okhttp
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.StreamResult
+import com.connectrpc.asConnectException
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
@@ -147,17 +148,24 @@ class ConnectOkHttpClient @JvmOverloads constructor(
 
                     override fun onResponse(call: Call, response: Response) {
                         // Unary requests will need to read the entire body to access trailers.
-                        val responseBuffer = response.body?.source()?.use { bufferedSource ->
-                            val buffer = Buffer()
-                            buffer.writeAll(bufferedSource)
-                            buffer
+                        var responseBuffer: Buffer? = null
+                        var connEx: ConnectException? = null
+                        try {
+                            responseBuffer = response.body?.source()?.use { bufferedSource ->
+                                val buffer = Buffer()
+                                buffer.writeAll(bufferedSource)
+                                buffer
+                            }
+                        } catch (ex: Throwable) {
+                            connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
                         }
                         onResult(
                             HTTPResponse(
                                 status = response.originalCode(),
                                 headers = response.headers.toLowerCaseKeysMultiMap(),
                                 message = responseBuffer ?: Buffer(),
-                                trailers = response.trailers().toLowerCaseKeysMultiMap(),
+                                trailers = response.safeTrailers(),
+                                cause = connEx,
                             ),
                         )
                     }
@@ -197,7 +205,7 @@ internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
     )
 }
 
-internal fun codeFromException(callCanceled: Boolean, e: Exception): Code {
+internal fun codeFromException(callCanceled: Boolean, e: Throwable): Code {
     return if ((e is InterruptedIOException && e.message == "timeout") ||
         e is SocketTimeoutException
     ) {
@@ -230,5 +238,14 @@ fun Response.originalMessage(): String {
         message.substring(0, message.length - REVISED_CODE_SUFFIX.length)
     } else {
         message
+    }
+}
+
+internal fun Response.safeTrailers(): Map<String, List<String>> {
+    return try {
+        trailers().toLowerCaseKeysMultiMap()
+    } catch (_: Throwable) {
+        // Trailers not available or something else went wrong...
+        emptyMap()
     }
 }
