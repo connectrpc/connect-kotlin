@@ -115,7 +115,7 @@ internal class ConnectInterceptor(
                 val exception: ConnectException?
                 val message: Buffer
                 if (response.status != 200) {
-                    exception = parseConnectUnaryException(response.status, response.headers, responseBody)
+                    exception = parseConnectUnaryException(response.status, responseHeaders.plus(trailers), responseBody)
                     // We've already read the response body to parse an error - don't read again.
                     message = Buffer()
                 } else {
@@ -244,7 +244,7 @@ internal class ConnectInterceptor(
         }
     }
 
-    private fun parseConnectUnaryException(httpStatus: Int?, headers: Headers, source: Buffer?): ConnectException {
+    private fun parseConnectUnaryException(httpStatus: Int?, metadata: Headers, source: Buffer?): ConnectException {
         val code = Code.fromHTTPStatus(httpStatus)
         if (source == null) {
             return ConnectException(code, "unexpected status code: $httpStatus")
@@ -261,7 +261,7 @@ internal class ConnectInterceptor(
             ConnectException(
                 code = Code.fromName(errorPayloadJSON.code, code),
                 message = errorPayloadJSON.message,
-                metadata = headers,
+                metadata = metadata,
             ).withErrorDetails(
                 serializationStrategy.errorDetailParser(),
                 errorDetails,

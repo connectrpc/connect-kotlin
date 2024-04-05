@@ -33,6 +33,9 @@ internal data class GRPCCompletion(
     val errorDetails: List<ConnectErrorDetail> = emptyList(),
     // Set to either message headers (or trailers) where the gRPC status was found.
     val metadata: Headers,
+    // If true, this status was parsed from headers, in a "trailers-only" response.
+    // Otherwise, the status was parsed from trailers.
+    val trailersOnly: Boolean = false,
     // If false, this completion was synthesized and not actually present in metadata.
     val present: Boolean = true,
 ) {

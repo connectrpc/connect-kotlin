@@ -37,6 +37,7 @@ internal class GRPCCompletionParser(
         val statusCode: Int
         val statusMetadata: Map<String, List<String>>
         val statusFromHeaders = parseStatus(headers)
+        val trailersOnly: Boolean
         if (statusFromHeaders == null) {
             statusCode = parseStatus(trailers)
                 ?: return GRPCCompletion(
@@ -46,9 +47,11 @@ internal class GRPCCompletionParser(
                     metadata = trailers,
                 )
             statusMetadata = trailers
+            trailersOnly = false
         } else {
             statusCode = statusFromHeaders
             statusMetadata = headers
+            trailersOnly = true
         }
         // Note: we report combined headers and trailers as exception meta, so
         // caller doesn't have to check both, which is particularly important
@@ -60,6 +63,7 @@ internal class GRPCCompletionParser(
             message = parseMessage(statusMetadata).utf8(),
             errorDetails = connectErrorDetails(statusMetadata),
             metadata = exceptionMeta,
+            trailersOnly = trailersOnly,
         )
     }
 

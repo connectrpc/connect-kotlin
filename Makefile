@@ -10,7 +10,7 @@ BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.30.0
-CONFORMANCE_VERSION := v1.0.0-rc4
+CONFORMANCE_VERSION := v1.0.1
 PROTOC_VERSION ?= 25.3
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
@@ -39,9 +39,8 @@ buildplugin: ## Build the connect-kotlin protoc plugin.
 clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
 
-# TODO: remove the cross-tests and rely solely on new conformance suite
 .PHONY: runconformance
-runconformance: generate $(CONNECT_CONFORMANCE) ## Run the new conformance test suite.
+runconformance: generate $(CONNECT_CONFORMANCE)
 	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
 	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
 		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
