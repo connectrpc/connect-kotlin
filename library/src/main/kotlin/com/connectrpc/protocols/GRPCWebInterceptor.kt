@@ -105,6 +105,7 @@ internal class GRPCWebInterceptor(
                     response.clone(
                         message = Buffer(),
                         cause = exception,
+                        trailers = headers,
                     )
                 } else {
                     // Unpack the current message and trailers.

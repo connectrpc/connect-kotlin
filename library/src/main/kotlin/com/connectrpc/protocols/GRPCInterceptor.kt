@@ -76,10 +76,13 @@ internal class GRPCInterceptor(
                     )
                 }
                 val headers = response.headers
-                val trailers = response.trailers
-                val exception = completionParser
+                var trailers = response.trailers
+                val completion = completionParser
                     .parse(headers, trailers)
-                    .toConnectExceptionOrNull(serializationStrategy)
+                if (completion.trailersOnly) {
+                    trailers = headers // report the headers also as trailers
+                }
+                val exception = completion.toConnectExceptionOrNull(serializationStrategy)
                 val message = if (exception == null) {
                     if (response.message.buffer.exhausted()) {
                         return@UnaryFunction response.clone(
@@ -112,6 +115,7 @@ internal class GRPCInterceptor(
                 response.clone(
                     message = message,
                     cause = exception,
+                    trailers = trailers,
                 )
             },
         )
