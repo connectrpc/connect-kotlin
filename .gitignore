@@ -6,6 +6,7 @@
 /local.properties
 /.gradle
 /.idea
+*.iml
 /.tmp
 # Cache of project
 /.gradletasknamecache
