@@ -42,6 +42,7 @@ internal class GRPCWebInterceptor(
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
     private var responseCompressionPool: CompressionPool? = null
     private var responseHeaders: Headers = emptyMap()
+    private var streamEmpty: Boolean = true
 
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
@@ -93,7 +94,7 @@ internal class GRPCWebInterceptor(
                 if (response.message.exhausted()) {
                     // There was no response body. Read status within the headers.
                     var exception = completionParser
-                        .parse(headers, emptyMap())
+                        .parse(headers, false, emptyMap())
                         .toConnectExceptionOrNull(serializationStrategy)
                     if (exception == null) {
                         // No response data and no error code?
@@ -155,7 +156,7 @@ internal class GRPCWebInterceptor(
                     }
                     val finalTrailers = parseGrpcWebTrailer(trailerBuffer)
                     var exception = completionParser
-                        .parse(headers, finalTrailers)
+                        .parse(headers, true, finalTrailers)
                         .toConnectExceptionOrNull(serializationStrategy)
                     if (exception == null && currentMessage == null) {
                         // No response message, and trailers indicated no error?
@@ -191,20 +192,13 @@ internal class GRPCWebInterceptor(
                 val streamResult = res.fold(
                     onHeaders = { result ->
                         val headers = result.headers
-                        val completion = completionParser.parse(headers, emptyMap())
-                        if (completion.present) {
-                            StreamResult.Complete(
-                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
-                                trailers = headers,
-                            )
-                        } else {
-                            responseHeaders = headers
-                            responseCompressionPool = clientConfig
-                                .compressionPool(headers[GRPC_ENCODING]?.first())
-                            StreamResult.Headers(headers)
-                        }
+                        responseHeaders = headers
+                        responseCompressionPool = clientConfig
+                            .compressionPool(headers[GRPC_ENCODING]?.first())
+                        StreamResult.Headers(headers)
                     },
                     onMessage = { result ->
+                        streamEmpty = false
                         val (headerByte, unpackedMessage) = Envelope.unpackWithHeaderByte(
                             result.message,
                             responseCompressionPool,
@@ -212,7 +206,7 @@ internal class GRPCWebInterceptor(
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val exception = completionParser
-                                .parse(responseHeaders, streamTrailers)
+                                .parse(responseHeaders, !streamEmpty, streamTrailers)
                                 .toConnectExceptionOrNull(serializationStrategy)
                             StreamResult.Complete(
                                 cause = exception,

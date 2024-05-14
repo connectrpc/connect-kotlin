@@ -22,6 +22,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 
 class GRPCErrorDetailParserTest {
 
@@ -32,6 +33,7 @@ class GRPCErrorDetailParserTest {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
             headers = emptyMap(),
+            hasBody = false,
             trailers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_MESSAGE_TRAILER to listOf("str"),
@@ -49,26 +51,70 @@ class GRPCErrorDetailParserTest {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
             headers = emptyMap(),
+            hasBody = false,
             trailers = mapOf(
                 GRPC_MESSAGE_TRAILER to listOf("str"),
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
             ),
         )
         assertThat(completion.present).isFalse()
+        assertThat(completion.code).isEqualTo(Code.UNKNOWN)
+        assertThat(completion.errorDetails).isEmpty()
+        verifyNoInteractions(errorDetailParser)
+    }
+
+    @Test
+    fun trailersOnly() {
+        val parser = GRPCCompletionParser(errorDetailParser)
+        val completion = parser.parse(
+            headers = mapOf(
+                GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
+                GRPC_MESSAGE_TRAILER to listOf("str"),
+                GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
+            ),
+            hasBody = false,
+            trailers = emptyMap(),
+        )
+        assertThat(completion.present).isTrue()
+        assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
+        assertThat(completion.message).isEqualTo("str")
+        verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
+    }
+
+    @Test
+    fun trailersWithoutStatusIncorrectStatusInHeaders() {
+        val parser = GRPCCompletionParser(errorDetailParser)
+        val completion = parser.parse(
+            headers = mapOf(
+                GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
+                GRPC_MESSAGE_TRAILER to listOf("str"),
+                GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
+            ),
+            // since there is a body, we don't look for a status in the headers
+            // because it a trailers-only response has no body and no trailers
+            hasBody = true,
+            trailers = emptyMap(),
+        )
+        assertThat(completion.present).isFalse()
+        assertThat(completion.code).isEqualTo(Code.UNKNOWN)
+        assertThat(completion.errorDetails).isEmpty()
+        verifyNoInteractions(errorDetailParser)
     }
 
     @Test
     fun trailersWithoutMessage() {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
-            headers = mapOf(
+            headers = emptyMap(),
+            hasBody = false,
+            trailers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_STATUS_DETAILS_TRAILERS to listOf("data".encodeUtf8().base64()),
             ),
-            trailers = emptyMap(),
         )
         assertThat(completion.present).isTrue()
         assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
+        verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
     }
 
     @Test
@@ -76,12 +122,15 @@ class GRPCErrorDetailParserTest {
         val parser = GRPCCompletionParser(errorDetailParser)
         val completion = parser.parse(
             headers = emptyMap(),
+            hasBody = false,
             trailers = mapOf(
                 GRPC_STATUS_TRAILER to listOf("${Code.UNAUTHENTICATED.value}"),
                 GRPC_MESSAGE_TRAILER to listOf("str"),
             ),
         )
         assertThat(completion.present).isTrue()
+        assertThat(completion.message).isEqualTo("str")
         assertThat(completion.errorDetails).isEmpty()
+        verifyNoInteractions(errorDetailParser)
     }
 }
