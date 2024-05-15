@@ -32,6 +32,7 @@ const val codecNameJSON = CODEC_NAME_JSON
  * Defines a type that is capable of encoding and decoding messages using a specific format.
  */
 interface Codec<E> {
+    // TODO: remove this method or unify somehow with SerializationStrategy.serializationName?
     /**
      * @return The name of the codec's format (e.g., "json", "proto"). Usually consumed
      * in the form of adding the `content-type` header via "application/{name}".

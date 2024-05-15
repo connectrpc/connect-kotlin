@@ -24,12 +24,14 @@ import kotlin.reflect.KClass
  */
 interface ErrorDetailParser {
     /**
-     * Unpack the underlying payload into the input class type.
+     * Unpack the given Any payload into the input class type.
      */
     fun <E : Any> unpack(any: AnyError, clazz: KClass<E>): E?
 
     /**
-     * Parse payload for a list of error details.
+     * Parse the given bytes for a list of error details. The given
+     * bytes will be the serialized form of a google.rpc.Status
+     * Protobuf message.
      */
     fun parseDetails(bytes: ByteArray): List<ConnectErrorDetail>
 }

@@ -17,7 +17,8 @@ package com.connectrpc
 import okio.ByteString
 
 /**
- * This is an Any adapter for various base data types.
+ * This is a protobuf-runtime-agnostic representation of google.protobuf.Any
+ * messages, which are used to represent error details in gRPC.
  */
 class AnyError(
     val typeUrl: String,

@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 interface SerializationStrategy {
 
     /**
-     * The name of the serialization. Used in the content-encoding
+     * The name of the serialization. Used in the content-type
      * header.
      */
     fun serializationName(): String
