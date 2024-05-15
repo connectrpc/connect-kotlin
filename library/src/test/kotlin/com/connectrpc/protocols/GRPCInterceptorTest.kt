@@ -185,7 +185,7 @@ class GRPCInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = emptyMap(),
+                headers = mapOf(CONTENT_TYPE to listOf("application/grpc+encoding_type")),
                 message = envelopedMessage,
                 trailers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("0"),
@@ -209,7 +209,10 @@ class GRPCInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
+                headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc+encoding_type"),
+                    GRPC_ENCODING to listOf(GzipCompressionPool.name()),
+                ),
                 message = envelopedMessage,
                 trailers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("0"),
@@ -253,7 +256,7 @@ class GRPCInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = emptyMap(),
+                headers = mapOf(CONTENT_TYPE to listOf("application/grpc+encoding_type")),
                 message = Buffer().write(json.encodeUtf8()),
                 trailers = mapOf(
                     GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}"),
@@ -423,7 +426,8 @@ class GRPCInterceptorTest {
 
         val result = streamFunction.streamResultFunction(
             StreamResult.Headers(
-                mapOf(
+                headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc+encoding_type"),
                     "key" to listOf("value"),
                 ),
             ),
@@ -471,6 +475,7 @@ class GRPCInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc+encoding_type"),
                     GRPC_ENCODING to listOf(GzipCompressionPool.name()),
                 ),
             ),

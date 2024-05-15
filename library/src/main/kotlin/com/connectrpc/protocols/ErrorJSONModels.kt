@@ -36,3 +36,7 @@ internal class EndStreamResponseJSON(
     @Json(name = "error") val error: ErrorPayloadJSON?,
     @Json(name = "metadata") val metadata: Headers?,
 )
+
+internal fun contentTypeIsJSON(contentType: String): Boolean {
+    return contentType == "application/json" || contentType == "application/json; charset=utf-8"
+}

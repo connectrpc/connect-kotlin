@@ -94,37 +94,53 @@ internal class ConnectInterceptor(
                 }
                 val trailers = mutableMapOf<String, List<String>>()
                 trailers.putAll(response.headers.toTrailers())
-                trailers.putAll(response.trailers)
-                val responseHeaders =
+                val headers =
                     response.headers.filter { entry -> !entry.key.startsWith("trailer-") }
-                val compressionPool = clientConfig.compressionPool(responseHeaders[CONTENT_ENCODING]?.first())
+                val compressionPool = clientConfig.compressionPool(headers[CONTENT_ENCODING]?.first())
                 val responseBody = try {
                     compressionPool?.decompress(response.message.buffer) ?: response.message.buffer
                 } catch (e: Exception) {
                     return@UnaryFunction response.clone(
                         message = Buffer(),
-                        headers = responseHeaders,
+                        headers = headers,
                         trailers = trailers,
                         cause = ConnectException(
                             code = Code.INTERNAL_ERROR,
                             message = e.message,
                             exception = e,
+                            metadata = headers.plus(trailers),
                         ),
                     )
                 }
+                val contentType = headers[CONTENT_TYPE]?.first() ?: ""
                 val exception: ConnectException?
                 val message: Buffer
                 if (response.status != 200) {
-                    exception = parseConnectUnaryException(response.status, responseHeaders.plus(trailers), responseBody)
+                    exception = parseConnectUnaryException(response.status, contentType, headers.plus(trailers), responseBody)
                     // We've already read the response body to parse an error - don't read again.
                     message = Buffer()
                 } else {
-                    exception = null
                     message = responseBody
+                    val isValidContentType =
+                        (serializationStrategy.serializationName() == "json" && contentTypeIsJSON(contentType))
+                                || contentType == "application/" + serializationStrategy.serializationName()
+                    if (isValidContentType) {
+                        exception = null
+                    } else {
+                        // If content-type looks like it could be an RPC server's response, consider
+                        // this an internal error. Otherwise, we infer a code from the HTTP status,
+                        // which means a code of UNKNOWN since HTTP status is 200.
+                        val code = if (contentType.startsWith("application/")) Code.INTERNAL_ERROR else Code.UNKNOWN
+                        exception = ConnectException(
+                            code = code,
+                            message = "unexpected content-type: $contentType",
+                            metadata = headers.plus(trailers),
+                        )
+                    }
                 }
                 response.clone(
                     message = message,
-                    headers = responseHeaders,
+                    headers = headers,
                     trailers = trailers,
                     cause = exception,
                 )
@@ -161,9 +177,23 @@ internal class ConnectInterceptor(
                 val streamResult: StreamResult<Buffer> = res.fold(
                     onHeaders = { result ->
                         responseHeaders = result.headers
-                        responseCompressionPool =
-                            clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())
-                        StreamResult.Headers(responseHeaders)
+                        val contentType = responseHeaders[CONTENT_TYPE]?.first() ?: ""
+                        val isValidContentType = contentType == "application/connect+" + serializationStrategy.serializationName()
+                        if (!isValidContentType) {
+                            // If content-type looks like it could be an RPC server's response, consider
+                            // this an internal error. Otherwise, we infer a code from the HTTP status,
+                            // which means a code of UNKNOWN since HTTP status is 200.
+                            val code = if (contentType.startsWith("application/connect+")) Code.INTERNAL_ERROR else Code.UNKNOWN
+                            StreamResult.Complete(ConnectException(
+                                code = code,
+                                message = "unexpected content-type: $contentType",
+                                metadata = responseHeaders,
+                            ))
+                        } else {
+                            responseCompressionPool =
+                                clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())
+                            StreamResult.Headers(responseHeaders)
+                        }
                     },
                     onMessage = { result ->
                         val (headerByte, unpackedMessage) = Envelope.unpackWithHeaderByte(
@@ -196,7 +226,7 @@ internal class ConnectInterceptor(
     ): UnaryHTTPRequest {
         val serializationStrategy = clientConfig.serializationStrategy
         val requestCodec = serializationStrategy.codec(request.methodSpec.requestClass)
-        val url = getUrlFromMethodSpec(
+        val url = constructURLForGETRequest(
             request,
             requestCodec,
             finalRequestBody,
@@ -204,7 +234,7 @@ internal class ConnectInterceptor(
         )
         return request.clone(
             url = url,
-            contentType = "application/${requestCodec.encodingName()}",
+            contentType = "",
             headers = request.headers,
             methodSpec = request.methodSpec,
             httpMethod = HTTPMethod.GET,
@@ -244,9 +274,9 @@ internal class ConnectInterceptor(
         }
     }
 
-    private fun parseConnectUnaryException(httpStatus: Int?, metadata: Headers, source: Buffer?): ConnectException {
+    private fun parseConnectUnaryException(httpStatus: Int?, contentType: String, metadata: Headers, source: Buffer?): ConnectException {
         val code = Code.fromHTTPStatus(httpStatus)
-        if (source == null) {
+        if (source == null || !contentTypeIsJSON(contentType)) {
             return ConnectException(code, "unexpected status code: $httpStatus")
         }
         return source.use { bufferedSource ->
@@ -298,7 +328,7 @@ private fun Headers.toTrailers(): Trailers {
     return trailers
 }
 
-private fun getUrlFromMethodSpec(
+private fun constructURLForGETRequest(
     httpRequest: HTTPRequest,
     codec: Codec<*>,
     payload: Buffer,
