@@ -1,13 +1,2 @@
 # Deadline headers are not currently set.
 Deadline Propagation/**
-
-# Bug: response content-type is not correctly checked
-**/unexpected-content-type
-
-# Bug: "trailers-only" responses are not correctly identified.
-# If headers contain "grpc-status", this client assumes it is a
-# trailers-only response. However, a trailers-only response should
-# instead be identified by lack of body or HTTP trailers.
-gRPC Unexpected Responses/**/trailers-only/*
-gRPC-Web Unexpected Responses/**/trailers-only/ignore-header-if-body-present
-

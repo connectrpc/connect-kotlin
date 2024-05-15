@@ -6,6 +6,3 @@ Timeouts/HTTPVersion:2/**/bidi-stream/**
 
 # Deadline headers are not currently set.
 Deadline Propagation/**
-
-# Bug: incorrect code attribution for these failures (UNKNOWN instead of INTERNAL)
-Connect Unexpected Responses/**/unexpected-stream-codec
