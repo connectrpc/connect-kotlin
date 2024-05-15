@@ -14,6 +14,7 @@
 
 package com.connectrpc.impl
 
+import com.connectrpc.CallOptions
 import com.connectrpc.Codec
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
@@ -50,7 +51,7 @@ class BidirectionalStreamTest {
 
         CoroutineScope(Dispatchers.IO).launch {
             val stream = client.stream(
-                emptyMap(),
+                CallOptions.empty,
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,
@@ -80,7 +81,7 @@ class BidirectionalStreamTest {
 
         CoroutineScope(Dispatchers.IO).launch {
             val stream = client.stream(
-                emptyMap(),
+                CallOptions.empty,
                 MethodSpec(
                     path = "com.connectrpc.SomeService/Service",
                     String::class,

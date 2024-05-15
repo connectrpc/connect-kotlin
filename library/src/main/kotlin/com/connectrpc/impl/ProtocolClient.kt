@@ -15,6 +15,7 @@
 package com.connectrpc.impl
 
 import com.connectrpc.BidirectionalStreamInterface
+import com.connectrpc.CallOptions
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
@@ -72,7 +73,7 @@ class ProtocolClient(
 
     override fun <Input : Any, Output : Any> unary(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
         onResult: (ResponseMessage<Output>) -> Unit,
     ): Cancelable {
@@ -88,7 +89,7 @@ class ProtocolClient(
             val unaryRequest = UnaryHTTPRequest(
                 url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
-                headers = headers,
+                headers = options.headers,
                 methodSpec = methodSpec,
                 message = requestMessage,
             )
@@ -157,24 +158,24 @@ class ProtocolClient(
 
     override suspend fun <Input : Any, Output : Any> unary(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output> {
         if (config.ioCoroutineContext != null) {
             return withContext(config.ioCoroutineContext) {
-                suspendUnary(request, headers, methodSpec)
+                suspendUnary(request, options, methodSpec)
             }
         }
-        return suspendUnary(request, headers, methodSpec)
+        return suspendUnary(request, options, methodSpec)
     }
 
     private suspend fun <Input : Any, Output : Any> suspendUnary(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output> {
         return suspendCancellableCoroutine { continuation ->
-            val cancelable = unary(request, headers, methodSpec) { responseMessage ->
+            val cancelable = unary(request, options, methodSpec) { responseMessage ->
                 continuation.resume(responseMessage)
             }
             continuation.invokeOnCancellation {
@@ -185,32 +186,32 @@ class ProtocolClient(
 
     override fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): UnaryBlockingCall<Output> {
         return UnaryCall { callback ->
-            unary(request, headers, methodSpec, callback)
+            unary(request, options, methodSpec, callback)
         }
     }
 
     override suspend fun <Input : Any, Output : Any> serverStream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output> {
-        val stream = stream(headers, methodSpec)
+        val stream = stream(options, methodSpec)
         return ServerOnlyStream(stream)
     }
 
     override suspend fun <Input : Any, Output : Any> clientStream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ClientOnlyStreamInterface<Input, Output> {
-        val stream = stream(headers, methodSpec)
+        val stream = stream(options, methodSpec)
         return ClientOnlyStream(stream)
     }
 
     override suspend fun <Input : Any, Output : Any> stream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): BidirectionalStreamInterface<Input, Output> {
         val channel = Channel<Output>(1)
@@ -221,7 +222,7 @@ class ProtocolClient(
         val request = HTTPRequest(
             url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
-            headers = headers,
+            headers = options.headers,
             methodSpec = methodSpec,
         )
         val streamFunc = config.createStreamingInterceptorChain()

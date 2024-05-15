@@ -28,85 +28,179 @@ interface ProtocolClientInterface {
      * Perform a unary (non-streaming) request.
      *
      * @param request The outbound request message.
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      * @param onResult Closure called when a response or error is received.
      *
      * @return A `Cancelable` which provides the ability to cancel the outbound request.
      */
     fun <Input : Any, Output : Any> unary(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
         onResult: (ResponseMessage<Output>) -> Unit,
     ): Cancelable
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "unary(request, CallOptions.headers(headers), methodSpec, onResult)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    fun <Input : Any, Output : Any> unary(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+        onResult: (ResponseMessage<Output>) -> Unit,
+    ): Cancelable {
+        return unary(request, CallOptions.headers(headers), methodSpec, onResult)
+    }
 
     /**
      * Perform a suspended unary (non-streaming) request.
      *
      * @param request The outbound request message.
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      *
      * @return The ResponseMessage for the unary call.
      */
     suspend fun <Input : Any, Output : Any> unary(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ResponseMessage<Output>
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "unary(request, CallOptions.headers(headers), methodSpec)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    suspend fun <Input : Any, Output : Any> unary(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): ResponseMessage<Output> {
+        return unary(request, CallOptions.headers(headers), methodSpec)
+    }
 
     /**
      * Perform a synchronous unary (non-streaming) request.
      *
      * @param request The outbound request message.
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      *
      * @return The [UnaryBlockingCall] for the unary request.
      */
     fun <Input : Any, Output : Any> unaryBlocking(
         request: Input,
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): UnaryBlockingCall<Output>
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "unaryBlocking(request, CallOptions.headers(headers), methodSpec)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    fun <Input : Any, Output : Any> unaryBlocking(
+        request: Input,
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): UnaryBlockingCall<Output> {
+        return unaryBlocking(request, CallOptions.headers(headers), methodSpec)
+    }
 
     /**
      * Start a new bidirectional stream.
      *
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      *
      * @return An interface for interacting with and sending data over the bidirectional stream.
      */
     suspend fun <Input : Any, Output : Any> stream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): BidirectionalStreamInterface<Input, Output>
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "stream(CallOptions.headers(headers), methodSpec)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    suspend fun <Input : Any, Output : Any> stream(
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): BidirectionalStreamInterface<Input, Output> {
+        return stream(CallOptions.headers(headers), methodSpec)
+    }
 
     /**
      * Start a new server only stream.
      *
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      *
      * @return An interface for interacting with and receiving data over the server only stream.
      */
     suspend fun <Input : Any, Output : Any> serverStream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ServerOnlyStreamInterface<Input, Output>
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "serverStream(CallOptions.headers(headers), methodSpec)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    suspend fun <Input : Any, Output : Any> serverStream(
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): ServerOnlyStreamInterface<Input, Output> {
+        return serverStream(CallOptions.headers(headers), methodSpec)
+    }
 
     /**
      * Start a new client only stream.
      *
-     * @param headers The outbound request headers to include.
-     * @param methodSpec The Method for RPC path.
+     * @param options Options used to invoke the RPC, such as outbound request headers,
+     *              timeout, etc.
+     * @param methodSpec The definition of the method to invoke
      *
      * @return An interface for interacting with and sending data over the client only stream.
      */
     suspend fun <Input : Any, Output : Any> clientStream(
-        headers: Headers,
+        options: CallOptions,
         methodSpec: MethodSpec<Input, Output>,
     ): ClientOnlyStreamInterface<Input, Output>
+
+    @Deprecated(
+        message = "Use signature that takes CallOptions instead",
+        replaceWith = ReplaceWith(
+            expression = "clientStream(CallOptions.headers(headers), methodSpec)",
+            imports = ["com.connectrpc.CallOptions"],
+        ),
+    )
+    suspend fun <Input : Any, Output : Any> clientStream(
+        headers: Headers,
+        methodSpec: MethodSpec<Input, Output>,
+    ): ClientOnlyStreamInterface<Input, Output> {
+        return clientStream(CallOptions.headers(headers), methodSpec)
+    }
 }

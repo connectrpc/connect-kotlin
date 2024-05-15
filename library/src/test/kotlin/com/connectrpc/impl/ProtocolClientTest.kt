@@ -14,6 +14,7 @@
 
 package com.connectrpc.impl
 
+import com.connectrpc.CallOptions
 import com.connectrpc.Codec
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
@@ -48,7 +49,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com/")
         client.unary(
             "input",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) { _ -> }
         val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -65,7 +66,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com")
         client.unary(
             "input",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) { _ -> }
         val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -82,7 +83,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com/")
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
-                emptyMap(),
+                CallOptions.empty,
                 createMethodSpec(StreamType.BIDI),
             )
             val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -100,7 +101,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com")
         CoroutineScope(Dispatchers.IO).launch {
             client.stream(
-                emptyMap(),
+                CallOptions.empty,
                 createMethodSpec(StreamType.BIDI),
             )
             val captor = argumentCaptor<HTTPRequest>()
@@ -117,7 +118,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com")
         client.unary(
             "",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) {}
         val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -133,7 +134,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com/")
         client.unary(
             "",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) {}
         val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -149,7 +150,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com/api")
         client.unary(
             "",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) {}
         val captor = argumentCaptor<UnaryHTTPRequest>()
@@ -165,7 +166,7 @@ class ProtocolClientTest {
         val client = createClient("https://connectrpc.com/api/")
         client.unary(
             "",
-            emptyMap(),
+            CallOptions.empty,
             createMethodSpec(StreamType.UNARY),
         ) {}
         val captor = argumentCaptor<UnaryHTTPRequest>()
