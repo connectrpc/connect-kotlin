@@ -295,11 +295,11 @@ internal class GRPCWebInterceptor(
     }
 }
 
-internal fun contentTypeIsGRPCWeb(contentType: String) : Boolean {
+internal fun contentTypeIsGRPCWeb(contentType: String): Boolean {
     return contentType == "application/grpc-web" || contentType.startsWith("application/grpc-web+")
 }
 
-internal fun contentTypeIsExpectedGRPCWeb(contentType: String, expectCodec: String) : Boolean {
-    return (expectCodec == "proto" && contentType == "application/grpc-web" )
-            || contentType == "application/grpc-web+$expectCodec"
+internal fun contentTypeIsExpectedGRPCWeb(contentType: String, expectCodec: String): Boolean {
+    return (expectCodec == "proto" && contentType == "application/grpc-web") ||
+        contentType == "application/grpc-web+$expectCodec"
 }

@@ -101,9 +101,11 @@ class InterceptorChainTest {
 
     @Test
     fun lifo_stream_result() {
-        val streamResult = streamingChain.streamResultFunction(StreamResult.Headers(
-            mapOf(CONTENT_TYPE to listOf("application/connect+encoding_type")),
-        )) as StreamResult.Headers
+        val streamResult = streamingChain.streamResultFunction(
+            StreamResult.Headers(
+                mapOf(CONTENT_TYPE to listOf("application/connect+encoding_type")),
+            ),
+        ) as StreamResult.Headers
         assertThat(streamResult.headers["id"]).containsExactly("4", "3", "2", "1")
     }
 

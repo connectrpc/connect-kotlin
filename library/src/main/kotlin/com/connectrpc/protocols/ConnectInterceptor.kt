@@ -122,8 +122,8 @@ internal class ConnectInterceptor(
                 } else {
                     message = responseBody
                     val isValidContentType =
-                        (serializationStrategy.serializationName() == "json" && contentTypeIsJSON(contentType))
-                                || contentType == "application/" + serializationStrategy.serializationName()
+                        (serializationStrategy.serializationName() == "json" && contentTypeIsJSON(contentType)) ||
+                            contentType == "application/" + serializationStrategy.serializationName()
                     if (isValidContentType) {
                         exception = null
                     } else {
@@ -184,11 +184,13 @@ internal class ConnectInterceptor(
                             // this an internal error. Otherwise, we infer a code from the HTTP status,
                             // which means a code of UNKNOWN since HTTP status is 200.
                             val code = if (contentType.startsWith("application/connect+")) Code.INTERNAL_ERROR else Code.UNKNOWN
-                            StreamResult.Complete(ConnectException(
-                                code = code,
-                                message = "unexpected content-type: $contentType",
-                                metadata = responseHeaders,
-                            ))
+                            StreamResult.Complete(
+                                ConnectException(
+                                    code = code,
+                                    message = "unexpected content-type: $contentType",
+                                    metadata = responseHeaders,
+                                ),
+                            )
                         } else {
                             responseCompressionPool =
                                 clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())

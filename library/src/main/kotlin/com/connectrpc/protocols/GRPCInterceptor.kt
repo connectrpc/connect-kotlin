@@ -107,7 +107,7 @@ internal class GRPCInterceptor(
                             cause = ConnectException(
                                 code = Code.UNIMPLEMENTED,
                                 message = "unary stream has no messages",
-                                metadata = headers.plus(trailers)
+                                metadata = headers.plus(trailers),
                             ),
                         )
                     }
@@ -123,7 +123,7 @@ internal class GRPCInterceptor(
                             cause = ConnectException(
                                 code = Code.UNIMPLEMENTED,
                                 message = "unary stream has multiple messages",
-                                metadata = headers.plus(trailers)
+                                metadata = headers.plus(trailers),
                             ),
                         )
                     }
@@ -217,11 +217,11 @@ internal class GRPCInterceptor(
     }
 }
 
-internal fun contentTypeIsGRPC(contentType: String) : Boolean {
+internal fun contentTypeIsGRPC(contentType: String): Boolean {
     return contentType == "application/grpc" || contentType.startsWith("application/grpc+")
 }
 
-internal fun contentTypeIsExpectedGRPC(contentType: String, expectCodec: String) : Boolean {
-    return (expectCodec == "proto" && contentType == "application/grpc" )
-        || contentType == "application/grpc+$expectCodec"
+internal fun contentTypeIsExpectedGRPC(contentType: String, expectCodec: String): Boolean {
+    return (expectCodec == "proto" && contentType == "application/grpc") ||
+        contentType == "application/grpc+$expectCodec"
 }
