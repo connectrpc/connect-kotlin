@@ -26,6 +26,7 @@ import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyOuterClass
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedInnerMessageServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
+import com.connectrpc.CallOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class PluginGenerationTest {
         val client = ElizaServiceClient(mock { })
         val request = NoPackage.SayRequest.newBuilder().setSentence("hello").build()
         CoroutineScope(Dispatchers.IO).launch {
-            client.say(request, emptyMap())
+            client.say(request, CallOptions.empty)
         }
         assertThat(request.sentence).isEqualTo("hello")
     }

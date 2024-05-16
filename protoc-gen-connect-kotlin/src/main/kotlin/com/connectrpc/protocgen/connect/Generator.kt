@@ -15,6 +15,7 @@
 package com.connectrpc.protocgen.connect
 
 import com.connectrpc.BidirectionalStreamInterface
+import com.connectrpc.CallOptions
 import com.connectrpc.ClientOnlyStreamInterface
 import com.connectrpc.Idempotency
 import com.connectrpc.MethodSpec
@@ -36,6 +37,7 @@ import com.google.protobuf.DescriptorProtos.FileDescriptorProto
 import com.google.protobuf.DescriptorProtos.MethodOptions.IdempotencyLevel
 import com.google.protobuf.Descriptors
 import com.google.protobuf.compiler.PluginProtos
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -53,7 +55,7 @@ import com.squareup.kotlinpoet.asTypeName
  * These are constants since com.connectrpc.Headers and com.connectrpc.http.Cancelable
  * are type aliases which doesn't have an underlying class for KotlinPoet to know what to do.
  *
- * The conventional and nicer way is to use the class type: Headers::class.asClassType() but
+ * The conventional and nicer way is to use the class type: Headers::class.asClassName() but
  * type aliasing does not allow for that.
  *
  * Instead, this is the way to reference these objects for now. If there is ever a desire to
@@ -61,6 +63,10 @@ import com.squareup.kotlinpoet.asTypeName
  */
 private val HEADERS_CLASS_NAME = ClassName("com.connectrpc", "Headers")
 private val CANCELABLE_CLASS_NAME = ClassName("com.connectrpc.http", "Cancelable")
+
+private val CALLOPTIONS_CLASS_NAME = CallOptions::class.asClassName()
+private val DEPRECATED_CLASS_NAME = Deprecated::class.asClassName()
+private val REPLACEWITH_CLASS_NAME = ReplaceWith::class.asClassName()
 
 class Generator : CodeGenerator {
     private lateinit var descriptorSource: Plugin.DescriptorSource
@@ -149,9 +155,10 @@ class Generator : CodeGenerator {
         baseSourceInfo: SourceInfo,
     ): List<FunSpec> {
         val functions = mutableListOf<FunSpec>()
-        val headerParameterSpec = ParameterSpec.builder("headers", HEADERS_CLASS_NAME)
-            .defaultValue("%L", "emptyMap()")
+        val optionsParameterSpec = ParameterSpec.builder("options", CALLOPTIONS_CLASS_NAME)
+            .defaultValue("%L", "CallOptions.empty")
             .build()
+        val headerParameterSpec = ParameterSpec.builder("headers", HEADERS_CLASS_NAME).build()
         for ((sourceInfo, method) in methods.withSourceInfo(
             baseSourceInfo,
             DescriptorProtos.ServiceDescriptorProto.METHOD_FIELD_NUMBER,
@@ -159,49 +166,142 @@ class Generator : CodeGenerator {
             val inputClassName = classNameFromType(method.inputType)
             val outputClassName = classNameFromType(method.outputType)
             if (method.isClientStreaming && method.isServerStreaming) {
-                val streamingBuilder = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .addModifiers(KModifier.SUSPEND)
-                    .addParameter(headerParameterSpec)
-                    .returns(
-                        BidirectionalStreamInterface::class.asClassName()
-                            .parameterizedBy(inputClassName, outputClassName),
-                    )
-                functions.add(streamingBuilder.build())
-            } else if (method.isServerStreaming) {
-                val serverStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .addModifiers(KModifier.SUSPEND)
-                    .addParameter(headerParameterSpec)
-                    .returns(
-                        ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
-                    )
-                    .build()
-                functions.add(serverStreamingFunction)
-            } else if (method.isClientStreaming) {
-                val clientStreamingFunction = FunSpec.builder(method.name.lowerCamelCase())
-                    .addKdoc(sourceInfo.comment().sanitizeKdoc())
-                    .addModifiers(KModifier.ABSTRACT)
-                    .addModifiers(KModifier.SUSPEND)
-                    .addParameter(headerParameterSpec)
-                    .returns(
-                        ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
-                    )
-                    .build()
-                functions.add(clientStreamingFunction)
-            } else {
-                if (configuration.generateCoroutineMethods) {
-                    val unarySuspendFunction = FunSpec.builder(method.name.lowerCamelCase())
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.ABSTRACT)
                         .addModifiers(KModifier.SUSPEND)
-                        .addParameter("request", inputClassName)
+                        .addParameter(optionsParameterSpec)
+                        .returns(
+                            BidirectionalStreamInterface::class.asClassName()
+                                .parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .build(),
+                )
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
+                        .addAnnotation(
+                            AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                .addMember(
+                                    "replaceWith = %L",
+                                    AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                        .addMember("expression = %S", "${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                                        .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                        .addModifiers(KModifier.SUSPEND)
                         .addParameter(headerParameterSpec)
-                        .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
-                        .build()
-                    functions.add(unarySuspendFunction)
+                        .returns(
+                            BidirectionalStreamInterface::class.asClassName()
+                                .parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .addStatement("return ${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                        .build(),
+                )
+            } else if (method.isServerStreaming) {
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter(optionsParameterSpec)
+                        .returns(
+                            ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .build(),
+                )
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
+                        .addAnnotation(
+                            AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                .addMember(
+                                    "replaceWith = %L",
+                                    AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                        .addMember("expression = %S", "${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                                        .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter(headerParameterSpec)
+                        .returns(
+                            ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .addStatement("return ${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                        .build(),
+                )
+            } else if (method.isClientStreaming) {
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
+                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                        .addModifiers(KModifier.ABSTRACT)
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter(optionsParameterSpec)
+                        .returns(
+                            ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .build(),
+                )
+                functions.add(
+                    FunSpec.builder(method.name.lowerCamelCase())
+                        .addAnnotation(
+                            AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                .addMember(
+                                    "replaceWith = %L",
+                                    AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                        .addMember("expression = %S", "${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                                        .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                        .addModifiers(KModifier.SUSPEND)
+                        .addParameter(headerParameterSpec)
+                        .returns(
+                            ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
+                        )
+                        .addStatement("return ${method.name.lowerCamelCase()}(CallOptions.headers(headers))")
+                        .build(),
+                )
+            } else {
+                if (configuration.generateCoroutineMethods) {
+                    functions.add(
+                        FunSpec.builder(method.name.lowerCamelCase())
+                            .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addModifiers(KModifier.SUSPEND)
+                            .addParameter("request", inputClassName)
+                            .addParameter(optionsParameterSpec)
+                            .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                            .build(),
+                    )
+                    functions.add(
+                        FunSpec.builder(method.name.lowerCamelCase())
+                            .addAnnotation(
+                                AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                    .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                    .addMember(
+                                        "replaceWith = %L",
+                                        AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                            .addMember("expression = %S", "${method.name.lowerCamelCase()}(request, CallOptions.headers(headers))")
+                                            .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                            .build(),
+                                    )
+                                    .build(),
+                            )
+                            .addModifiers(KModifier.SUSPEND)
+                            .addParameter("request", inputClassName)
+                            .addParameter(headerParameterSpec)
+                            .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
+                            .addStatement("return ${method.name.lowerCamelCase()}(request, CallOptions.headers(headers))")
+                            .build(),
+                    )
                 }
                 if (configuration.generateCallbackMethods) {
                     val callbackType = LambdaTypeName.get(
@@ -213,25 +313,68 @@ class Generator : CodeGenerator {
                         ),
                         returnType = Unit::class.java.asTypeName(),
                     )
-                    val unaryCallbackFunction = FunSpec.builder(method.name.lowerCamelCase())
-                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
-                        .addModifiers(KModifier.ABSTRACT)
-                        .addParameter("request", inputClassName)
-                        .addParameter(headerParameterSpec)
-                        .addParameter("onResult", callbackType)
-                        .returns(CANCELABLE_CLASS_NAME)
-                        .build()
-                    functions.add(unaryCallbackFunction)
+                    functions.add(
+                        FunSpec.builder(method.name.lowerCamelCase())
+                            .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addParameter("request", inputClassName)
+                            .addParameter(optionsParameterSpec)
+                            .addParameter("onResult", callbackType)
+                            .returns(CANCELABLE_CLASS_NAME)
+                            .build(),
+                    )
+                    functions.add(
+                        FunSpec.builder(method.name.lowerCamelCase())
+                            .addAnnotation(
+                                AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                    .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                    .addMember(
+                                        "replaceWith = %L",
+                                        AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                            .addMember("expression = %S", "${method.name.lowerCamelCase()}(request, CallOptions.headers(headers), onResult)")
+                                            .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                            .build(),
+                                    )
+                                    .build(),
+                            )
+                            .addParameter("request", inputClassName)
+                            .addParameter(headerParameterSpec)
+                            .addParameter("onResult", callbackType)
+                            .returns(CANCELABLE_CLASS_NAME)
+                            .addStatement("return ${method.name.lowerCamelCase()}(request, CallOptions.headers(headers), onResult)")
+                            .build(),
+                    )
                 }
                 if (configuration.generateBlockingUnaryMethods) {
-                    val unarySuspendFunction = FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
-                        .addKdoc(sourceInfo.comment().sanitizeKdoc())
-                        .addModifiers(KModifier.ABSTRACT)
-                        .addParameter("request", inputClassName)
-                        .addParameter(headerParameterSpec)
-                        .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
-                        .build()
-                    functions.add(unarySuspendFunction)
+                    functions.add(
+                        FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
+                            .addKdoc(sourceInfo.comment().sanitizeKdoc())
+                            .addModifiers(KModifier.ABSTRACT)
+                            .addParameter("request", inputClassName)
+                            .addParameter(optionsParameterSpec)
+                            .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
+                            .build(),
+                    )
+                    functions.add(
+                        FunSpec.builder("${method.name.lowerCamelCase()}Blocking")
+                            .addAnnotation(
+                                AnnotationSpec.builder(DEPRECATED_CLASS_NAME)
+                                    .addMember("message = %S", "Use signature that takes CallOptions instead")
+                                    .addMember(
+                                        "replaceWith = %L",
+                                        AnnotationSpec.builder(REPLACEWITH_CLASS_NAME)
+                                            .addMember("expression = %S", "${method.name.lowerCamelCase()}(request, CallOptions.headers(headers))")
+                                            .addMember("imports = [%S]", CALLOPTIONS_CLASS_NAME)
+                                            .build(),
+                                    )
+                                    .build(),
+                            )
+                            .addParameter("request", inputClassName)
+                            .addParameter(headerParameterSpec)
+                            .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
+                            .addStatement("return ${method.name.lowerCamelCase()}Blocking(request, CallOptions.headers(headers))")
+                            .build(),
+                    )
                 }
             }
         }
@@ -305,7 +448,7 @@ class Generator : CodeGenerator {
                     .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
-                    .addParameter("headers", HEADERS_CLASS_NAME)
+                    .addParameter("options", CALLOPTIONS_CLASS_NAME)
                     .returns(
                         BidirectionalStreamInterface::class.asClassName()
                             .parameterizedBy(
@@ -318,7 +461,7 @@ class Generator : CodeGenerator {
                         CodeBlock.builder()
                             .addStatement("client.stream(")
                             .indent()
-                            .addStatement("headers,")
+                            .addStatement("options,")
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
@@ -331,7 +474,7 @@ class Generator : CodeGenerator {
                     .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
-                    .addParameter("headers", HEADERS_CLASS_NAME)
+                    .addParameter("options", CALLOPTIONS_CLASS_NAME)
                     .returns(
                         ServerOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
@@ -340,7 +483,7 @@ class Generator : CodeGenerator {
                         CodeBlock.builder()
                             .addStatement("client.serverStream(")
                             .indent()
-                            .addStatement("headers,")
+                            .addStatement("options,")
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
@@ -353,7 +496,7 @@ class Generator : CodeGenerator {
                     .addKdoc(sourceInfo.comment().sanitizeKdoc())
                     .addModifiers(KModifier.OVERRIDE)
                     .addModifiers(KModifier.SUSPEND)
-                    .addParameter("headers", HEADERS_CLASS_NAME)
+                    .addParameter("options", CALLOPTIONS_CLASS_NAME)
                     .returns(
                         ClientOnlyStreamInterface::class.asClassName().parameterizedBy(inputClassName, outputClassName),
                     )
@@ -362,7 +505,7 @@ class Generator : CodeGenerator {
                         CodeBlock.builder()
                             .addStatement("client.clientStream(")
                             .indent()
-                            .addStatement("headers,")
+                            .addStatement("options,")
                             .add(methodSpecCallBlock)
                             .unindent()
                             .addStatement(")")
@@ -377,7 +520,7 @@ class Generator : CodeGenerator {
                         .addModifiers(KModifier.SUSPEND)
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
-                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .addParameter("options", CALLOPTIONS_CLASS_NAME)
                         .returns(ResponseMessage::class.asClassName().parameterizedBy(outputClassName))
                         .addStatement(
                             "return %L",
@@ -385,7 +528,7 @@ class Generator : CodeGenerator {
                                 .addStatement("client.unary(")
                                 .indent()
                                 .addStatement("request,")
-                                .addStatement("headers,")
+                                .addStatement("options,")
                                 .add(methodSpecCallBlock)
                                 .unindent()
                                 .addStatement(")")
@@ -408,7 +551,7 @@ class Generator : CodeGenerator {
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
-                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .addParameter("options", CALLOPTIONS_CLASS_NAME)
                         .addParameter("onResult", callbackType)
                         .returns(CANCELABLE_CLASS_NAME)
                         .addStatement(
@@ -417,7 +560,7 @@ class Generator : CodeGenerator {
                                 .addStatement("client.unary(")
                                 .indent()
                                 .addStatement("request,")
-                                .addStatement("headers,")
+                                .addStatement("options,")
                                 .add(methodSpecCallBlock)
                                 .addStatement("onResult")
                                 .unindent()
@@ -432,7 +575,7 @@ class Generator : CodeGenerator {
                         .addKdoc(sourceInfo.comment().sanitizeKdoc())
                         .addModifiers(KModifier.OVERRIDE)
                         .addParameter("request", inputClassName)
-                        .addParameter("headers", HEADERS_CLASS_NAME)
+                        .addParameter("options", CALLOPTIONS_CLASS_NAME)
                         .returns(UnaryBlockingCall::class.asClassName().parameterizedBy(outputClassName))
                         .addStatement(
                             "return %L",
@@ -440,7 +583,7 @@ class Generator : CodeGenerator {
                                 .addStatement("client.unaryBlocking(")
                                 .indent()
                                 .addStatement("request,")
-                                .addStatement("headers,")
+                                .addStatement("options,")
                                 .add(methodSpecCallBlock)
                                 .unindent()
                                 .addStatement(")")
