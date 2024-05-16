@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.java
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
 import com.connectrpc.conformance.v1.BidiStreamRequest
 import com.connectrpc.conformance.v1.BidiStreamResponse
@@ -26,7 +26,7 @@ class JavaBidiStreamClient(
     BidiStreamRequest.getDefaultInstance(),
     BidiStreamResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(headers: Headers): BidiStream<BidiStreamRequest, BidiStreamResponse> {
-        return BidiStream.new(client.bidiStream(headers))
+    override suspend fun execute(options: CallOptions): BidiStream<BidiStreamRequest, BidiStreamResponse> {
+        return BidiStream.new(client.bidiStream(options))
     }
 }

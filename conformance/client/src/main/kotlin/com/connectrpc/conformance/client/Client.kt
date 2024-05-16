@@ -14,6 +14,7 @@
 
 package com.connectrpc.conformance.client
 
+import com.connectrpc.CallOptions
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
@@ -132,7 +133,7 @@ class Client(
         val canceler = client.execute(
             args.invokeStyle,
             msg,
-            req.requestHeaders,
+            CallOptions.headers(req.requestHeaders),
             resp::complete,
         )
         when (val cancel = req.cancel) {
@@ -161,7 +162,7 @@ class Client(
         ) {
             throw RuntimeException("client stream calls can only support `BeforeCloseSend` and 'AfterCloseSendMs' cancellation field, instead got ${req.cancel!!::class.simpleName}")
         }
-        return client.execute(req.requestHeaders) { stream ->
+        return client.execute(CallOptions.headers(req.requestHeaders)) { stream ->
             var numUnsent = 0
             for (i in req.requestMessages.indices) {
                 if (req.requestDelayMs > 0) {
@@ -217,7 +218,7 @@ class Client(
         val msg = fromAny(req.requestMessages[0], client.reqTemplate, SERVER_STREAM_REQUEST_NAME)
         var sent = false
         try {
-            return client.execute(msg, req.requestHeaders) { stream ->
+            return client.execute(msg, CallOptions.headers(req.requestHeaders)) { stream ->
                 sent = true
                 val cancel = req.cancel
                 if (cancel is Cancel.AfterCloseSendMs) {
@@ -255,7 +256,7 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        return client.execute(req.requestHeaders) { stream ->
+        return client.execute(CallOptions.headers(req.requestHeaders)) { stream ->
             var numUnsent = 0
             for (i in req.requestMessages.indices) {
                 if (req.requestDelayMs > 0) {
@@ -296,7 +297,7 @@ class Client(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
     ): ClientResponseResult {
-        return client.execute(req.requestHeaders) { stream ->
+        return client.execute(CallOptions.headers(req.requestHeaders)) { stream ->
             val cancel = req.cancel
             val payloads: MutableList<MessageLite> = mutableListOf()
             for (i in req.requestMessages.indices) {

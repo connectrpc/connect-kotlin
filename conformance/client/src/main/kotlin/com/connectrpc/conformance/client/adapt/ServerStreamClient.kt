@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.adapt
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -38,14 +38,14 @@ abstract class ServerStreamClient<Req : MessageLite, Resp : MessageLite>(
      */
     suspend fun <R> execute(
         req: Req,
-        headers: Headers,
+        options: CallOptions = CallOptions.empty,
         block: suspend CoroutineScope.(ResponseStream<Resp>) -> R,
     ): R {
-        val stream = execute(req, headers)
+        val stream = execute(req, options)
         return stream.use {
             coroutineScope { block(this, it) }
         }
     }
 
-    protected abstract suspend fun execute(req: Req, headers: Headers): ResponseStream<Resp>
+    protected abstract suspend fun execute(req: Req, options: CallOptions): ResponseStream<Resp>
 }

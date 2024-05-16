@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.java
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.v1.ConformanceServiceClient
@@ -27,8 +27,8 @@ class JavaServerStreamClient(
     ServerStreamRequest.getDefaultInstance(),
     ServerStreamResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(req: ServerStreamRequest, headers: Headers): ResponseStream<ServerStreamResponse> {
-        val stream = client.serverStream(headers)
+    override suspend fun execute(req: ServerStreamRequest, options: CallOptions): ResponseStream<ServerStreamResponse> {
+        val stream = client.serverStream(options)
         val sendResult: Result<Unit>
         try {
             sendResult = stream.sendAndClose(req)

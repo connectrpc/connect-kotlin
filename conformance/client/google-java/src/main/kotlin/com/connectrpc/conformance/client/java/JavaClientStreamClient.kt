@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.java
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.conformance.client.adapt.ClientStreamClient
 import com.connectrpc.conformance.v1.ClientStreamRequest
 import com.connectrpc.conformance.v1.ClientStreamResponse
@@ -26,7 +26,7 @@ class JavaClientStreamClient(
     ClientStreamRequest.getDefaultInstance(),
     ClientStreamResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(headers: Headers): ClientStream<ClientStreamRequest, ClientStreamResponse> {
-        return ClientStream.new(client.clientStream(headers))
+    override suspend fun execute(options: CallOptions): ClientStream<ClientStreamRequest, ClientStreamResponse> {
+        return ClientStream.new(client.clientStream(options))
     }
 }

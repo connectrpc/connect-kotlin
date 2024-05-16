@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.javalite
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.conformance.client.adapt.UnaryClient
@@ -29,19 +29,19 @@ class JavaLiteUnimplementedClient(
     UnimplementedRequest.getDefaultInstance(),
     UnimplementedResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(req: UnimplementedRequest, headers: Headers): ResponseMessage<UnimplementedResponse> {
-        return client.unimplemented(req, headers)
+    override suspend fun execute(req: UnimplementedRequest, options: CallOptions): ResponseMessage<UnimplementedResponse> {
+        return client.unimplemented(req, options)
     }
 
     override fun execute(
         req: UnimplementedRequest,
-        headers: Headers,
+        options: CallOptions,
         onFinish: (ResponseMessage<UnimplementedResponse>) -> Unit,
     ): Cancelable {
-        return client.unimplemented(req, headers, onFinish)
+        return client.unimplemented(req, options, onFinish)
     }
 
-    override fun blocking(req: UnimplementedRequest, headers: Headers): UnaryBlockingCall<UnimplementedResponse> {
-        return client.unimplementedBlocking(req, headers)
+    override fun blocking(req: UnimplementedRequest, options: CallOptions): UnaryBlockingCall<UnimplementedResponse> {
+        return client.unimplementedBlocking(req, options)
     }
 }

@@ -14,8 +14,8 @@
 
 package com.connectrpc.conformance.client.adapt
 
+import com.connectrpc.CallOptions
 import com.connectrpc.ClientOnlyStreamInterface
-import com.connectrpc.Headers
 import com.connectrpc.ResponseMessage
 import com.connectrpc.asConnectException
 import com.google.protobuf.MessageLite
@@ -42,16 +42,16 @@ abstract class ClientStreamClient<Req : MessageLite, Resp : MessageLite>(
      * stream is automatically closed when the block returns or throws.
      */
     suspend fun <R> execute(
-        headers: Headers,
+        options: CallOptions = CallOptions.empty,
         block: suspend CoroutineScope.(ClientStream<Req, Resp>) -> R,
     ): R {
-        val stream = execute(headers)
+        val stream = execute(options)
         return stream.use {
             coroutineScope { block(this, it) }
         }
     }
 
-    protected abstract suspend fun execute(headers: Headers): ClientStream<Req, Resp>
+    protected abstract suspend fun execute(options: CallOptions): ClientStream<Req, Resp>
 
     /**
      * A ClientStream is just like a RequestStream, except that closing

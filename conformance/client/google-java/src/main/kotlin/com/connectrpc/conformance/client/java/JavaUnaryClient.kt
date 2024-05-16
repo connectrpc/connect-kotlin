@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.java
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.conformance.client.adapt.UnaryClient
@@ -29,19 +29,19 @@ class JavaUnaryClient(
     UnaryRequest.getDefaultInstance(),
     UnaryResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(req: UnaryRequest, headers: Headers): ResponseMessage<UnaryResponse> {
-        return client.unary(req, headers)
+    override suspend fun execute(req: UnaryRequest, options: CallOptions): ResponseMessage<UnaryResponse> {
+        return client.unary(req, options)
     }
 
     override fun execute(
         req: UnaryRequest,
-        headers: Headers,
+        options: CallOptions,
         onFinish: (ResponseMessage<UnaryResponse>) -> Unit,
     ): Cancelable {
-        return client.unary(req, headers, onFinish)
+        return client.unary(req, options, onFinish)
     }
 
-    override fun blocking(req: UnaryRequest, headers: Headers): UnaryBlockingCall<UnaryResponse> {
-        return client.unaryBlocking(req, headers)
+    override fun blocking(req: UnaryRequest, options: CallOptions): UnaryBlockingCall<UnaryResponse> {
+        return client.unaryBlocking(req, options)
     }
 }

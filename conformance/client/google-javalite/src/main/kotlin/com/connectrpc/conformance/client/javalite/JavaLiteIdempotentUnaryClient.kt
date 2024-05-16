@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.javalite
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.conformance.client.adapt.UnaryClient
@@ -29,22 +29,19 @@ class JavaLiteIdempotentUnaryClient(
     IdempotentUnaryRequest.getDefaultInstance(),
     IdempotentUnaryResponse.getDefaultInstance(),
 ) {
-    override suspend fun execute(
-        req: IdempotentUnaryRequest,
-        headers: Headers,
-    ): ResponseMessage<IdempotentUnaryResponse> {
-        return client.idempotentUnary(req, headers)
+    override suspend fun execute(req: IdempotentUnaryRequest, options: CallOptions): ResponseMessage<IdempotentUnaryResponse> {
+        return client.idempotentUnary(req, options)
     }
 
     override fun execute(
         req: IdempotentUnaryRequest,
-        headers: Headers,
+        options: CallOptions,
         onFinish: (ResponseMessage<IdempotentUnaryResponse>) -> Unit,
     ): Cancelable {
-        return client.idempotentUnary(req, headers, onFinish)
+        return client.idempotentUnary(req, options, onFinish)
     }
 
-    override fun blocking(req: IdempotentUnaryRequest, headers: Headers): UnaryBlockingCall<IdempotentUnaryResponse> {
-        return client.idempotentUnaryBlocking(req, headers)
+    override fun blocking(req: IdempotentUnaryRequest, options: CallOptions): UnaryBlockingCall<IdempotentUnaryResponse> {
+        return client.idempotentUnaryBlocking(req, options)
     }
 }

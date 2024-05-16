@@ -14,7 +14,7 @@
 
 package com.connectrpc.conformance.client.adapt
 
-import com.connectrpc.Headers
+import com.connectrpc.CallOptions
 import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
@@ -35,11 +35,11 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
     val reqTemplate: Req,
     val respTemplate: Resp,
 ) {
-    abstract suspend fun execute(req: Req, headers: Headers): ResponseMessage<Resp>
+    abstract suspend fun execute(req: Req, options: CallOptions = CallOptions.empty): ResponseMessage<Resp>
 
-    abstract fun execute(req: Req, headers: Headers, onFinish: (ResponseMessage<Resp>) -> Unit): Cancelable
+    abstract fun execute(req: Req, options: CallOptions = CallOptions.empty, onFinish: (ResponseMessage<Resp>) -> Unit): Cancelable
 
-    abstract fun blocking(req: Req, headers: Headers): UnaryBlockingCall<Resp>
+    abstract fun blocking(req: Req, options: CallOptions = CallOptions.empty): UnaryBlockingCall<Resp>
 
     /**
      * Executes the unary RPC using the given invocation style, request
@@ -55,17 +55,17 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
     suspend fun execute(
         style: InvokeStyle,
         req: Req,
-        headers: Headers,
+        options: CallOptions = CallOptions.empty,
         onFinish: (ResponseMessage<Resp>) -> Unit,
     ): Cancelable {
         when (style) {
             InvokeStyle.CALLBACK -> {
-                return execute(req, headers, onFinish)
+                return execute(req, options, onFinish)
             }
             InvokeStyle.SUSPEND -> {
                 return coroutineScope {
                     val job = launch {
-                        onFinish(execute(req, headers))
+                        onFinish(execute(req, options))
                     }
                     return@coroutineScope {
                         job.cancel()
@@ -73,7 +73,7 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
                 }
             }
             InvokeStyle.BLOCKING -> {
-                val call = blocking(req, headers)
+                val call = blocking(req, options)
                 coroutineScope {
                     launch(Dispatchers.IO) {
                         onFinish(call.execute())
