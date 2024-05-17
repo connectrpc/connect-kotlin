@@ -38,6 +38,8 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.net.URL
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class GRPCInterceptorTest {
 
@@ -67,6 +69,7 @@ class GRPCInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -96,6 +99,7 @@ class GRPCInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value"), "User-Agent" to listOf("my-custom-user-agent")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -124,6 +128,7 @@ class GRPCInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -153,6 +158,7 @@ class GRPCInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = emptyMap(),
                 message = GzipCompressionPool.compress(Buffer().write("message".encodeUtf8())),
                 methodSpec = MethodSpec(
@@ -311,6 +317,7 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = mapOf(
                     // Doesn't get passed as headers.
                     GRPC_ENCODING to listOf("gzip"),
@@ -344,6 +351,7 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -371,6 +379,7 @@ class GRPCInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",

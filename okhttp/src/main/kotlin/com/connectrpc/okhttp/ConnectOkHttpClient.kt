@@ -49,6 +49,8 @@ import java.net.SocketTimeoutException
  */
 class ConnectOkHttpClient @JvmOverloads constructor(
     unaryClient: OkHttpClient = OkHttpClient(),
+    // TODO: remove this; a separate client is only useful for configuring separate timeouts,
+    //       but that can be done in the ProtocolClientConfig instead of the HTTP client.
     streamClient: OkHttpClient = unaryClient,
 ) : HTTPClientInterface {
     private val unaryClient = applyNetworkInterceptor(unaryClient)
@@ -59,8 +61,8 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             .addNetworkInterceptor(object : Interceptor {
                 override fun intercept(chain: Interceptor.Chain): Response {
                     val resp = chain.proceed(chain.request())
-                    // The Connect protocol spec currently suggests 408 as the HTTP status code for
-                    // cancelled and deadline exceeded errors with unary methods.. However, the
+                    // The Connect protocol spec currently suggests 408 as the HTTP status code
+                    // for canceled and deadline exceeded errors with unary methods. However, the
                     // spec for this status code states that the request may be retried without
                     // modification (even non-idempotent requests), and okhttp does in fact retry
                     // such errors. (So do many browsers.) So if we see that error code AND an

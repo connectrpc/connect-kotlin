@@ -35,6 +35,8 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.net.URL
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class GRPCWebInterceptorTest {
 
@@ -63,6 +65,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = 2.25.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -93,6 +96,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -121,6 +125,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -150,6 +155,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -344,6 +350,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -375,6 +382,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -402,6 +410,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",
