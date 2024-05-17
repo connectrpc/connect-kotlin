@@ -43,22 +43,34 @@ import okio.BufferedSink
 import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
+import java.time.Duration
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
  */
 class ConnectOkHttpClient @JvmOverloads constructor(
-    unaryClient: OkHttpClient = OkHttpClient(),
+    private val unaryClient: OkHttpClient = OkHttpClient(),
     // TODO: remove this; a separate client is only useful for configuring separate timeouts,
     //       but that can be done in the ProtocolClientConfig instead of the HTTP client.
-    streamClient: OkHttpClient = unaryClient,
+    private val streamClient: OkHttpClient = unaryClient,
 ) : HTTPClientInterface {
-    private val unaryClient = applyNetworkInterceptor(unaryClient)
-    private val streamClient = applyNetworkInterceptor(streamClient)
+    companion object {
+        // Configures the given OkHttpClient builder to be more appropriate for
+        // use with RPC. This removes the read and write timeouts (which both default
+        // to 10 seconds in OkHttp) so that timeouts can instead be enforced by the
+        // protocol implementation, via the timeout oracle supplied in ProtocolClientConfig.
+        // This also disables OkHttp's auto-retry handling of 408 status codes since older
+        // Connect servers may use that code with error responses where the error code is
+        // "canceled" or "deadline exceeded".
+        fun configureClient(client: OkHttpClient.Builder): OkHttpClient.Builder {
+            return applyNetworkInterceptor(client)
+                .callTimeout(Duration.ZERO) // defaults to zero already, but just in case it's set...
+                .readTimeout(Duration.ZERO)
+                .writeTimeout(Duration.ZERO)
+        }
 
-    private fun applyNetworkInterceptor(client: OkHttpClient): OkHttpClient {
-        return client.newBuilder()
-            .addNetworkInterceptor(object : Interceptor {
+        private fun applyNetworkInterceptor(client: OkHttpClient.Builder): OkHttpClient.Builder {
+            return client.addNetworkInterceptor(object : Interceptor {
                 override fun intercept(chain: Interceptor.Chain): Response {
                     val resp = chain.proceed(chain.request())
                     // The Connect protocol spec currently suggests 408 as the HTTP status code
@@ -83,15 +95,15 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                     return resp
                 }
             })
-            .build()
-    }
+        }
 
-    private fun isConnectUnary(req: Request): Boolean {
-        return when (req.method) {
-            "POST" -> req.headers[CONNECT_PROTOCOL_VERSION_KEY].orEmpty() == CONNECT_PROTOCOL_VERSION_VALUE &&
-                req.headers["Content-Type"].orEmpty().startsWith("application/")
-            "GET" -> req.url.queryParameter(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY) == GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE
-            else -> false
+        private fun isConnectUnary(req: Request): Boolean {
+            return when (req.method) {
+                "POST" -> req.headers[CONNECT_PROTOCOL_VERSION_KEY].orEmpty() == CONNECT_PROTOCOL_VERSION_VALUE &&
+                    req.headers["Content-Type"].orEmpty().startsWith("application/")
+                "GET" -> req.url.queryParameter(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY) == GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE
+                else -> false
+            }
         }
     }
 

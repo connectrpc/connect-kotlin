@@ -25,6 +25,8 @@ import com.connectrpc.protocols.NetworkProtocol
 import java.net.URI
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 typealias TimeoutOracle = (MethodSpec<*, *>) -> Duration?
 
@@ -81,7 +83,10 @@ class ProtocolClientConfig @JvmOverloads constructor(
     // is returned, the entire call must complete before it elapses. If the
     // call is still active at the end of the timeout period, it is cancelled
     // and will result in an exception with a Code.DEADLINE_EXCEEDED code.
-    val timeoutOracle: TimeoutOracle = { null },
+    //
+    // The default oracle, if not configured, returns a 10 second timeout for
+    // all operations.
+    val timeoutOracle: TimeoutOracle = { 10.toDuration(DurationUnit.SECONDS) },
     // Schedules timeout actions.
     val timeoutScheduler: Timeout.Scheduler = Timeout.DEFAULT_SCHEDULER,
 ) {
