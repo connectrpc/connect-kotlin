@@ -42,6 +42,7 @@ internal class GRPCWebInterceptor(
     private val completionParser = GRPCCompletionParser(serializationStrategy.errorDetailParser())
     private var responseCompressionPool: CompressionPool? = null
     private var responseHeaders: Headers = emptyMap()
+    private var streamEmpty: Boolean = true
 
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
@@ -72,16 +73,32 @@ internal class GRPCWebInterceptor(
                 if (response.cause != null) {
                     return@UnaryFunction response.clone(message = Buffer())
                 }
+                val headers = response.headers
                 if (response.status != 200) {
                     return@UnaryFunction response.clone(
                         message = Buffer(),
                         cause = ConnectException(
                             code = Code.fromHTTPStatus(response.status),
                             message = "unexpected status code: ${response.status}",
+                            metadata = headers,
                         ),
                     )
                 }
-                val headers = response.headers
+                val contentType = headers[CONTENT_TYPE]?.first() ?: ""
+                if (!contentTypeIsExpectedGRPCWeb(contentType, serializationStrategy.serializationName())) {
+                    // If content-type looks like it could be a gRPC server's response, consider
+                    // this an internal error. Otherwise, we infer a code from the HTTP status,
+                    // which means a code of UNKNOWN since HTTP status is 200.
+                    val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
+                    return@UnaryFunction response.clone(
+                        message = Buffer(),
+                        cause = ConnectException(
+                            code = code,
+                            message = "unexpected content-type: $contentType",
+                            metadata = headers,
+                        ),
+                    )
+                }
                 val compressionPool =
                     clientConfig.compressionPool(headers[GRPC_ENCODING]?.first())
                 // gRPC Web returns data in 2 chunks (either/both of which may be compressed):
@@ -93,13 +110,14 @@ internal class GRPCWebInterceptor(
                 if (response.message.exhausted()) {
                     // There was no response body. Read status within the headers.
                     var exception = completionParser
-                        .parse(headers, emptyMap())
+                        .parse(headers, false, emptyMap())
                         .toConnectExceptionOrNull(serializationStrategy)
                     if (exception == null) {
                         // No response data and no error code?
                         exception = ConnectException(
                             code = Code.UNIMPLEMENTED,
                             message = "unary stream has no messages",
+                            metadata = headers,
                         )
                     }
                     response.clone(
@@ -123,6 +141,7 @@ internal class GRPCWebInterceptor(
                             cause = ConnectException(
                                 code = Code.INTERNAL_ERROR,
                                 message = "response did not include an end of stream message",
+                                metadata = headers,
                             ),
                         )
                     } else {
@@ -138,6 +157,7 @@ internal class GRPCWebInterceptor(
                                 cause = ConnectException(
                                     code = Code.UNIMPLEMENTED,
                                     message = "unary stream has multiple messages",
+                                    metadata = headers,
                                 ),
                             )
                         }
@@ -150,18 +170,20 @@ internal class GRPCWebInterceptor(
                             cause = ConnectException(
                                 code = Code.INTERNAL_ERROR,
                                 message = "response stream contains data after end-of-stream message",
+                                metadata = headers,
                             ),
                         )
                     }
                     val finalTrailers = parseGrpcWebTrailer(trailerBuffer)
                     var exception = completionParser
-                        .parse(headers, finalTrailers)
+                        .parse(headers, true, finalTrailers)
                         .toConnectExceptionOrNull(serializationStrategy)
                     if (exception == null && currentMessage == null) {
                         // No response message, and trailers indicated no error?
                         exception = ConnectException(
                             code = Code.UNIMPLEMENTED,
                             message = "unary stream has multiple messages",
+                            metadata = headers,
                         )
                     }
                     response.clone(
@@ -190,21 +212,28 @@ internal class GRPCWebInterceptor(
             streamResultFunction = { res ->
                 val streamResult = res.fold(
                     onHeaders = { result ->
-                        val headers = result.headers
-                        val completion = completionParser.parse(headers, emptyMap())
-                        if (completion.present) {
+                        responseHeaders = result.headers
+                        val contentType = responseHeaders[CONTENT_TYPE]?.first() ?: ""
+                        if (!contentTypeIsExpectedGRPCWeb(contentType, serializationStrategy.serializationName())) {
+                            // If content-type looks like it could be a gRPC server's response, consider
+                            // this an internal error. Otherwise, we infer a code from the HTTP status,
+                            // which means a code of UNKNOWN since HTTP status is 200.
+                            val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
                             StreamResult.Complete(
-                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
-                                trailers = headers,
+                                cause = ConnectException(
+                                    code = code,
+                                    message = "unexpected content-type: $contentType",
+                                    metadata = responseHeaders,
+                                ),
                             )
                         } else {
-                            responseHeaders = headers
                             responseCompressionPool = clientConfig
-                                .compressionPool(headers[GRPC_ENCODING]?.first())
-                            StreamResult.Headers(headers)
+                                .compressionPool(responseHeaders[GRPC_ENCODING]?.first())
+                            StreamResult.Headers(responseHeaders)
                         }
                     },
                     onMessage = { result ->
+                        streamEmpty = false
                         val (headerByte, unpackedMessage) = Envelope.unpackWithHeaderByte(
                             result.message,
                             responseCompressionPool,
@@ -212,7 +241,7 @@ internal class GRPCWebInterceptor(
                         if (headerByte.and(TRAILERS_BIT) == TRAILERS_BIT) {
                             val streamTrailers = parseGrpcWebTrailer(unpackedMessage)
                             val exception = completionParser
-                                .parse(responseHeaders, streamTrailers)
+                                .parse(responseHeaders, !streamEmpty, streamTrailers)
                                 .toConnectExceptionOrNull(serializationStrategy)
                             StreamResult.Complete(
                                 cause = exception,
@@ -264,4 +293,13 @@ internal class GRPCWebInterceptor(
         }
         return trailers
     }
+}
+
+internal fun contentTypeIsGRPCWeb(contentType: String): Boolean {
+    return contentType == "application/grpc-web" || contentType.startsWith("application/grpc-web+")
+}
+
+internal fun contentTypeIsExpectedGRPCWeb(contentType: String, expectCodec: String): Boolean {
+    return (expectCodec == "proto" && contentType == "application/grpc-web") ||
+        contentType == "application/grpc-web+$expectCodec"
 }

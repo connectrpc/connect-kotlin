@@ -16,6 +16,7 @@ package com.connectrpc.protocols
 
 const val ACCEPT_ENCODING = "accept-encoding"
 const val CONTENT_ENCODING = "content-encoding"
+const val CONTENT_TYPE = "content-type"
 const val CONNECT_STREAMING_CONTENT_ENCODING = "connect-content-encoding"
 const val CONNECT_STREAMING_ACCEPT_ENCODING = "connect-accept-encoding"
 const val CONNECT_PROTOCOL_VERSION_KEY = "connect-protocol-version"

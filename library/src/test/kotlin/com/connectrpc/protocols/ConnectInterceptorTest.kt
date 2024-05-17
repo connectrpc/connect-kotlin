@@ -292,7 +292,7 @@ class ConnectInterceptorTest {
             HTTPResponse(
                 // body contents override status code
                 status = 503,
-                headers = emptyMap(),
+                headers = mapOf(CONTENT_TYPE to listOf("application/json; charset=utf-8")),
                 message = Buffer().write(json.encodeUtf8()),
                 trailers = emptyMap(),
             ),
@@ -483,6 +483,7 @@ class ConnectInterceptorTest {
             StreamResult.Headers(
                 headers = mapOf(
                     "trailer-x-some-key" to listOf("some_value"),
+                    CONTENT_TYPE to listOf("application/connect+encoding_type"),
                     CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
                 ),
             ),
@@ -493,6 +494,7 @@ class ConnectInterceptorTest {
         assertThat(headerResult.headers).isEqualTo(
             mapOf(
                 "trailer-x-some-key" to listOf("some_value"),
+                CONTENT_TYPE to listOf("application/connect+encoding_type"),
                 CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
             ),
         )
@@ -536,6 +538,7 @@ class ConnectInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
+                    CONTENT_TYPE to listOf("application/connect+encoding_type"),
                     CONNECT_STREAMING_CONTENT_ENCODING to listOf("gzip"),
                 ),
             ),

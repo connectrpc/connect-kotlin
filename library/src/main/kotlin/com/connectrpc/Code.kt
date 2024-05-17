@@ -36,7 +36,7 @@ enum class Code(val codeName: String, val value: Int) {
     ABORTED("aborted", 10),
     OUT_OF_RANGE("out_of_range", 11),
     UNIMPLEMENTED("unimplemented", 12),
-    INTERNAL_ERROR("internal", 13),
+    INTERNAL_ERROR("internal", 13), // TODO: rename enum value to INTERNAL
     UNAVAILABLE("unavailable", 14),
     DATA_LOSS("data_loss", 15),
     UNAUTHENTICATED("unauthenticated", 16),

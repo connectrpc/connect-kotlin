@@ -18,6 +18,7 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.clone
+import com.connectrpc.protocols.CONTENT_TYPE
 import com.connectrpc.protocols.Envelope
 import com.connectrpc.protocols.NetworkProtocol
 import okio.Buffer
@@ -25,6 +26,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.whenever
 import java.net.URL
 
 private val UNARY_METHOD_SPEC = MethodSpec(
@@ -69,6 +71,7 @@ class InterceptorChainTest {
         )
         unaryChain = protocolClientConfig.createInterceptorChain()
         streamingChain = protocolClientConfig.createStreamingInterceptorChain()
+        whenever(protocolClientConfig.serializationStrategy.serializationName()).thenReturn("encoding_type")
     }
 
     @Test
@@ -98,7 +101,11 @@ class InterceptorChainTest {
 
     @Test
     fun lifo_stream_result() {
-        val streamResult = streamingChain.streamResultFunction(StreamResult.Headers(emptyMap())) as StreamResult.Headers
+        val streamResult = streamingChain.streamResultFunction(
+            StreamResult.Headers(
+                mapOf(CONTENT_TYPE to listOf("application/connect+encoding_type")),
+            ),
+        ) as StreamResult.Headers
         assertThat(streamResult.headers["id"]).containsExactly("4", "3", "2", "1")
     }
 

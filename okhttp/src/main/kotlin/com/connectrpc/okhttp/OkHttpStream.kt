@@ -112,6 +112,7 @@ private class ResponseCallback(
                     cause = ConnectException(
                         code = Code.fromHTTPStatus(httpStatus),
                         message = "unexpected HTTP status: $httpStatus ${response.originalMessage()}",
+                        metadata = headers,
                     ),
                 )
                 onResult(finalResult)

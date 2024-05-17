@@ -183,7 +183,10 @@ class GRPCWebInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = mapOf(GRPC_ENCODING to listOf("gzip")),
+                headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
+                    GRPC_ENCODING to listOf("gzip"),
+                ),
                 message = responseBody,
                 trailers = emptyMap(),
             ),
@@ -210,7 +213,10 @@ class GRPCWebInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = mapOf(GRPC_ENCODING to listOf(GzipCompressionPool.name())),
+                headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
+                    GRPC_ENCODING to listOf(GzipCompressionPool.name()),
+                ),
                 message = responseBody,
                 trailers = emptyMap(),
             ),
@@ -232,6 +238,7 @@ class GRPCWebInterceptorTest {
             HTTPResponse(
                 status = 200,
                 headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
                     GRPC_STATUS_TRAILER to listOf("${Code.RESOURCE_EXHAUSTED.value}"),
                 ),
                 message = Buffer(),
@@ -259,7 +266,7 @@ class GRPCWebInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = emptyMap(),
+                headers = mapOf(CONTENT_TYPE to listOf("application/grpc-web+encoding_type")),
                 message = trailers,
                 trailers = emptyMap(),
             ),
@@ -290,7 +297,7 @@ class GRPCWebInterceptorTest {
         val response = unaryFunction.responseFunction(
             HTTPResponse(
                 status = 200,
-                headers = emptyMap(),
+                headers = mapOf(CONTENT_TYPE to listOf("application/grpc-web+encoding_type")),
                 message = responseBody,
                 trailers = emptyMap(),
             ),
@@ -452,6 +459,7 @@ class GRPCWebInterceptorTest {
                 headers = mapOf(
                     // Doesn't get passed as headers.
                     "trailer-x-some-key" to listOf("some_value"),
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
                     GRPC_ENCODING to listOf("gzip"),
                 ),
             ),
@@ -498,6 +506,7 @@ class GRPCWebInterceptorTest {
         streamFunction.streamResultFunction(
             StreamResult.Headers(
                 headers = mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
                     GRPC_ENCODING to listOf("gzip"),
                 ),
             ),
