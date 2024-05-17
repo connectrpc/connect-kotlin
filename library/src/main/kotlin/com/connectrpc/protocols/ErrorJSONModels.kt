@@ -38,5 +38,9 @@ internal class EndStreamResponseJSON(
 )
 
 internal fun contentTypeIsJSON(contentType: String): Boolean {
+    // TODO: This could be more robust, like actually parsing the content-type.
+    // There exists a good helper for that, but it's in okhttp, which we intentionally
+    // don't have as a dep for this module, which aims to be agnostic of the actual
+    // HTTP client implementation to use.
     return contentType == "application/json" || contentType == "application/json; charset=utf-8"
 }
