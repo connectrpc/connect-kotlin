@@ -82,6 +82,7 @@ class GRPCInterceptorTest {
         )
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
+        assertThat(request.headers[GRPC_TIMEOUT]).containsExactly("2500m")
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("application/grpc+${serializationStrategy.serializationName()}")
     }

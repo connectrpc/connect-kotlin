@@ -88,6 +88,7 @@ class ConnectInterceptorTest {
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
+        assertThat(request.headers[CONNECT_TIMEOUT_MS]).containsExactly("2500")
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("content_type")
         assertThat(request.headers[USER_AGENT]).containsExactly("connect-kotlin/dev")

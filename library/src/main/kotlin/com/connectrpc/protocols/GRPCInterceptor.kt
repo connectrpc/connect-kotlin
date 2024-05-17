@@ -25,6 +25,7 @@ import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.clone
 import okio.Buffer
+import kotlin.time.Duration
 
 /**
  * The gRPC HTTP implementation
@@ -42,12 +43,7 @@ internal class GRPCInterceptor(
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
             requestFunction = { request ->
-                val requestHeaders = mutableMapOf<String, List<String>>()
-                requestHeaders.putAll(request.headers)
-                if (clientConfig.compressionPools().isNotEmpty()) {
-                    requestHeaders[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
-                        .map { compressionPool -> compressionPool.name() }
-                }
+                val requestHeaders = request.headers.withGRPCRequestHeaders(request.timeout)
                 val requestCompression = clientConfig.requestCompression
                 // GRPC unary payloads are enveloped.
                 val envelopedMessage = Envelope.pack(
@@ -59,7 +55,7 @@ internal class GRPCInterceptor(
                     url = request.url,
                     // The underlying content type is overridden here.
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
-                    headers = requestHeaders.withGRPCRequestHeaders(),
+                    headers = requestHeaders,
                     message = envelopedMessage,
                 )
             },
@@ -146,7 +142,7 @@ internal class GRPCInterceptor(
                 request.clone(
                     url = request.url,
                     contentType = "application/grpc+${serializationStrategy.serializationName()}",
-                    headers = request.headers.withGRPCRequestHeaders(),
+                    headers = request.headers.withGRPCRequestHeaders(request.timeout),
                 )
             },
             requestBodyFunction = { buffer ->
@@ -202,19 +198,53 @@ internal class GRPCInterceptor(
         )
     }
 
-    private fun Headers.withGRPCRequestHeaders(): Headers {
+    private fun Headers.withGRPCRequestHeaders(timeout: Duration?): Headers {
         val headers = toMutableMap()
         if (headers.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
             // https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#user-agents
             headers[USER_AGENT] = listOf("grpc-kotlin-connect/${ConnectConstants.VERSION}")
         }
         headers[GRPC_TE_HEADER] = listOf("trailers")
+        if (timeout != null) {
+            headers[GRPC_TIMEOUT] = listOf(grpcTimeoutString(timeout))
+        }
         val requestCompression = clientConfig.requestCompression
         if (requestCompression != null) {
             headers[GRPC_ENCODING] = listOf(requestCompression.compressionPool.name())
         }
+        if (clientConfig.compressionPools().isNotEmpty()) {
+            headers[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
+                .map { compressionPool -> compressionPool.name() }
+        }
         return headers
     }
+}
+
+internal fun grpcTimeoutString(timeout: Duration): String {
+    val nanos = "${timeout.inWholeNanoseconds}"
+    // Spec states that value may be at most 8 digits.
+    // So we change adjust units until it fits. We'll also
+    // adjust to make the timeout more compact if we can do
+    // so without loss of precision.
+    if (nanos.length <= 8 && !nanos.endsWith("000")) {
+        return "${nanos}n"
+    }
+    val micros = "${timeout.inWholeMicroseconds}"
+    if (micros.length <= 8 && !micros.endsWith("000")) {
+        return "${micros}u"
+    }
+    val millis = "${timeout.inWholeMilliseconds}"
+    if (millis.length <= 8 && !millis.endsWith("000")) {
+        return "${millis}m"
+    }
+    val secs = "${timeout.inWholeSeconds}"
+    if (secs.length <= 8) {
+        return "${secs}S"
+    }
+    // Clamp to maximum number of seconds that fits in 8 digits.
+    // Over 3 years, so in practice, despite being clamped, this
+    // is effectively an unbounded timeout.
+    return "99999999S"
 }
 
 internal fun contentTypeIsGRPC(contentType: String): Boolean {

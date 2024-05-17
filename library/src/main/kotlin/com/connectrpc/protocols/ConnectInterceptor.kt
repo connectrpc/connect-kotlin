@@ -38,6 +38,7 @@ import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
 import java.net.URL
+import kotlin.time.Duration
 
 /**
  * The Connect protocol.
@@ -61,6 +62,9 @@ internal class ConnectInterceptor(
                 val requestHeaders =
                     mutableMapOf(CONNECT_PROTOCOL_VERSION_KEY to listOf(CONNECT_PROTOCOL_VERSION_VALUE))
                 requestHeaders.putAll(request.headers)
+                if (request.timeout != null) {
+                    requestHeaders[CONNECT_TIMEOUT_MS] = listOf(connectTimeoutString(request.timeout))
+                }
                 if (clientConfig.compressionPools().isNotEmpty()) {
                     requestHeaders[ACCEPT_ENCODING] = clientConfig.compressionPools().map { compressionPool ->
                         compressionPool.name()
@@ -155,13 +159,18 @@ internal class ConnectInterceptor(
                 val requestHeaders =
                     mutableMapOf(CONNECT_PROTOCOL_VERSION_KEY to listOf(CONNECT_PROTOCOL_VERSION_VALUE))
                 requestHeaders.putAll(request.headers)
+                if (request.timeout != null) {
+                    requestHeaders[CONNECT_TIMEOUT_MS] = listOf(connectTimeoutString(request.timeout))
+                }
                 if (requestCompression != null) {
-                    requestHeaders[CONNECT_STREAMING_CONTENT_ENCODING] = listOf(requestCompression.compressionPool.name())
+                    requestHeaders[CONNECT_STREAMING_CONTENT_ENCODING] =
+                        listOf(requestCompression.compressionPool.name())
                 }
                 if (requestHeaders.keys.none { it.equals(USER_AGENT, ignoreCase = true) }) {
                     requestHeaders[USER_AGENT] = listOf("connect-kotlin/${ConnectConstants.VERSION}")
                 }
-                requestHeaders[CONNECT_STREAMING_ACCEPT_ENCODING] = clientConfig.compressionPools().map { entry -> entry.name() }
+                requestHeaders[CONNECT_STREAMING_ACCEPT_ENCODING] =
+                    clientConfig.compressionPools().map { entry -> entry.name() }
                 request.clone(
                     url = request.url,
                     contentType = request.contentType,
@@ -318,45 +327,57 @@ internal class ConnectInterceptor(
         }
         return errorDetails
     }
-}
 
-private fun Headers.toTrailers(): Trailers {
-    val trailers = mutableMapOf<String, List<String>>()
-    for (entry in entries) {
-        val newKey = entry.key.substringAfter("trailer-", "")
-        if (newKey.isEmpty()) continue
-        trailers[newKey] = entry.value
+    private fun Headers.toTrailers(): Trailers {
+        val trailers = mutableMapOf<String, List<String>>()
+        for (entry in entries) {
+            val newKey = entry.key.substringAfter("trailer-", "")
+            if (newKey.isEmpty()) continue
+            trailers[newKey] = entry.value
+        }
+        return trailers
     }
-    return trailers
-}
 
-private fun constructURLForGETRequest(
-    httpRequest: HTTPRequest,
-    codec: Codec<*>,
-    payload: Buffer,
-    requestCompression: RequestCompression?,
-): URL {
-    val baseURL = httpRequest.url
-    val methodSpec = httpRequest.methodSpec
-    val params = mutableListOf<String>()
-    if (requestCompression?.shouldCompress(payload) == true) {
-        params.add("${GETConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
+    private fun connectTimeoutString(timeout: Duration): String {
+        val millis = "${timeout.inWholeMilliseconds}"
+        // Spec states that value may be at most 10 digits. So we
+        // clamp to largest 10-digit value.
+        if (millis.length > 10) {
+            // Nearly 4 months, so in practice, despite being clamped,
+            // this is effectively an unbounded timeout.
+            return "9999999999"
+        }
+        return millis
     }
-    params.add("${GETConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
-    params.add("${GETConstants.BASE64_QUERY_PARAM_KEY}=1")
-    params.add("${GETConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
-    params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
-    params.sort()
-    val queryParams = params.joinToString("&")
-    val baseURI = baseURL.toURI()
-        .resolve("/${methodSpec.path}?$queryParams")
-    return baseURI.toURL()
-}
 
-fun Headers.toLowercase(): Headers {
-    return asSequence().groupingBy {
-        it.key.lowercase()
-    }.aggregate { _: String, accumulator: List<String>?, element: Map.Entry<String, List<String>>, _: Boolean ->
-        accumulator?.plus(element.value) ?: element.value
+    private fun constructURLForGETRequest(
+        httpRequest: HTTPRequest,
+        codec: Codec<*>,
+        payload: Buffer,
+        requestCompression: RequestCompression?,
+    ): URL {
+        val baseURL = httpRequest.url
+        val methodSpec = httpRequest.methodSpec
+        val params = mutableListOf<String>()
+        if (requestCompression?.shouldCompress(payload) == true) {
+            params.add("${GETConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
+        }
+        params.add("${GETConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
+        params.add("${GETConstants.BASE64_QUERY_PARAM_KEY}=1")
+        params.add("${GETConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
+        params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
+        params.sort()
+        val queryParams = params.joinToString("&")
+        val baseURI = baseURL.toURI()
+            .resolve("/${methodSpec.path}?$queryParams")
+        return baseURI.toURL()
+    }
+
+    private fun Headers.toLowercase(): Headers {
+        return asSequence().groupingBy {
+            it.key.lowercase()
+        }.aggregate { _: String, accumulator: List<String>?, element: Map.Entry<String, List<String>>, _: Boolean ->
+            accumulator?.plus(element.value) ?: element.value
+        }
     }
 }
