@@ -36,7 +36,9 @@ import com.connectrpc.conformance.client.adapt.Invoker
 import com.connectrpc.conformance.client.adapt.ResponseStream
 import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.client.adapt.UnaryClient
+import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
+import com.connectrpc.http.Timeout
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
@@ -57,6 +59,8 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.time.Duration
 import java.util.Base64
 import kotlin.reflect.cast
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * The conformance client. This contains the logic for invoking an
@@ -441,9 +445,6 @@ class Client(
             val certs = certs(req)
             clientBuilder = clientBuilder.sslSocketFactory(certs.sslSocketFactory(), certs.trustManager)
         }
-        if (req.timeoutMs != 0) {
-            clientBuilder = clientBuilder.callTimeout(Duration.ofMillis(req.timeoutMs.toLong()))
-        }
         // TODO: need to support max receive bytes and use req.receiveLimitBytes
         val getConfig = if (req.useGetHttpMethod) GETConfiguration.Enabled else GETConfiguration.Disabled
         val requestCompression =
@@ -458,10 +459,24 @@ class Client(
             } else {
                 emptyList()
             }
-        val httpClient = clientBuilder.build()
+        val httpClient = ConnectOkHttpClient.configureClient(clientBuilder).build()
         var connectHttpClient: HTTPClientInterface = ConnectOkHttpClient(httpClient)
         args.verbose.withPrefix("http client interface: ").verbosity(3) {
             connectHttpClient = TracingHTTPClient(connectHttpClient, this)
+        }
+        var timeoutScheduler = Timeout.DEFAULT_SCHEDULER
+        args.verbose.verbosity(3) {
+            val verbosePrinter = this
+            timeoutScheduler = object : Timeout.Scheduler {
+                override fun scheduleTimeout(delay: kotlin.time.Duration, action: Cancelable): Timeout {
+                    verbosePrinter.println("Scheduling timeout in $delay...")
+                    val timeout = Timeout.DEFAULT_SCHEDULER.scheduleTimeout(delay) {
+                        verbosePrinter.println("Timeout elapsed! Cancelling...")
+                        action()
+                    }
+                    return timeout
+                }
+            }
         }
         return Pair(
             httpClient,
@@ -474,6 +489,14 @@ class Client(
                     getConfiguration = getConfig,
                     requestCompression = requestCompression,
                     compressionPools = compressionPools,
+                    timeoutScheduler = timeoutScheduler,
+                    timeoutOracle = {
+                        if (req.timeoutMs == 0) {
+                            null
+                        } else {
+                            req.timeoutMs.toDuration(DurationUnit.MILLISECONDS)
+                        }
+                    },
                 ),
             ),
         )

@@ -20,6 +20,8 @@ import com.connectrpc.conformance.client.adapt.ServerStreamClient
 import com.connectrpc.conformance.v1.ConformanceServiceClient
 import com.connectrpc.conformance.v1.ServerStreamRequest
 import com.connectrpc.conformance.v1.ServerStreamResponse
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 
 class JavaLiteServerStreamClient(
     private val client: ConformanceServiceClient,
@@ -33,6 +35,21 @@ class JavaLiteServerStreamClient(
         try {
             sendResult = stream.sendAndClose(req)
             if (sendResult.isFailure) {
+                // It can't be because stream.sendClose was already closed. So the operation
+                // must have already failed. Extract the reason via a call to receive. But
+                // if something is awry, don't block forever on the receive call.
+                try {
+                    withTimeout(50) {
+                        // Waits up to 50 milliseconds.
+                        stream.responseChannel().receive()
+                    }
+                } catch (_: TimeoutCancellationException) {
+                    // Receive did not complete :(
+                } catch (ex: Throwable) {
+                    throw ex
+                }
+                // Either receive did not complete or it did not fail (which
+                // shouldn't actually be possible).
                 throw sendResult.exceptionOrNull()!!
             }
         } catch (ex: Throwable) {

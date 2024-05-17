@@ -1,8 +1,1 @@
-# We currently rely on OkHttp's "call timeout" to handle
-# RPC deadlines, but that is not enforced when the request
-# body is duplex. So timeouts don't currently work with
-# bidi streams.
-Timeouts/HTTPVersion:2/**/bidi-stream/**
-
-# Deadline headers are not currently set.
-Deadline Propagation/**
+# Currently there are zero failing tests.
