@@ -21,6 +21,7 @@ const val CONNECT_STREAMING_CONTENT_ENCODING = "connect-content-encoding"
 const val CONNECT_STREAMING_ACCEPT_ENCODING = "connect-accept-encoding"
 const val CONNECT_PROTOCOL_VERSION_KEY = "connect-protocol-version"
 const val CONNECT_PROTOCOL_VERSION_VALUE = "1"
+const val CONNECT_TIMEOUT_MS = "connect-timeout-ms"
 
 const val GRPC_ACCEPT_ENCODING = "grpc-accept-encoding"
 const val GRPC_ENCODING = "grpc-encoding"
@@ -29,6 +30,7 @@ const val GRPC_STATUS_DETAILS_TRAILERS = "grpc-status-details-bin"
 const val GRPC_STATUS_TRAILER = "grpc-status"
 const val GRPC_TE_HEADER = "te"
 const val GRPC_WEB_USER_AGENT = "x-user-agent"
+const val GRPC_TIMEOUT = "grpc-timeout"
 
 const val USER_AGENT = "user-agent"
 

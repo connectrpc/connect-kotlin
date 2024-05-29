@@ -39,6 +39,8 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.net.URL
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class ConnectInterceptorTest {
     private val errorDetailParser: ErrorDetailParser = mock { }
@@ -72,6 +74,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -85,6 +88,7 @@ class ConnectInterceptorTest {
         assertThat(request.headers[CONNECT_PROTOCOL_VERSION_KEY]).containsExactly(CONNECT_PROTOCOL_VERSION_VALUE)
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
+        assertThat(request.headers[CONNECT_TIMEOUT_MS]).containsExactly("2500")
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("content_type")
         assertThat(request.headers[USER_AGENT]).containsExactly("connect-kotlin/dev")
@@ -104,6 +108,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -132,6 +137,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -160,6 +166,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -189,6 +196,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -363,6 +371,7 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -395,6 +404,7 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -423,6 +433,7 @@ class ConnectInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -685,6 +696,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
@@ -722,6 +734,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
@@ -751,6 +764,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(
@@ -785,6 +799,7 @@ class ConnectInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer().write(ByteArray(5_000)),
                 methodSpec = MethodSpec(

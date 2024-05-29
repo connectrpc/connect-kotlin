@@ -18,6 +18,7 @@ import com.connectrpc.Headers
 import com.connectrpc.MethodSpec
 import okio.Buffer
 import java.net.URL
+import kotlin.time.Duration
 
 enum class HTTPMethod(
     val string: String,
@@ -34,6 +35,8 @@ open class HTTPRequest internal constructor(
     val url: URL,
     // Value to assign to the `content-type` header.
     val contentType: String,
+    // The optional timeout for this request.
+    val timeout: Duration?,
     // Additional outbound headers for the request.
     val headers: Headers,
     // The method spec associated with the request.
@@ -51,6 +54,8 @@ fun HTTPRequest.clone(
     url: URL = this.url,
     // Value to assign to the `content-type` header.
     contentType: String = this.contentType,
+    // The optional timeout for this request.
+    timeout: Duration? = this.timeout,
     // Additional outbound headers for the request.
     headers: Headers = this.headers,
     // The method spec associated with the request.
@@ -59,6 +64,7 @@ fun HTTPRequest.clone(
     return HTTPRequest(
         url,
         contentType,
+        timeout,
         headers,
         methodSpec,
     )
@@ -73,6 +79,8 @@ class UnaryHTTPRequest(
     url: URL,
     // Value to assign to the `content-type` header.
     contentType: String,
+    // The optional timeout for this request.
+    timeout: Duration?,
     // Additional outbound headers for the request.
     headers: Headers,
     // The method spec associated with the request.
@@ -82,13 +90,15 @@ class UnaryHTTPRequest(
     // HTTP method to use with the request.
     // Almost always POST, but side effect free unary RPCs may be made with GET.
     val httpMethod: HTTPMethod = HTTPMethod.POST,
-) : HTTPRequest(url, contentType, headers, methodSpec)
+) : HTTPRequest(url, contentType, timeout, headers, methodSpec)
 
 fun UnaryHTTPRequest.clone(
     // The URL for the request.
     url: URL = this.url,
     // Value to assign to the `content-type` header.
     contentType: String = this.contentType,
+    // The optional timeout for this request.
+    timeout: Duration? = this.timeout,
     // Additional outbound headers for the request.
     headers: Headers = this.headers,
     // The method spec associated with the request.
@@ -101,6 +111,7 @@ fun UnaryHTTPRequest.clone(
     return UnaryHTTPRequest(
         url,
         contentType,
+        timeout,
         headers,
         methodSpec,
         message,

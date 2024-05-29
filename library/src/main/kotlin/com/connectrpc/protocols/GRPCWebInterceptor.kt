@@ -26,6 +26,7 @@ import com.connectrpc.UnaryFunction
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.http.clone
 import okio.Buffer
+import kotlin.time.Duration
 
 /**
  * The gRPC Web implementation.
@@ -47,12 +48,7 @@ internal class GRPCWebInterceptor(
     override fun unaryFunction(): UnaryFunction {
         return UnaryFunction(
             requestFunction = { request ->
-                val requestHeaders = mutableMapOf<String, List<String>>()
-                requestHeaders.putAll(request.headers)
-                if (clientConfig.compressionPools().isNotEmpty()) {
-                    requestHeaders[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
-                        .map { compressionPool -> compressionPool.name() }
-                }
+                val requestHeaders = request.headers.withGRPCRequestHeaders(request.timeout)
                 val requestCompressionPool = clientConfig.requestCompression
                 // GRPC unary payloads are enveloped.
                 val envelopedMessage = Envelope.pack(
@@ -60,12 +56,11 @@ internal class GRPCWebInterceptor(
                     requestCompressionPool?.compressionPool,
                     requestCompressionPool?.minBytes,
                 )
-
                 request.clone(
                     url = request.url,
                     // The underlying content type is overridden here.
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
-                    headers = requestHeaders.withGRPCRequestHeaders(),
+                    headers = requestHeaders,
                     message = envelopedMessage,
                 )
             },
@@ -202,7 +197,7 @@ internal class GRPCWebInterceptor(
                 request.clone(
                     url = request.url,
                     contentType = "application/grpc-web+${serializationStrategy.serializationName()}",
-                    headers = request.headers.withGRPCRequestHeaders(),
+                    headers = request.headers.withGRPCRequestHeaders(request.timeout),
                 )
             },
             requestBodyFunction = { buffer ->
@@ -258,14 +253,22 @@ internal class GRPCWebInterceptor(
         )
     }
 
-    private fun Headers.withGRPCRequestHeaders(): Headers {
+    private fun Headers.withGRPCRequestHeaders(timeout: Duration?): Headers {
+        // TODO: This is only slightly different from the version in GRPCInterceptor. Consolidate?
         val headers = toMutableMap()
         if (headers.keys.none { it.equals(GRPC_WEB_USER_AGENT, ignoreCase = true) }) {
             headers[GRPC_WEB_USER_AGENT] = listOf("grpc-kotlin-connect/${ConnectConstants.VERSION}")
         }
+        if (timeout != null) {
+            headers[GRPC_TIMEOUT] = listOf(grpcTimeoutString(timeout))
+        }
         val requestCompression = clientConfig.requestCompression
         if (requestCompression != null) {
             headers[GRPC_ENCODING] = listOf(requestCompression.compressionPool.name())
+        }
+        if (clientConfig.compressionPools().isNotEmpty()) {
+            headers[GRPC_ACCEPT_ENCODING] = clientConfig.compressionPools()
+                .map { compressionPool -> compressionPool.name() }
         }
         return headers
     }

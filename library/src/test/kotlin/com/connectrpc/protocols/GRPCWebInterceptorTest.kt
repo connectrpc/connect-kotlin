@@ -35,6 +35,8 @@ import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.net.URL
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class GRPCWebInterceptorTest {
 
@@ -63,6 +65,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -75,6 +78,7 @@ class GRPCWebInterceptorTest {
         )
         assertThat(request.headers[ACCEPT_ENCODING]).isNullOrEmpty()
         assertThat(request.headers[CONTENT_ENCODING]).isNullOrEmpty()
+        assertThat(request.headers[GRPC_TIMEOUT]).containsExactly("2500m")
         assertThat(request.headers["key"]).containsExactly("value")
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
         assertThat(request.headers[GRPC_WEB_USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
@@ -93,6 +97,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
                 message = Buffer(),
                 methodSpec = MethodSpec(
@@ -121,6 +126,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -150,6 +156,7 @@ class GRPCWebInterceptorTest {
             UnaryHTTPRequest(
                 url = URL(config.host),
                 contentType = "",
+                timeout = null,
                 headers = emptyMap(),
                 message = Buffer().write("message".encodeUtf8()),
                 methodSpec = MethodSpec(
@@ -344,6 +351,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -354,7 +362,6 @@ class GRPCWebInterceptorTest {
             ),
         )
         assertThat(request.contentType).isEqualTo("application/grpc-web+${serializationStrategy.serializationName()}")
-        assertThat(request.headers.keys).containsExactlyInAnyOrder(GRPC_WEB_USER_AGENT, GRPC_ENCODING, "key")
         assertThat(request.headers[GRPC_WEB_USER_AGENT]).containsExactly("grpc-kotlin-connect/dev")
         assertThat(request.headers[GRPC_ENCODING]).containsExactly(GzipCompressionPool.name())
         assertThat(request.headers["key"]).containsExactly("value")
@@ -375,6 +382,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
                 methodSpec = MethodSpec(
                     path = "",
@@ -402,6 +410,7 @@ class GRPCWebInterceptorTest {
             HTTPRequest(
                 url = URL(config.host),
                 contentType = "content_type",
+                timeout = null,
                 headers = mapOf("key" to listOf("value")),
                 methodSpec = MethodSpec(
                     path = "",

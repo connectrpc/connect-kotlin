@@ -16,6 +16,7 @@ package com.connectrpc
 
 import com.connectrpc.compression.CompressionPool
 import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.http.Timeout
 import com.connectrpc.protocols.ConnectInterceptor
 import com.connectrpc.protocols.GETConfiguration
 import com.connectrpc.protocols.GRPCInterceptor
@@ -23,11 +24,34 @@ import com.connectrpc.protocols.GRPCWebInterceptor
 import com.connectrpc.protocols.NetworkProtocol
 import java.net.URI
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+typealias TimeoutOracle = (MethodSpec<*, *>) -> Duration?
+
+/**
+ * Returns an oracle that provides the given timeouts for unary or stream
+ * operations, respectively.
+ */
+fun simpleTimeouts(unaryTimeout: Duration?, streamTimeout: Duration?): TimeoutOracle {
+    return { methodSpec ->
+        when (methodSpec.streamType) {
+            StreamType.UNARY -> unaryTimeout
+            else -> streamTimeout
+        }
+    }
+}
 
 /**
  *  Set of configuration used to set up clients.
  */
 class ProtocolClientConfig @JvmOverloads constructor(
+    // TODO: Use a block-based construction pattern instead of JvmOverloads
+    //       so we can add new fields in the future without having to worry
+    //       about their ordering or potentially breaking compatibility with
+    //       already-compiled byte code.
+
     // The host (e.g., https://connectrpc.com).
     val host: String,
     // The client to use for performing requests.
@@ -54,6 +78,17 @@ class ProtocolClientConfig @JvmOverloads constructor(
     // blocking will automatically be dispatched using the given context,
     // so the caller does not need to worry about it.
     val ioCoroutineContext: CoroutineContext? = null,
+    // A function that is consulted to determine timeouts for each RPC. If
+    // the function returns null, no timeout is applied. If a non-null value
+    // is returned, the entire call must complete before it elapses. If the
+    // call is still active at the end of the timeout period, it is cancelled
+    // and will result in an exception with a Code.DEADLINE_EXCEEDED code.
+    //
+    // The default oracle, if not configured, returns a 10 second timeout for
+    // all operations.
+    val timeoutOracle: TimeoutOracle = { 10.toDuration(DurationUnit.SECONDS) },
+    // Schedules timeout actions.
+    val timeoutScheduler: Timeout.Scheduler = Timeout.DEFAULT_SCHEDULER,
 ) {
     private val internalInterceptorFactoryList = mutableListOf<(ProtocolClientConfig) -> Interceptor>()
     private val compressionPools = mutableMapOf<String, CompressionPool>()

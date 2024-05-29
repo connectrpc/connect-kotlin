@@ -17,6 +17,7 @@ package com.connectrpc.http
 import com.connectrpc.StreamResult
 import okio.Buffer
 
+/** A function that cancels an operation when called. */
 typealias Cancelable = () -> Unit
 
 /**

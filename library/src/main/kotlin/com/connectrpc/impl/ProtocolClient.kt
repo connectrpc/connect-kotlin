@@ -32,6 +32,7 @@ import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Timeout
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.dispatchIn
 import com.connectrpc.http.transform
@@ -43,6 +44,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okio.Buffer
 import java.net.URI
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 
 /**
@@ -85,22 +87,47 @@ class ProtocolClient(
             } else {
                 requestCodec.serialize(request)
             }
+            val requestTimeout = config.timeoutOracle(methodSpec)
             val unaryRequest = UnaryHTTPRequest(
                 url = urlFromMethodSpec(methodSpec),
                 contentType = "application/${requestCodec.encodingName()}",
+                timeout = requestTimeout,
                 headers = headers,
                 methodSpec = methodSpec,
                 message = requestMessage,
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
+            val timeoutRef = AtomicReference<Timeout>(null)
+            val finalOnResult: (ResponseMessage<Output>) -> Unit = handleResult@{ result ->
+                when (result) {
+                    is ResponseMessage.Failure -> {
+                        val timeout = timeoutRef.get()
+                        if (timeout != null) {
+                            timeout.cancel()
+                            if (result.cause.code == Code.CANCELED && timeout.timedOut) {
+                                onResult(
+                                    ResponseMessage.Failure(
+                                        cause = ConnectException(Code.DEADLINE_EXCEEDED, exception = result.cause),
+                                        headers = result.headers,
+                                        trailers = result.trailers,
+                                    ),
+                                )
+                                return@handleResult
+                            }
+                        }
+                        onResult(result)
+                    }
+                    else -> onResult(result)
+                }
+            }
             val cancelable = httpClient.unary(finalRequest) httpClientUnary@{ httpResponse ->
                 val finalResponse: HTTPResponse
                 try {
                     finalResponse = unaryFunc.responseFunction(httpResponse)
                 } catch (ex: Throwable) {
                     val connEx = asConnectException(ex)
-                    onResult(
+                    finalOnResult(
                         ResponseMessage.Failure(
                             connEx,
                             emptyMap(),
@@ -110,7 +137,7 @@ class ProtocolClient(
                     return@httpClientUnary
                 }
                 if (finalResponse.cause != null) {
-                    onResult(
+                    finalOnResult(
                         ResponseMessage.Failure(
                             finalResponse.cause,
                             finalResponse.headers,
@@ -124,7 +151,7 @@ class ProtocolClient(
                 try {
                     responseMessage = responseCodec.deserialize(finalResponse.message)
                 } catch (ex: Exception) {
-                    onResult(
+                    finalOnResult(
                         ResponseMessage.Failure(
                             asConnectException(ex, Code.INTERNAL_ERROR),
                             finalResponse.headers,
@@ -133,13 +160,16 @@ class ProtocolClient(
                     )
                     return@httpClientUnary
                 }
-                onResult(
+                finalOnResult(
                     ResponseMessage.Success(
                         responseMessage,
                         finalResponse.headers,
                         finalResponse.trailers,
                     ),
                 )
+            }
+            if (requestTimeout != null) {
+                timeoutRef.set(config.timeoutScheduler.scheduleTimeout(requestTimeout, cancelable))
             }
             return cancelable
         } catch (ex: Exception) {
@@ -218,14 +248,17 @@ class ProtocolClient(
         val responseTrailers = CompletableDeferred<Headers>()
         val requestCodec = config.serializationStrategy.codec(methodSpec.requestClass)
         val responseCodec = config.serializationStrategy.codec(methodSpec.responseClass)
+        val requestTimeout = config.timeoutOracle(methodSpec)
         val request = HTTPRequest(
             url = urlFromMethodSpec(methodSpec),
             contentType = "application/connect+${requestCodec.encodingName()}",
+            timeout = requestTimeout,
             headers = headers,
             methodSpec = methodSpec,
         )
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
+        val timeoutRef = AtomicReference<Timeout>(null)
         var isComplete = false
         val httpStream = httpClient.stream(
             request = finalRequest,
@@ -259,10 +292,18 @@ class ProtocolClient(
                             streamResult.message,
                         )
                         channel.send(message)
-                    } catch (e: Throwable) {
+                    } catch (ex: Throwable) {
                         isComplete = true
+                        var connEx = asConnectException(ex)
+                        val timeout = timeoutRef.get()
+                        if (timeout != null) {
+                            timeout.cancel()
+                            if (connEx.code == Code.CANCELED && timeout.timedOut) {
+                                connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = ex)
+                            }
+                        }
                         try {
-                            channel.close(ConnectException(Code.UNKNOWN, exception = e))
+                            channel.close(connEx)
                         } finally {
                             responseTrailers.complete(emptyMap())
                         }
@@ -273,13 +314,30 @@ class ProtocolClient(
                     // This is a no-op if we already received a StreamResult.Headers.
                     responseHeaders.complete(emptyMap())
                     isComplete = true
+                    var connEx = streamResult.cause
+                    val timeout = timeoutRef.get()
+                    if (timeout != null) {
+                        timeout.cancel()
+                        if (connEx?.code == Code.CANCELED && timeout.timedOut) {
+                            connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = streamResult.cause)
+                        }
+                    }
                     try {
-                        channel.close(streamResult.cause)
+                        channel.close(connEx)
                     } finally {
                         responseTrailers.complete(streamResult.trailers)
                     }
                 }
             }
+        }
+        if (requestTimeout != null) {
+            timeoutRef.set(
+                config.timeoutScheduler.scheduleTimeout(requestTimeout) {
+                    runBlocking {
+                        channel.close(ConnectException(code = Code.DEADLINE_EXCEEDED, message = "$requestTimeout timeout elapsed"))
+                    }
+                },
+            )
         }
         try {
             channel.invokeOnClose {
