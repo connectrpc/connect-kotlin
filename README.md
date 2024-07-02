@@ -1,5 +1,6 @@
 ![Build](https://github.com/connectrpc/connect-kotlin/actions/workflows/ci.yml/badge.svg)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-kotlin.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-kotlin?ref=badge_shield)
 
 Connect-Kotlin
 ==============
@@ -176,3 +177,7 @@ Offered under the [Apache 2 license][license].
 [server reflection]: https://github.com/connectrpc/grpcreflect-go
 [slack]: https://buf.build/links/slack
 [streaming]: https://connectrpc.com/docs/kotlin/using-clients#using-generated-clients
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-kotlin.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fconnectrpc%2Fconnect-kotlin?ref=badge_large)
