@@ -95,6 +95,21 @@ class Generator : CodeGenerator {
         }
     }
 
+    override fun getSupportedFeatures(): Array<PluginProtos.CodeGeneratorResponse.Feature> {
+        return arrayOf(
+            PluginProtos.CodeGeneratorResponse.Feature.FEATURE_PROTO3_OPTIONAL,
+            PluginProtos.CodeGeneratorResponse.Feature.FEATURE_SUPPORTS_EDITIONS,
+        )
+    }
+
+    override fun getMinimumEdition(): DescriptorProtos.Edition {
+        return DescriptorProtos.Edition.EDITION_PROTO2
+    }
+
+    override fun getMaximumEdition(): DescriptorProtos.Edition {
+        return DescriptorProtos.Edition.EDITION_2023
+    }
+
     private fun parseFile(file: Descriptors.FileDescriptor): Map<ClassName, FileSpec> {
         val baseSourceInfo = SourceInfo(protoFileMap[file.name]!!, descriptorSource, emptyList())
         val fileSpecs = mutableMapOf<ClassName, FileSpec>()
