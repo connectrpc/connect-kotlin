@@ -15,6 +15,7 @@
 package com.connectrpc.protocgen.connect.internal
 
 import com.connectrpc.protocgen.connect.internal.Plugin.DescriptorSource
+import com.google.protobuf.DescriptorProtos.Edition
 import com.google.protobuf.compiler.PluginProtos
 
 /**
@@ -30,4 +31,21 @@ interface CodeGenerator {
         descriptorSource: DescriptorSource,
         response: Plugin.Response,
     )
+
+    /**
+     * Returns an array of supported Protobuf features.
+     */
+    fun getSupportedFeatures(): Array<PluginProtos.CodeGeneratorResponse.Feature>
+
+    /**
+     * Returns the minimum edition (inclusive) supported by this generator. Any
+     * proto files with an edition before this will result in an error.
+     */
+    fun getMinimumEdition(): Edition
+
+    /**
+     * Returns the maximum edition (inclusive) supported by this generator. Any
+     * proto files with an edition after this will result in an error.
+     */
+    fun getMaximumEdition(): Edition
 }
