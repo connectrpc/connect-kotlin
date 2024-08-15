@@ -19,9 +19,6 @@ import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
 import com.google.protobuf.MessageLite
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 /**
  * The client of a unary RPC operation. This provides multiple ways
@@ -40,82 +37,4 @@ abstract class UnaryClient<Req : MessageLite, Resp : MessageLite>(
     abstract fun execute(req: Req, headers: Headers, onFinish: (ResponseMessage<Resp>) -> Unit): Cancelable
 
     abstract fun blocking(req: Req, headers: Headers): UnaryBlockingCall<Resp>
-
-    /**
-     * Executes the unary RPC using the given invocation style, request
-     * message, and request headers. The given callback is invoked when
-     * the operation completes.
-     *
-     * This signature resembles the one above that takes a callback, but
-     * will adapt the call to the suspend or blocking signatures if so
-     * directed by the given InvokeStyle. This allows a caller to use a
-     * single shape to invoke the RPC, but actually exercise any/all of
-     * the above three signatures.
-     */
-    suspend fun execute(
-        style: InvokeStyle,
-        req: Req,
-        headers: Headers,
-        onFinish: (ResponseMessage<Resp>) -> Unit,
-    ): Cancelable {
-        when (style) {
-            InvokeStyle.CALLBACK -> {
-                return execute(req, headers, onFinish)
-            }
-            InvokeStyle.SUSPEND -> {
-                return coroutineScope {
-                    val job = launch {
-                        onFinish(execute(req, headers))
-                    }
-                    return@coroutineScope {
-                        job.cancel()
-                    }
-                }
-            }
-            InvokeStyle.BLOCKING -> {
-                val call = blocking(req, headers)
-                coroutineScope {
-                    launch(Dispatchers.IO) {
-                        onFinish(call.execute())
-                    }
-                }
-                return {
-                    call.cancel()
-                }
-            }
-        }
-    }
-
-    /**
-     * The style of invocation, one each for the three different
-     * ways to invoke a unary RPC.
-     */
-    enum class InvokeStyle {
-        /**
-         * Indicates the callback-based async signature, which
-         * invokes the method with the following signature:
-         * ```
-         * fun execute(Req, Headers, (ResponseMessage<Resp>)->Unit): Cancelable
-         * ```
-         */
-        CALLBACK,
-
-        /**
-         * Indicates the suspend-based async signature, which
-         * invokes the method with the following signature:
-         * ```
-         * suspend fun execute(Req, Headers): ResponseMessage<Resp>
-         * ```
-         */
-        SUSPEND,
-
-        /**
-         * Indicates the blocking signature, which invokes the
-         * method with the following signature:
-         * ```
-         * fun blocking(Req, Headers): UnaryBlockingCall<Resp>
-         * ```
-         */
-        BLOCKING,
-    }
 }

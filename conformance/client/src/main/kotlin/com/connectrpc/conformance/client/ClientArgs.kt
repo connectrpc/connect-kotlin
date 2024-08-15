@@ -14,15 +14,13 @@
 
 package com.connectrpc.conformance.client
 
-import com.connectrpc.conformance.client.adapt.UnaryClient.InvokeStyle
-
 data class ClientArgs(
-    val invokeStyle: InvokeStyle,
+    val unaryInvokeStyle: UnaryInvokeStyle,
     val verbose: VerbosePrinter,
 ) {
     companion object {
         fun parseArgs(args: Array<String>): ClientArgs {
-            var invokeStyle = InvokeStyle.SUSPEND
+            var unaryInvokeStyle = UnaryInvokeStyle.SUSPEND
             var verbosity = 0
             var skip = false
             for (i in args.indices) {
@@ -39,13 +37,13 @@ data class ClientArgs(
                         val v = args[i + 1]
                         when (v.lowercase()) {
                             "suspend" -> {
-                                invokeStyle = InvokeStyle.SUSPEND
+                                unaryInvokeStyle = UnaryInvokeStyle.SUSPEND
                             }
                             "callback" -> {
-                                invokeStyle = InvokeStyle.CALLBACK
+                                unaryInvokeStyle = UnaryInvokeStyle.CALLBACK
                             }
                             "blocking" -> {
-                                invokeStyle = InvokeStyle.BLOCKING
+                                unaryInvokeStyle = UnaryInvokeStyle.BLOCKING
                             }
                             else -> {
                                 throw RuntimeException("value for $arg option should be 'suspend', 'callback', or 'blocking'; instead got '$v'")
@@ -73,7 +71,40 @@ data class ClientArgs(
                     }
                 }
             }
-            return ClientArgs(invokeStyle, VerbosePrinter(verbosity, "* client: "))
+            return ClientArgs(unaryInvokeStyle, VerbosePrinter(verbosity, "* client: "))
         }
+    }
+
+    /**
+     * The style of invocation, one each for the three different
+     * ways to invoke a unary RPC.
+     */
+    enum class UnaryInvokeStyle {
+        /**
+         * Indicates the callback-based async signature, which
+         * invokes the method with the following signature:
+         * ```
+         * fun execute(Req, Headers, (ResponseMessage<Resp>)->Unit): Cancelable
+         * ```
+         */
+        CALLBACK,
+
+        /**
+         * Indicates the suspend-based async signature, which
+         * invokes the method with the following signature:
+         * ```
+         * suspend fun execute(Req, Headers): ResponseMessage<Resp>
+         * ```
+         */
+        SUSPEND,
+
+        /**
+         * Indicates the blocking signature, which invokes the
+         * method with the following signature:
+         * ```
+         * fun blocking(Req, Headers): UnaryBlockingCall<Resp>
+         * ```
+         */
+        BLOCKING,
     }
 }
