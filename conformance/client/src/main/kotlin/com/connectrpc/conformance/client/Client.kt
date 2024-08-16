@@ -14,6 +14,7 @@
 
 package com.connectrpc.conformance.client
 
+import com.connectrpc.Code
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
@@ -22,6 +23,7 @@ import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.asConnectException
 import com.connectrpc.compression.GzipCompressionPool
+import com.connectrpc.conformance.client.ClientArgs.UnaryInvokeStyle
 import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.BidiStreamClient
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest
@@ -43,7 +45,10 @@ import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
 import com.connectrpc.protocols.GETConfiguration
 import com.google.protobuf.MessageLite
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -133,23 +138,57 @@ class Client(
         }
         val msg = fromAny(req.requestMessages[0], client.reqTemplate, requestType)
         val resp = CompletableDeferred<ResponseMessage<Resp>>()
-        val canceler = client.execute(
-            args.invokeStyle,
-            msg,
-            req.requestHeaders,
-            resp::complete,
-        )
-        when (val cancel = req.cancel) {
-            is Cancel.AfterCloseSendMs -> {
-                delay(cancel.millis.toLong())
-                canceler()
+
+        return coroutineScope {
+            val canceler: Cancelable
+            when (args.unaryInvokeStyle) {
+                UnaryInvokeStyle.CALLBACK -> {
+                    canceler = client.execute(msg, req.requestHeaders, resp::complete)
+                }
+                UnaryInvokeStyle.SUSPEND -> {
+                    val job = launch {
+                        try {
+                            resp.complete(client.execute(msg, req.requestHeaders))
+                        } catch (ex: Throwable) {
+                            val code = if (ex is CancellationException) {
+                                Code.CANCELED
+                            } else {
+                                Code.UNKNOWN
+                            }
+                            resp.complete(
+                                ResponseMessage.Failure(
+                                    cause = ConnectException(code, exception = ex),
+                                    headers = emptyMap(),
+                                    trailers = emptyMap(),
+                                ),
+                            )
+                        }
+                    }
+                    canceler = { job.cancel() }
+                }
+                UnaryInvokeStyle.BLOCKING -> {
+                    val call = client.blocking(msg, req.requestHeaders)
+                    launch(Dispatchers.IO) {
+                        resp.complete(call.execute())
+                    }
+                    canceler = { call.cancel() }
+                }
             }
-            else -> {
-                // We already validated the case above.
-                // So this case means no cancellation.
+
+            when (val cancel = req.cancel) {
+                is Cancel.AfterCloseSendMs -> {
+                    launch {
+                        delay(cancel.millis.toLong())
+                        canceler()
+                    }
+                }
+                else -> {
+                    // We already validated the case above.
+                    // So this case means no cancellation.
+                }
             }
+            unaryResult(0, resp.await())
         }
-        return unaryResult(0, resp.await())
     }
 
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(

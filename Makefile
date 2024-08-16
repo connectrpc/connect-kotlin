@@ -10,7 +10,7 @@ BIN := .tmp/bin
 CACHE := .tmp/cache
 LICENSE_HEADER_YEAR_RANGE := 2022-2023
 LICENSE_HEADER_VERSION := v1.34.0
-CONFORMANCE_VERSION := v1.0.2
+CONFORMANCE_VERSION := v1.0.3
 PROTOC_VERSION ?= $(shell yq '.versions.protobuf' gradle/libs.versions.toml | cut -d'.' -f2-)
 ifeq ($(PROTOC_VERSION),)
 $(error "Unable to determine protoc version")
