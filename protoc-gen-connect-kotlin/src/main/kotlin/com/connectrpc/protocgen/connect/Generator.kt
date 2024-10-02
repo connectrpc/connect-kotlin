@@ -547,13 +547,13 @@ private fun TypeSpec.Builder.addServiceDeprecation(
     if (service.options.deprecated) {
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
-                .addMember("%S", "The underlying service is marked deprecated.")
+                .addMember("%S", "The service is deprecated in the Protobuf source file.")
                 .build(),
         )
     } else if (file.options.deprecated) {
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
-                .addMember("%S", "The underlying file is marked deprecated.")
+                .addMember("%S", "The Protobuf source file that defines this service is deprecated.")
                 .build(),
         )
     }
@@ -566,7 +566,7 @@ private fun FunSpec.Builder.addMethodDeprecation(
     if (method.options.deprecated) {
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
-                .addMember("%S", "The underlying service method is marked deprecated.")
+                .addMember("%S", "The method is deprecated in the Protobuf source file.")
                 .build(),
         )
     }
