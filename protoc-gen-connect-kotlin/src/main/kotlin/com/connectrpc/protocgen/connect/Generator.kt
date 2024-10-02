@@ -542,19 +542,19 @@ private fun String.packageToDirectory(): String {
 
 private fun TypeSpec.Builder.addServiceDeprecation(
     service: Descriptors.ServiceDescriptor,
-    file: Descriptors.FileDescriptor
+    file: Descriptors.FileDescriptor,
 ): TypeSpec.Builder {
     if (service.options.deprecated) {
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
                 .addMember("%S", "The underlying service is marked deprecated.")
-                .build()
+                .build(),
         )
     } else if (file.options.deprecated) {
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
                 .addMember("%S", "The underlying file is marked deprecated.")
-                .build()
+                .build(),
         )
     }
     return this
@@ -567,7 +567,7 @@ private fun FunSpec.Builder.addMethodDeprecation(
         this.addAnnotation(
             AnnotationSpec.builder(Deprecated::class)
                 .addMember("%S", "The underlying service method is marked deprecated.")
-                .build()
+                .build(),
         )
     }
     return this
