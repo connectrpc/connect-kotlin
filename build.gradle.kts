@@ -1,7 +1,9 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
     alias(libs.plugins.git)
@@ -128,13 +130,13 @@ allprojects {
 }
 
 subprojects {
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "1.8"
-            languageVersion = "1.6"
-            apiVersion = "1.6"
+    tasks.withType<KotlinJvmCompile> {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+            languageVersion.set(KotlinVersion.KOTLIN_1_7)
+            apiVersion.set(KotlinVersion.KOTLIN_1_7)
             if (JavaVersion.current().isJava9Compatible && project.name != "android") {
-                freeCompilerArgs += "-Xjdk-release=1.8"
+                freeCompilerArgs.add("-Xjdk-release=1.8")
             }
         }
     }

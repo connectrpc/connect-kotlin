@@ -5,8 +5,8 @@ plugins {
 
 tasks {
     compileKotlin {
-        kotlinOptions {
-            freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
 }

@@ -9,9 +9,9 @@ application {
 
 tasks {
     compileKotlin {
-        kotlinOptions {
+        compilerOptions {
             // Generated Kotlin code for protobuf uses RequiresOptIn annotation
-            freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+            freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
     jar {
