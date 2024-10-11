@@ -4,9 +4,9 @@ plugins {
 
 tasks {
     compileKotlin {
-        kotlinOptions {
+        compilerOptions {
             // Generated Kotlin code for protobuf uses OptIn annotation
-            freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+            freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
         }
     }
 }
