@@ -54,7 +54,7 @@ protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref 
 protobuf-kotlinlite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
-testcontainers = { module = "org.testcontainers:testcontainers", version = "1.20.3" }
+testcontainers = { module = "org.testcontainers:testcontainers", version = "1.20.4" }
 
 [plugins]
 git = { id = "com.palantir.git-version", version = "3.1.0" }
