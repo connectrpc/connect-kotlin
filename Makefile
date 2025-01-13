@@ -8,8 +8,8 @@ MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 CACHE := .tmp/cache
-LICENSE_HEADER_YEAR_RANGE := 2022-2023
-LICENSE_HEADER_VERSION := v1.45.0
+LICENSE_HEADER_YEAR_RANGE := 2022-2025
+LICENSE_HEADER_VERSION := v1.49.0
 CONFORMANCE_VERSION := v1.0.3
 PROTOC_VERSION ?= $(shell yq '.versions.protobuf' gradle/libs.versions.toml | cut -d'.' -f2-)
 ifeq ($(PROTOC_VERSION),)
@@ -122,10 +122,10 @@ $(CONNECT_CONFORMANCE): $(CONNECT_CONFORMANCE_DOWNLOAD)
 .PHONY: generate
 generate: $(PROTOC) buildplugin generateconformance generateexamples ## Generate proto files for the entire project.
 	rm -rf protoc-gen-connect-kotlin/build/generated/sources/bufgen || true
-	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin protoc-gen-connect-kotlin/proto
+	buf generate --template protoc-gen-connect-kotlin/buf.gen.yaml -o protoc-gen-connect-kotlin
 	rm -rf extensions/google-java/build/generated/sources/bufgen || true
 	rm -rf extensions/google-javalite/build/generated/sources/bufgen || true
-	buf generate --template extensions/buf.gen.yaml -o extensions buf.build/googleapis/googleapis
+	buf generate --template extensions/buf.gen.yaml -o extensions
 	make licenseheaders
 
 .PHONY: generateconformance
@@ -136,7 +136,7 @@ generateconformance: $(PROTOC) buildplugin ## Generate protofiles for conformanc
 
 .PHONY: generateexamples
 generateexamples: $(PROTOC) buildplugin ## Generate proto files for example apps.
-	buf generate --template examples/buf.gen.yaml -o examples buf.build/connectrpc/eliza
+	buf generate --template examples/buf.gen.yaml -o examples
 
 .PHONY: help
 help: ## Describe useful make targets.

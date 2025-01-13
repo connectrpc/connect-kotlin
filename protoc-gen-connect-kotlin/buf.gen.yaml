@@ -1,12 +1,11 @@
-version: v1
+version: v2
+clean: true
 plugins:
-  - plugin: connect-kotlin
+  - local: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
     out: build/generated/sources/bufgen
-    path: ./protoc-gen-connect-kotlin/build/install/protoc-gen-connect-kotlin/bin/protoc-gen-connect-kotlin
     opt:
       - generateCallbackMethods=true
       - generateCoroutineMethods=true
-  - plugin: java
-    out: build/generated/sources/bufgen
+  - protoc_builtin: java
     protoc_path: .tmp/bin/protoc
-
+    out: build/generated/sources/bufgen

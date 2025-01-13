@@ -61,6 +61,7 @@ allprojects {
                 ),
             )
             target("**/*.kt")
+            targetExclude("**/build/generated/**/*.kt")
         }
         kotlinGradle {
             ktlint().editorConfigOverride(
