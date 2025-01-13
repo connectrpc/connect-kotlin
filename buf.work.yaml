@@ -1,3 +1,0 @@
-version: v1
-directories:
-  - protoc-gen-connect-kotlin/proto

@@ -1,0 +1,16 @@
+version: v2
+modules:
+  - path: protoc-gen-connect-kotlin/proto
+lint:
+  use:
+    - STANDARD
+  except:
+    - FIELD_NOT_REQUIRED
+    - PACKAGE_NO_IMPORT_CYCLE
+  ignore:
+    - protoc-gen-connect-kotlin/proto/no_package.proto
+  rpc_allow_same_request_response: true
+breaking:
+  except:
+    - EXTENSION_NO_DELETE
+    - FIELD_SAME_DEFAULT

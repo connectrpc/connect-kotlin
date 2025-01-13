@@ -1,15 +1,19 @@
-version: v1
+version: v2
 managed:
   enabled: true
-  java_package_prefix: "com.connectrpc"
-types:
-  include:
-    - google.rpc.Status
+  override:
+    - file_option: java_package_prefix
+      value: "com.connectrpc"
+clean: true
 plugins:
-  - plugin: java
+  - protoc_builtin: java
+    protoc_path: .tmp/bin/protoc
     out: google-java/build/generated/sources/bufgen
+  - protoc_builtin: java
     protoc_path: .tmp/bin/protoc
-  - plugin: java
     out: google-javalite/build/generated/sources/bufgen
-    protoc_path: .tmp/bin/protoc
     opt: lite
+inputs:
+  - module: buf.build/googleapis/googleapis
+    types:
+      - google.rpc.Status
