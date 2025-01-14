@@ -118,6 +118,7 @@ class ProtocolClient(
                         }
                         onResult(result)
                     }
+
                     else -> onResult(result)
                 }
             }

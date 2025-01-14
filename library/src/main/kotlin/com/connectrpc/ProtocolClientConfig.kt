@@ -99,9 +99,11 @@ class ProtocolClientConfig @JvmOverloads constructor(
             NetworkProtocol.CONNECT -> { params ->
                 ConnectInterceptor(params)
             }
+
             NetworkProtocol.GRPC -> { params ->
                 GRPCInterceptor(params)
             }
+
             NetworkProtocol.GRPC_WEB -> { params ->
                 GRPCWebInterceptor(params)
             }

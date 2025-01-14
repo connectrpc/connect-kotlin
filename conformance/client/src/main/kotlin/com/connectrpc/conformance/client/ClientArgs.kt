@@ -39,17 +39,21 @@ data class ClientArgs(
                             "suspend" -> {
                                 unaryInvokeStyle = UnaryInvokeStyle.SUSPEND
                             }
+
                             "callback" -> {
                                 unaryInvokeStyle = UnaryInvokeStyle.CALLBACK
                             }
+
                             "blocking" -> {
                                 unaryInvokeStyle = UnaryInvokeStyle.BLOCKING
                             }
+
                             else -> {
                                 throw RuntimeException("value for $arg option should be 'suspend', 'callback', or 'blocking'; instead got '$v'")
                             }
                         }
                     }
+
                     "-v" -> {
                         if (i == args.size - 1) {
                             throw RuntimeException("$arg option requires a value")
@@ -62,6 +66,7 @@ data class ClientArgs(
                         }
                         verbosity = intVal
                     }
+
                     else -> {
                         if (arg.startsWith("-")) {
                             throw RuntimeException("unknown option: $arg")

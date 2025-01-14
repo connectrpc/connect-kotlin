@@ -58,9 +58,11 @@ internal class TracingHTTPClient(
                 is StreamResult.Headers -> {
                     printer.printlnWithStackTrace("Received HTTP response headers")
                 }
+
                 is StreamResult.Message -> {
                     printer.printlnWithStackTrace("Received HTTP response data (${result.message.size} bytes)")
                 }
+
                 is StreamResult.Complete -> {
                     if (result.cause != null) {
                         printer.printlnWithStackTrace("Failed to complete HTTP response (code=${result.cause!!.code}): ${result.cause!!.message.orEmpty()}")

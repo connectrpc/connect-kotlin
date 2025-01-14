@@ -89,6 +89,7 @@ class JavaHelpers {
                     result.response.raw = respMsg
                     builder.setResponse(respMsg)
                 }
+
                 is ClientCompatResponse.Result.ErrorResult -> {
                     builder.setError(
                         ClientErrorResult.newBuilder()
@@ -241,10 +242,13 @@ class JavaHelpers {
             get() = when (msg.cancel.cancelTimingCase) {
                 CancelTimingCase.CANCELTIMING_NOT_SET, null ->
                     null
+
                 CancelTimingCase.BEFORE_CLOSE_SEND ->
                     ClientCompatRequest.Cancel.BeforeCloseSend()
+
                 CancelTimingCase.AFTER_CLOSE_SEND_MS ->
                     ClientCompatRequest.Cancel.AfterCloseSendMs(msg.cancel.afterCloseSendMs)
+
                 CancelTimingCase.AFTER_NUM_RESPONSES ->
                     ClientCompatRequest.Cancel.AfterNumResponses(msg.cancel.afterNumResponses)
             }
