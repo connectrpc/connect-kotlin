@@ -145,6 +145,7 @@ class Client(
                 UnaryInvokeStyle.CALLBACK -> {
                     canceler = client.execute(msg, req.requestHeaders, resp::complete)
                 }
+
                 UnaryInvokeStyle.SUSPEND -> {
                     val job = launch {
                         try {
@@ -166,6 +167,7 @@ class Client(
                     }
                     canceler = { job.cancel() }
                 }
+
                 UnaryInvokeStyle.BLOCKING -> {
                     val call = client.blocking(msg, req.requestHeaders)
                     launch(Dispatchers.IO) {
@@ -182,6 +184,7 @@ class Client(
                         canceler()
                     }
                 }
+
                 else -> {
                     // We already validated the case above.
                     // So this case means no cancellation.
@@ -226,12 +229,14 @@ class Client(
                 is Cancel.BeforeCloseSend -> {
                     stream.close()
                 }
+
                 is Cancel.AfterCloseSendMs -> {
                     launch {
                         delay(cancel.millis.toLong())
                         stream.close()
                     }
                 }
+
                 else -> {
                     // We already validated the case above.
                     // So this case means no cancellation.
@@ -287,8 +292,10 @@ class Client(
         return when (req.streamType) {
             StreamType.HALF_DUPLEX_BIDI_STREAM ->
                 handleHalfDuplexBidi(client, req)
+
             StreamType.FULL_DUPLEX_BIDI_STREAM ->
                 handleFullDuplexBidi(client, req)
+
             else ->
                 throw RuntimeException("specified method ${req.method} is bidi-stream but stream type indicates ${req.streamType}")
         }
@@ -322,11 +329,13 @@ class Client(
                     stream.close() // cancel
                     stream.requests.close() // close send
                 }
+
                 is Cancel.AfterCloseSendMs -> {
                     stream.requests.close() // close send
                     delay(cancel.millis.toLong())
                     stream.close() // cancel
                 }
+
                 else -> {
                     stream.requests.close() // close send
                 }
@@ -383,11 +392,13 @@ class Client(
                     stream.close() // cancel
                     stream.requests.close() // close send
                 }
+
                 is Cancel.AfterCloseSendMs -> {
                     stream.requests.close() // close send
                     delay(cancel.millis.toLong())
                     stream.close() // cancel
                 }
+
                 else -> {
                     stream.requests.close() // close send
                 }
@@ -427,6 +438,7 @@ class Client(
                     numUnsentRequests = numUnsent,
                 )
             }
+
             is ResponseMessage.Failure -> {
                 ClientResponseResult(
                     headers = result.headers,
@@ -544,6 +556,7 @@ class Client(
     private fun asOkHttpProtocols(httpVersion: HttpVersion, useTls: Boolean): List<okhttp3.Protocol> {
         return when (httpVersion) {
             HttpVersion.HTTP_1_1 -> listOf(okhttp3.Protocol.HTTP_1_1)
+
             HttpVersion.HTTP_2 ->
                 if (useTls) {
                     // okhttp *requires* that protocols contains HTTP_1_1

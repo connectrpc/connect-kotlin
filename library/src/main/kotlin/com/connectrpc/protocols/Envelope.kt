@@ -86,6 +86,7 @@ class Envelope {
                     }
                     compressionPool.decompress(message)
                 }
+
                 else -> {
                     message
                 }

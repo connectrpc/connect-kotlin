@@ -101,7 +101,9 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             return when (req.method) {
                 "POST" -> req.headers[CONNECT_PROTOCOL_VERSION_KEY].orEmpty() == CONNECT_PROTOCOL_VERSION_VALUE &&
                     req.headers["Content-Type"].orEmpty().startsWith("application/")
+
                 "GET" -> req.url.queryParameter(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY) == GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE
+
                 else -> false
             }
         }

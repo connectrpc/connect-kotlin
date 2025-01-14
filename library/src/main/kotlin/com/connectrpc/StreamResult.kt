@@ -60,9 +60,11 @@ sealed class StreamResult<Output> {
             is Headers -> {
                 onHeaders(this)
             }
+
             is Message -> {
                 onMessage(this)
             }
+
             is Complete -> {
                 onCompletion(this)
             }

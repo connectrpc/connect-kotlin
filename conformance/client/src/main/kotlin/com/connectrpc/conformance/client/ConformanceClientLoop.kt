@@ -117,6 +117,7 @@ class ConformanceClientLoop(
                     }
                     throw EOFException("unexpected EOF: read $offs of $len expected bytes")
                 }
+
                 else -> {
                     offs += n
                     remain -= n

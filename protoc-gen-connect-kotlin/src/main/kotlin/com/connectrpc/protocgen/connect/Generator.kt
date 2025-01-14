@@ -318,7 +318,9 @@ class Generator : CodeGenerator {
             }
             when (method.options.idempotencyLevel) {
                 IdempotencyLevel.NO_SIDE_EFFECTS -> methodSpecBuilder.addStatement("idempotency = Idempotency.${Idempotency.NO_SIDE_EFFECTS.name},")
+
                 IdempotencyLevel.IDEMPOTENT -> methodSpecBuilder.addStatement("idempotency = Idempotency.${Idempotency.IDEMPOTENT.name},")
+
                 else -> {
                     // Use default value in method spec.
                 }
