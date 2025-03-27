@@ -19,6 +19,7 @@ import com.connectrpc.Headers
 import com.connectrpc.ServerOnlyStreamInterface
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.runBlocking
 
 /**
  * Concrete implementation of [ServerOnlyStreamInterface].
@@ -56,5 +57,9 @@ internal class ServerOnlyStream<Input, Output>(
 
     override fun isClosed(): Boolean {
         return messageStream.isClosed()
+    }
+
+    protected fun finalize() {
+        runBlocking { receiveClose() }
     }
 }

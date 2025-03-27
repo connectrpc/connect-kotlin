@@ -21,6 +21,7 @@ import com.connectrpc.http.Stream
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 
 /**
@@ -73,5 +74,9 @@ internal class BidirectionalStream<Input, Output>(
 
     override fun isReceiveClosed(): Boolean {
         return stream.isReceiveClosed()
+    }
+
+    protected fun finalize() {
+        runBlocking { receiveClose() }
     }
 }

@@ -22,6 +22,7 @@ import com.connectrpc.Headers
 import com.connectrpc.asConnectException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.runBlocking
 
 /**
  * Concrete implementation of [ClientOnlyStreamInterface].
@@ -81,5 +82,9 @@ internal class ClientOnlyStream<Input, Output>(
 
     override fun isClosed(): Boolean {
         return messageStream.isClosed()
+    }
+
+    protected fun finalize() {
+        runBlocking { cancel() }
     }
 }
