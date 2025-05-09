@@ -95,6 +95,32 @@ allprojects {
             jdkVersion.set(8)
         }
     }
+}
+
+subprojects {
+    tasks.withType<KotlinJvmCompile> {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_1_8)
+            languageVersion.set(KotlinVersion.KOTLIN_1_8)
+            apiVersion.set(KotlinVersion.KOTLIN_1_8)
+            if (JavaVersion.current().isJava9Compatible && project.name != "android") {
+                freeCompilerArgs.add("-Xjdk-release=1.8")
+            }
+        }
+    }
+    tasks.withType<JavaCompile> {
+        val defaultArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
+        if (JavaVersion.current().isJava9Compatible) {
+            doFirst {
+                options.compilerArgs = listOf("--release", "8") + defaultArgs
+            }
+        } else {
+            options.compilerArgs = defaultArgs
+        }
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+        targetCompatibility = JavaVersion.VERSION_1_8.toString()
+        options.encoding = Charsets.UTF_8.toString()
+    }
     plugins.withId("com.vanniktech.maven.publish.base") {
         configure<MavenPublishBaseExtension> {
             val isAutoReleased = project.hasProperty("signingInMemoryKey")
@@ -127,31 +153,5 @@ allprojects {
                 }
             }
         }
-    }
-}
-
-subprojects {
-    tasks.withType<KotlinJvmCompile> {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_1_8)
-            languageVersion.set(KotlinVersion.KOTLIN_1_8)
-            apiVersion.set(KotlinVersion.KOTLIN_1_8)
-            if (JavaVersion.current().isJava9Compatible && project.name != "android") {
-                freeCompilerArgs.add("-Xjdk-release=1.8")
-            }
-        }
-    }
-    tasks.withType<JavaCompile> {
-        val defaultArgs = listOf("-Xdoclint:none", "-Xlint:none", "-nowarn")
-        if (JavaVersion.current().isJava9Compatible) {
-            doFirst {
-                options.compilerArgs = listOf("--release", "8") + defaultArgs
-            }
-        } else {
-            options.compilerArgs = defaultArgs
-        }
-        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-        targetCompatibility = JavaVersion.VERSION_1_8.toString()
-        options.encoding = Charsets.UTF_8.toString()
     }
 }
