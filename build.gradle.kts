@@ -98,7 +98,7 @@ allprojects {
     plugins.withId("com.vanniktech.maven.publish.base") {
         configure<MavenPublishBaseExtension> {
             val isAutoReleased = project.hasProperty("signingInMemoryKey")
-            publishToMavenCentral(SonatypeHost.S01)
+            publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, automaticRelease = true)
             if (isAutoReleased) {
                 signAllPublications()
             }

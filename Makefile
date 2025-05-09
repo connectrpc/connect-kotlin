@@ -166,9 +166,8 @@ lintfix: ## Applies the lint changes.
 	./gradlew $(GRADLE_ARGS) spotlessApply
 
 .PHONY: release
-release: generate ## Upload artifacts to Sonatype Nexus.
-	./gradlew $(GRADLE_ARGS) --info publish --stacktrace --no-daemon --no-parallel
-	./gradlew $(GRADLE_ARGS) --info releaseRepository
+release: generate ## Upload artifacts to Maven Central.
+	./gradlew $(GRADLE_ARGS) --info publishAndReleaseToMavenCentral --stacktrace --no-daemon --no-parallel --no-configuration-cache
 
 .PHONY: releaselocal
 releaselocal: ## Release artifacts to local maven repository.
