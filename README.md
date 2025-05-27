@@ -1,5 +1,5 @@
-![Build](https://github.com/connectrpc/connect-kotlin/actions/workflows/ci.yml/badge.svg)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build](https://github.com/connectrpc/connect-kotlin/actions/workflows/ci.yml/badge.svg)](https://github.com/connectrpc/connect-kotlin/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/connectrpc/connect-kotlin.svg?color=blue&label=License)](https://opensource.org/licenses/Apache-2.0)
 
 Connect-Kotlin
 ==============
@@ -121,7 +121,7 @@ a fully functional Android application using Connect-Kotlin.
 Additionally, there are pure Kotlin examples that demonstrate a simple main executable using Connect-Kotlin:
 - [`/examples/kotlin-google-java`](./examples/kotlin-google-java): A simple Kotlin main
 executable using Google's Java Protobuf generator plugin
-- [`/examples/kotlin-google-javalite`](./examples/kotlin-google-java): A simple Kotlin main
+- [`/examples/kotlin-google-javalite`](./examples/kotlin-google-javalite): A simple Kotlin main
 executable using Google's Javalite Protobuf generator plugin
 
 The examples demonstrates:
