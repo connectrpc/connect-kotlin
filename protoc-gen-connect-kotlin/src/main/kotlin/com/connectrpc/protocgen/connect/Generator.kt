@@ -518,6 +518,7 @@ class Generator : CodeGenerator {
             .replace("""[""", "&#91;")
             .replace("""]""", "&#93;")
             .replace("@", "&#64;")
+            .replace("%", "%%")
     }
 }
 
