@@ -25,5 +25,6 @@ service EvilCommentsService {
     // @ is valid in KDoc, but not in proto.
     // Comments in KDoc use C-style block comments, so */ and /* should be escaped.
     // [ and ] characters should also be escaped.
+    // % characters should be escaped.
     rpc EvilComments(EvilCommentsRequest) returns (EvilCommentsResponse) {}
 }
