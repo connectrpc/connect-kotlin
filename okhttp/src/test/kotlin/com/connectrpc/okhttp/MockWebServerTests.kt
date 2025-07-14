@@ -27,10 +27,10 @@ import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.protocols.NetworkProtocol
 import kotlinx.coroutines.test.runTest
-import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import mockwebserver3.MockResponse
 import mockwebserver3.junit4.MockWebServerRule
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
