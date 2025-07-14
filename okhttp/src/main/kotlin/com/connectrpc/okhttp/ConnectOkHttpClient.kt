@@ -167,7 +167,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                         var responseBuffer: Buffer? = null
                         var connEx: ConnectException? = null
                         try {
-                            responseBuffer = response.body?.source()?.use { bufferedSource ->
+                            responseBuffer = response.body.source().use { bufferedSource ->
                                 val buffer = Buffer()
                                 buffer.writeAll(bufferedSource)
                                 buffer

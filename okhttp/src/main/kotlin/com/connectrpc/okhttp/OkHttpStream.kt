@@ -119,7 +119,7 @@ private class ResponseCallback(
                 return@runBlocking
             }
             response.use { resp ->
-                resp.body!!.source().use { sourceBuffer ->
+                resp.body.source().use { sourceBuffer ->
                     var connEx: ConnectException? = null
                     try {
                         while (!sourceBuffer.exhausted()) {
