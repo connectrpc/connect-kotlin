@@ -14,7 +14,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
       - uses: bufbuild/buf-setup-action@v1
         with:
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v3
