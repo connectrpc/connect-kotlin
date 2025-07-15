@@ -27,9 +27,10 @@ import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.protocols.NetworkProtocol
 import kotlinx.coroutines.test.runTest
+import mockwebserver3.MockResponse
+import mockwebserver3.junit4.MockWebServerRule
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
-import okhttp3.mockwebserver.MockResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -45,16 +46,16 @@ class MockWebServerTests {
     @Test
     fun `invalid compressed failure response is handled correctly`() = runTest {
         mockWebServerRule.server.enqueue(
-            MockResponse().apply {
+            MockResponse.Builder().apply {
                 addHeader("accept-encoding", "gzip")
                 addHeader("content-encoding", "gzip")
-                setBody("{}")
-                setResponseCode(401)
-            },
+                body("{}")
+                code(401)
+            }.build(),
         )
         val response = createClient().say(sayRequest { sentence = "hello" })
         mockWebServerRule.server.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+            assertThat(target).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
         assertThat(response).isInstanceOf(ResponseMessage::class.java)
         response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
@@ -63,16 +64,16 @@ class MockWebServerTests {
     @Test
     fun `invalid compressed response data is handled correctly`() = runTest {
         mockWebServerRule.server.enqueue(
-            MockResponse().apply {
+            MockResponse.Builder().apply {
                 addHeader("accept-encoding", "gzip")
                 addHeader("content-encoding", "gzip")
-                setBody("this isn't gzipped")
-                setResponseCode(200)
-            },
+                body("this isn't gzipped")
+                code(200)
+            }.build(),
         )
         val response = createClient().say(sayRequest { sentence = "hello" })
         mockWebServerRule.server.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+            assertThat(target).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
         assertThat(response).isInstanceOf(ResponseMessage::class.java)
         response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
@@ -81,16 +82,16 @@ class MockWebServerTests {
     @Test
     fun `invalid protobuf response data is handled correctly`() = runTest {
         mockWebServerRule.server.enqueue(
-            MockResponse().apply {
+            MockResponse.Builder().apply {
                 addHeader("accept-encoding", "gzip")
                 addHeader("content-type", "application/proto")
-                setBody("this isn't valid protobuf")
-                setResponseCode(200)
-            },
+                body("this isn't valid protobuf")
+                code(200)
+            }.build(),
         )
         val response = createClient().say(sayRequest { sentence = "hello" })
         mockWebServerRule.server.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+            assertThat(target).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
         assertThat(response).isInstanceOf(ResponseMessage::class.java)
         response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
@@ -99,16 +100,16 @@ class MockWebServerTests {
     @Test
     fun `invalid json response data is handled correctly`() = runTest {
         mockWebServerRule.server.enqueue(
-            MockResponse().apply {
+            MockResponse.Builder().apply {
                 addHeader("accept-encoding", "gzip")
                 addHeader("content-type", "application/json")
-                setBody("{ invalid json")
-                setResponseCode(200)
-            },
+                body("{ invalid json")
+                code(200)
+            }.build(),
         )
         val response = createClient(serializationStrategy = GoogleJavaJSONStrategy()).say(sayRequest { sentence = "hello" })
         mockWebServerRule.server.takeRequest().apply {
-            assertThat(path).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
+            assertThat(target).isEqualTo("/connectrpc.eliza.v1.ElizaService/Say")
         }
         assertThat(response).isInstanceOf(ResponseMessage::class.java)
         response.failure { assertThat(it.cause.code).isEqualTo(Code.INTERNAL_ERROR) }
