@@ -11,7 +11,6 @@ moshi = "1.15.2"
 okhttp = "5.2.1"
 okio = "3.16.2"
 protobuf = "4.33.0"
-slf4j = "2.0.17"
 spotless = "8.0.0"
 
 [libraries]
@@ -33,11 +32,9 @@ junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
-kotlin-jsr223 = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
 kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
-kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 maven-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenplugin" }
 mockito = { module = "org.mockito.kotlin:mockito-kotlin", version = "4.1.0" }
@@ -52,9 +49,7 @@ protobuf-java-util = { module = "com.google.protobuf:protobuf-java-util", versio
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
 protobuf-kotlin = { module = "com.google.protobuf:protobuf-kotlin", version.ref = "protobuf" }
 protobuf-kotlinlite = { module = "com.google.protobuf:protobuf-kotlin-lite", version.ref = "protobuf" }
-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
-testcontainers = { module = "org.testcontainers:testcontainers", version = "1.21.3" }
 
 [plugins]
 git = { id = "com.palantir.git-version", version = "4.0.0" }
