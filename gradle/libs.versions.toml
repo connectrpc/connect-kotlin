@@ -10,7 +10,7 @@ mavenplugin = "0.34.0"
 moshi = "1.15.2"
 okhttp = "5.2.1"
 okio = "3.16.1"
-protobuf = "4.32.1"
+protobuf = "4.33.0"
 slf4j = "2.0.17"
 spotless = "8.0.0"
 
