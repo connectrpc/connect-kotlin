@@ -2,7 +2,7 @@
 android = "4.1.1.4"
 assertj = "3.27.6"
 coroutines = "1.10.2"
-dokka = "2.0.0"
+dokka = "2.1.0"
 junit = "4.13.2"
 kotlin = "2.2.21"
 kotlinpoet = "2.2.0"
