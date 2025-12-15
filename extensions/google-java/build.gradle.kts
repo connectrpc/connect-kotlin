@@ -34,7 +34,7 @@ dependencies {
 
 mavenPublishing {
     configure(
-        KotlinJvm(javadocJar = Dokka("dokkaHtml")),
+        KotlinJvm(javadocJar = Dokka("dokkaGeneratePublicationHtml")),
     )
 }
 

@@ -1,5 +1,4 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
@@ -7,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 plugins {
     alias(libs.plugins.git)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.dokka)
 }
 
 apply(plugin = "com.vanniktech.maven.publish.base")
@@ -27,10 +27,8 @@ val releaseVersion = project.findProperty("releaseVersion") as String? ?: snapsh
 
 buildscript {
     dependencies {
-        classpath(libs.dokka.core)
         classpath(libs.maven.plugin)
         classpath(libs.android.plugin)
-        classpath(libs.dokka.plugin)
         classpath(libs.kotlin.plugin)
         classpath(libs.spotless)
     }
@@ -49,6 +47,7 @@ allprojects {
         google()
     }
     apply(plugin = "com.diffplug.spotless")
+    apply(plugin = "org.jetbrains.dokka")
     spotless {
         isEnforceCheck = false // Disables lint on gradle builds.
         kotlin {
@@ -88,7 +87,7 @@ allprojects {
             }
         }
     }
-    tasks.withType<DokkaTask>().configureEach {
+    dokka {
         dokkaSourceSets.configureEach {
             skipDeprecated.set(true)
             jdkVersion.set(8)
