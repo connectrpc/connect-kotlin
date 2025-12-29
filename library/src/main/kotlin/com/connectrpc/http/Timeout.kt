@@ -14,15 +14,18 @@
 
 package com.connectrpc.http
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import java.util.Timer
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.timerTask
+import kotlinx.coroutines.launch
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.Duration
 
 /**
  * Represents the timeout state for an RPC.
  */
+@OptIn(ExperimentalAtomicApi::class)
 class Timeout private constructor(
     private val timeoutAction: Cancelable,
 ) {
@@ -68,19 +71,20 @@ class Timeout private constructor(
 
     companion object {
         /**
-         * A default implementation that a Timer backed by a single daemon thread.
-         * The thread isn't started until the first cancelation is scheduled.
+         * A default implementation using coroutines for scheduling.
          */
         val DEFAULT_SCHEDULER = object : Scheduler {
+            private val scope = CoroutineScope(Dispatchers.IO)
+
             override fun scheduleTimeout(delay: Duration, action: Cancelable): Timeout {
                 val timeout = Timeout(action)
-                val task = timerTask { timeout.trigger() }
-                timer.value.schedule(task, delay.inWholeMilliseconds)
-                timeout.onCancel = { task.cancel() }
+                val job = scope.launch {
+                    delay(delay)
+                    timeout.trigger()
+                }
+                timeout.onCancel = { job.cancel() }
                 return timeout
             }
         }
-
-        private val timer = lazy { Timer(Scheduler::class.qualifiedName, true) }
     }
 }

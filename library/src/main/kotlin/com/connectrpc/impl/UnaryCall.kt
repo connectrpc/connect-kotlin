@@ -18,8 +18,9 @@ import com.connectrpc.ResponseMessage
 import com.connectrpc.UnaryBlockingCall
 import com.connectrpc.http.Cancelable
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 /**
  * Callback that handles asynchronous response.
@@ -39,16 +40,17 @@ internal typealias AsyncOperation<T> = (callback: ResponseCallback<T>) -> Cancel
  * Concrete implementation of [UnaryBlockingCall] which transforms
  * the given async operation into a synchronous/blocking one.
  */
+@OptIn(ExperimentalAtomicApi::class)
 internal class UnaryCall<Output>(
     private val block: AsyncOperation<Output>,
 ) : UnaryBlockingCall<Output> {
-    private val executed = AtomicBoolean()
+    private val executed = AtomicBoolean(false)
 
     /**
      * initialized to null and then replaced with non-null
      * function when [execute] or [cancel] is called.
      */
-    private var cancelFunc = AtomicReference<Cancelable>()
+    private val cancelFunc = AtomicReference<Cancelable?>(null)
 
     /**
      * Execute the underlying operation and block until it completes.
@@ -57,9 +59,9 @@ internal class UnaryCall<Output>(
         check(executed.compareAndSet(false, true)) { "already executed" }
 
         val resultReady = CountDownLatch(1)
-        val result = AtomicReference<ResponseMessage<Output>>()
+        val result = AtomicReference<ResponseMessage<Output>?>(null)
         val cancelFn = block { responseMessage ->
-            result.set(responseMessage)
+            result.store(responseMessage)
             resultReady.countDown()
         }
 
@@ -70,16 +72,16 @@ internal class UnaryCall<Output>(
             cancelFn()
         }
         resultReady.await()
-        return result.get()
+        // result is guaranteed to be non-null after await() returns
+        return checkNotNull(result.load()) { "result was not set" }
     }
 
     /**
      * Cancel the underlying request.
      */
     override fun cancel() {
-        val cancelFn = cancelFunc.getAndSet {} // set to (non-null) no-op
-        if (cancelFn != null) {
-            cancelFn()
-        }
+        val noOp: Cancelable = {}
+        val cancelFn = cancelFunc.exchange(noOp) // set to (non-null) no-op
+        cancelFn?.invoke()
     }
 }
