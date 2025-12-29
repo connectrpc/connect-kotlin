@@ -37,13 +37,16 @@ import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.dispatchIn
 import com.connectrpc.http.transform
 import com.connectrpc.protocols.GETConfiguration
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
+import io.ktor.http.appendPathSegments
+import io.ktor.http.encodedPath
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okio.Buffer
-import java.net.URI
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
@@ -59,19 +62,12 @@ class ProtocolClient(
     private val config: ProtocolClientConfig,
 ) : ProtocolClientInterface {
 
-    private val baseURIWithTrailingSlash = if (config.baseUri.path != null && config.baseUri.path.endsWith('/')) {
-        config.baseUri
+    private val baseUrlWithTrailingSlash: Url = if (config.baseUrl.encodedPath.endsWith('/')) {
+        config.baseUrl
     } else {
-        val path = config.baseUri.path ?: ""
-        URI(
-            config.baseUri.scheme,
-            config.baseUri.userInfo,
-            config.baseUri.host,
-            config.baseUri.port,
-            "$path/",
-            config.baseUri.query,
-            config.baseUri.fragment,
-        )
+        URLBuilder(config.baseUrl).apply {
+            encodedPath += "/"
+        }.build()
     }
 
     override fun <Input : Any, Output : Any> unary(
@@ -365,5 +361,5 @@ class ProtocolClient(
         }
     }
 
-    private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>) = baseURIWithTrailingSlash.resolve(methodSpec.path).toURL()
+    private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>): Url = URLBuilder(baseUrlWithTrailingSlash).appendPathSegments(methodSpec.path).build()
 }

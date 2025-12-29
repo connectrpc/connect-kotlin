@@ -34,10 +34,13 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.clone
 import com.squareup.moshi.Moshi
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
+import io.ktor.http.appendPathSegments
+import io.ktor.http.encodedPath
 import okio.Buffer
 import okio.ByteString
 import okio.ByteString.Companion.decodeBase64
-import java.net.URL
 import kotlin.time.Duration
 
 /**
@@ -355,22 +358,18 @@ internal class ConnectInterceptor(
         codec: Codec<*>,
         payload: Buffer,
         requestCompression: RequestCompression?,
-    ): URL {
-        val baseURL = httpRequest.url
-        val methodSpec = httpRequest.methodSpec
-        val params = mutableListOf<String>()
-        if (requestCompression?.shouldCompress(payload) == true) {
-            params.add("${GETConstants.COMPRESSION_QUERY_PARAM_KEY}=${requestCompression.compressionPool.name()}")
-        }
-        params.add("${GETConstants.MESSAGE_QUERY_PARAM_KEY}=${payload.readByteString().base64Url()}")
-        params.add("${GETConstants.BASE64_QUERY_PARAM_KEY}=1")
-        params.add("${GETConstants.ENCODING_QUERY_PARAM_KEY}=${codec.encodingName()}")
-        params.add("${GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY}=${GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE}")
-        params.sort()
-        val queryParams = params.joinToString("&")
-        val baseURI = baseURL.toURI()
-            .resolve("/${methodSpec.path}?$queryParams")
-        return baseURI.toURL()
+    ): Url {
+        // The httpRequest.url already contains the full path including methodSpec.path
+        // (added by ProtocolClient.urlFromMethodSpec), so we just need to add query parameters.
+        return URLBuilder(httpRequest.url).apply {
+            if (requestCompression?.shouldCompress(payload) == true) {
+                parameters.append(GETConstants.COMPRESSION_QUERY_PARAM_KEY, requestCompression.compressionPool.name())
+            }
+            parameters.append(GETConstants.MESSAGE_QUERY_PARAM_KEY, payload.readByteString().base64Url())
+            parameters.append(GETConstants.BASE64_QUERY_PARAM_KEY, "1")
+            parameters.append(GETConstants.ENCODING_QUERY_PARAM_KEY, codec.encodingName())
+            parameters.append(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY, GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE)
+        }.build()
     }
 
     private fun Headers.toLowercase(): Headers {

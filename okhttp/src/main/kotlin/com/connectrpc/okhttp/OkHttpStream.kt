@@ -49,7 +49,7 @@ internal fun OkHttpClient.initializeStream(
 ): Stream {
     val requestBody = PipeRequestBody(duplex, request.contentType.toMediaType())
     val builder = Request.Builder()
-        .url(request.url)
+        .url(request.url.toString())
         .method(HTTPMethod.POST.string, requestBody) // streams are always POSTs
     for (entry in request.headers) {
         for (values in entry.value) {

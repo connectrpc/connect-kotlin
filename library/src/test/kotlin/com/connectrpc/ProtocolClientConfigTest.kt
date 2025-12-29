@@ -15,30 +15,35 @@
 package com.connectrpc
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.fail
 import org.junit.Test
 import org.mockito.kotlin.mock
-import java.net.MalformedURLException
 
 class ProtocolClientConfigTest {
 
     @Test
-    fun hostUri() {
+    fun hostUrl() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = mock { },
         )
-        assertThat(config.baseUri.host).isEqualTo("connectrpc.com")
-        assertThat(config.baseUri.toURL()).isNotNull()
+        assertThat(config.baseUrl.host).isEqualTo("connectrpc.com")
     }
 
-    @Test(expected = MalformedURLException::class)
-    fun unsupportedSchemeErrorsWhenTranslatingToURL() {
+    @Test
+    fun hostUrlWithPathPrefix() {
         val config = ProtocolClientConfig(
+            host = "https://connectrpc.com/api/v1",
+            serializationStrategy = mock { },
+        )
+        assertThat(config.baseUrl.host).isEqualTo("connectrpc.com")
+        assertThat(config.baseUrl.encodedPath).isEqualTo("/api/v1")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun unsupportedSchemeErrors() {
+        ProtocolClientConfig(
             host = "xhtp://connectrpc.com",
             serializationStrategy = mock { },
         )
-        config.baseUri.toURL()
-        fail<Unit>("expecting URL construction to fail")
     }
 }
