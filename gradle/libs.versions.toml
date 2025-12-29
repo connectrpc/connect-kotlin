@@ -2,6 +2,7 @@
 android = "4.1.1.4"
 assertj = "3.27.6"
 coroutines = "1.10.2"
+ktor = "3.3.3"
 dokka = "2.1.0"
 junit = "4.13.2"
 kotlin = "2.2.21"
@@ -34,6 +35,7 @@ kotlin-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
+ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 maven-plugin = { module = "com.vanniktech:gradle-maven-publish-plugin", version.ref = "mavenplugin" }
 mockito = { module = "org.mockito.kotlin:mockito-kotlin", version = "4.1.0" }
 moshiKotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }

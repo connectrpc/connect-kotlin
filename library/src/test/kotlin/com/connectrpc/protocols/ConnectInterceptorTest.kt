@@ -38,7 +38,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.net.URL
+import io.ktor.http.Url
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -72,7 +72,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
@@ -106,7 +106,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
@@ -135,7 +135,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -164,7 +164,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -194,7 +194,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -369,7 +369,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -402,7 +402,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
@@ -431,7 +431,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -694,7 +694,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -732,7 +732,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -746,7 +746,7 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        assertThat(request.url.query).isNull()
+        assertThat(request.url.encodedQuery).isEmpty()
         assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
@@ -762,7 +762,7 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -797,7 +797,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -811,11 +811,11 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        assertThat(request.url.query).isNull()
+        assertThat(request.url.encodedQuery).isEmpty()
         assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
-    private fun parseQuery(request: HTTPRequest) = request.url.query
+    private fun parseQuery(request: HTTPRequest) = request.url.encodedQuery
         .split("&")
         .map { str ->
             val split = str.split("=")

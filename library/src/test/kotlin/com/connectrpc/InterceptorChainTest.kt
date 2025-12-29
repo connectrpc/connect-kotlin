@@ -27,7 +27,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.net.URL
+import io.ktor.http.Url
 
 private val UNARY_METHOD_SPEC = MethodSpec(
     path = "",
@@ -76,7 +76,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_unary() {
-        val response = unaryChain.requestFunction(UnaryHTTPRequest(URL("https://connectrpc.com"), "", null, emptyMap(), UNARY_METHOD_SPEC, Buffer()))
+        val response = unaryChain.requestFunction(UnaryHTTPRequest(Url("https://connectrpc.com"), "", null, emptyMap(), UNARY_METHOD_SPEC, Buffer()))
         assertThat(response.headers["id"]).containsExactly("1", "2", "3", "4")
     }
 
@@ -88,7 +88,7 @@ class InterceptorChainTest {
 
     @Test
     fun fifo_request_stream() {
-        val request = streamingChain.requestFunction(HTTPRequest(URL("https://connectrpc.com"), "", null, emptyMap(), STREAM_METHOD_SPEC))
+        val request = streamingChain.requestFunction(HTTPRequest(Url("https://connectrpc.com"), "", null, emptyMap(), STREAM_METHOD_SPEC))
         assertThat(request.headers["id"]).containsExactly("1", "2", "3", "4")
     }
 

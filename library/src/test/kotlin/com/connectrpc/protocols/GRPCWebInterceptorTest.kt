@@ -34,7 +34,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.net.URL
+import io.ktor.http.Url
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -63,7 +63,7 @@ class GRPCWebInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "",
                 timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
@@ -95,7 +95,7 @@ class GRPCWebInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "",
                 timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
@@ -124,7 +124,7 @@ class GRPCWebInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "",
                 timeout = null,
                 headers = emptyMap(),
@@ -154,7 +154,7 @@ class GRPCWebInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "",
                 timeout = null,
                 headers = emptyMap(),
@@ -349,7 +349,7 @@ class GRPCWebInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -380,7 +380,7 @@ class GRPCWebInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("X-User-Agent" to listOf("custom-user-agent")),
@@ -408,7 +408,7 @@ class GRPCWebInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
