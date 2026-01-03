@@ -135,7 +135,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             null
         }
         val callRequest = builder
-            .url(request.url)
+            .url(request.url.toString())
             .method(method, requestBody)
             .build()
         val newCall = unaryClient.newCall(callRequest)

@@ -20,6 +20,7 @@ dependencies {
     // Part of API contract
     api(libs.kotlin.coroutines.core)
     api(libs.okio.core)
+    api(libs.ktor.http)
 
     implementation(libs.moshiKotlin)
 
