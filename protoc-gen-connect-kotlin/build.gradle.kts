@@ -31,6 +31,7 @@ tasks {
 
 dependencies {
     implementation(project(":library"))
+    implementation(project(":library-server"))
     implementation(libs.protobuf.java)
     implementation(libs.kotlinpoet)
 
