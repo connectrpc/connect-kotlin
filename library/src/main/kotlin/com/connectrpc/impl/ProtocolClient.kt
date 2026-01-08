@@ -44,12 +44,14 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okio.Buffer
 import java.net.URI
-import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.atomics.AtomicReference
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
 
 /**
  * Concrete implementation of the [ProtocolClientInterface].
  */
+@OptIn(ExperimentalAtomicApi::class)
 class ProtocolClient(
     // The client to use for performing requests.
     private val httpClient: HTTPClientInterface,
@@ -98,11 +100,11 @@ class ProtocolClient(
             )
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
-            val timeoutRef = AtomicReference<Timeout>(null)
+            val timeoutRef = AtomicReference<Timeout?>(null)
             val finalOnResult: (ResponseMessage<Output>) -> Unit = handleResult@{ result ->
                 when (result) {
                     is ResponseMessage.Failure -> {
-                        val timeout = timeoutRef.get()
+                        val timeout = timeoutRef.load()
                         if (timeout != null) {
                             timeout.cancel()
                             if (result.cause.code == Code.CANCELED && timeout.timedOut) {
@@ -170,7 +172,7 @@ class ProtocolClient(
                 )
             }
             if (requestTimeout != null) {
-                timeoutRef.set(config.timeoutScheduler.scheduleTimeout(requestTimeout, cancelable))
+                timeoutRef.store(config.timeoutScheduler.scheduleTimeout(requestTimeout, cancelable))
             }
             return cancelable
         } catch (ex: Exception) {
@@ -259,7 +261,7 @@ class ProtocolClient(
         )
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
-        val timeoutRef = AtomicReference<Timeout>(null)
+        val timeoutRef = AtomicReference<Timeout?>(null)
         var isComplete = false
         val httpStream = httpClient.stream(
             request = finalRequest,
@@ -296,7 +298,7 @@ class ProtocolClient(
                     } catch (ex: Throwable) {
                         isComplete = true
                         var connEx = asConnectException(ex)
-                        val timeout = timeoutRef.get()
+                        val timeout = timeoutRef.load()
                         if (timeout != null) {
                             timeout.cancel()
                             if (connEx.code == Code.CANCELED && timeout.timedOut) {
@@ -316,7 +318,7 @@ class ProtocolClient(
                     responseHeaders.complete(emptyMap())
                     isComplete = true
                     var connEx = streamResult.cause
-                    val timeout = timeoutRef.get()
+                    val timeout = timeoutRef.load()
                     if (timeout != null) {
                         timeout.cancel()
                         if (connEx?.code == Code.CANCELED && timeout.timedOut) {
@@ -332,7 +334,7 @@ class ProtocolClient(
             }
         }
         if (requestTimeout != null) {
-            timeoutRef.set(
+            timeoutRef.store(
                 config.timeoutScheduler.scheduleTimeout(requestTimeout) {
                     runBlocking {
                         channel.close(ConnectException(code = Code.DEADLINE_EXCEEDED, message = "$requestTimeout timeout elapsed"))
