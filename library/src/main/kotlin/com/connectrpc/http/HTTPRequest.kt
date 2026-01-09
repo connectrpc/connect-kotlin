@@ -16,8 +16,8 @@ package com.connectrpc.http
 
 import com.connectrpc.Headers
 import com.connectrpc.MethodSpec
+import io.ktor.http.Url
 import okio.Buffer
-import java.net.URL
 import kotlin.time.Duration
 
 enum class HTTPMethod(
@@ -32,7 +32,7 @@ enum class HTTPMethod(
  */
 open class HTTPRequest internal constructor(
     // The URL for the request.
-    val url: URL,
+    val url: Url,
     // Value to assign to the `content-type` header.
     val contentType: String,
     // The optional timeout for this request.
@@ -51,7 +51,7 @@ open class HTTPRequest internal constructor(
  */
 fun HTTPRequest.clone(
     // The URL for the request.
-    url: URL = this.url,
+    url: Url = this.url,
     // Value to assign to the `content-type` header.
     contentType: String = this.contentType,
     // The optional timeout for this request.
@@ -76,7 +76,7 @@ fun HTTPRequest.clone(
  */
 class UnaryHTTPRequest(
     // The URL for the request.
-    url: URL,
+    url: Url,
     // Value to assign to the `content-type` header.
     contentType: String,
     // The optional timeout for this request.
@@ -94,7 +94,7 @@ class UnaryHTTPRequest(
 
 fun UnaryHTTPRequest.clone(
     // The URL for the request.
-    url: URL = this.url,
+    url: Url = this.url,
     // Value to assign to the `content-type` header.
     contentType: String = this.contentType,
     // The optional timeout for this request.

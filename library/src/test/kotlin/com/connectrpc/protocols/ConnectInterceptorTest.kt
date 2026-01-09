@@ -31,6 +31,7 @@ import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.UnaryHTTPRequest
 import com.squareup.moshi.Moshi
+import io.ktor.http.Url
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
 import org.assertj.core.api.Assertions.assertThat
@@ -38,7 +39,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.net.URL
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -72,7 +72,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = 2.5.toDuration(DurationUnit.SECONDS),
                 headers = mapOf("key" to listOf("value")),
@@ -106,7 +106,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
@@ -135,7 +135,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -164,7 +164,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -194,7 +194,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = emptyMap(),
@@ -369,7 +369,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -402,7 +402,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("User-Agent" to listOf("custom-user-agent")),
@@ -431,7 +431,7 @@ class ConnectInterceptorTest {
 
         val request = streamFunction.requestFunction(
             HTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -694,7 +694,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -732,7 +732,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -746,7 +746,7 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        assertThat(request.url.query).isNull()
+        assertThat(request.url.encodedQuery).isEmpty()
         assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
@@ -762,7 +762,7 @@ class ConnectInterceptorTest {
         val unaryFunction = connectInterceptor.unaryFunction()
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -797,7 +797,7 @@ class ConnectInterceptorTest {
 
         val request = unaryFunction.requestFunction(
             UnaryHTTPRequest(
-                url = URL(config.host),
+                url = Url(config.host),
                 contentType = "content_type",
                 timeout = null,
                 headers = mapOf("key" to listOf("value")),
@@ -811,11 +811,45 @@ class ConnectInterceptorTest {
                 ),
             ),
         )
-        assertThat(request.url.query).isNull()
+        assertThat(request.url.encodedQuery).isEmpty()
         assertThat(request.httpMethod).isEqualTo(HTTPMethod.POST)
     }
 
-    private fun parseQuery(request: HTTPRequest) = request.url.query
+    @Test
+    fun getRequestPreservesPathPrefix() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com/api/v1",
+            serializationStrategy = serializationStrategy,
+            compressionPools = emptyList(),
+            getConfiguration = GETConfiguration.Enabled,
+        )
+        val connectInterceptor = ConnectInterceptor(config)
+        val unaryFunction = connectInterceptor.unaryFunction()
+
+        // In actual usage, ProtocolClient.urlFromMethodSpec already adds methodSpec.path to the URL
+        // before passing to the interceptor. This test simulates that behavior.
+        val request = unaryFunction.requestFunction(
+            UnaryHTTPRequest(
+                url = Url("https://connectrpc.com/api/v1/service/Method"),
+                contentType = "content_type",
+                timeout = null,
+                headers = emptyMap(),
+                message = Buffer(),
+                methodSpec = MethodSpec(
+                    path = "service/Method",
+                    requestClass = Any::class,
+                    responseClass = Any::class,
+                    streamType = StreamType.UNARY,
+                    idempotency = Idempotency.NO_SIDE_EFFECTS,
+                ),
+            ),
+        )
+
+        assertThat(request.url.encodedPath).isEqualTo("/api/v1/service/Method")
+        assertThat(request.httpMethod).isEqualTo(HTTPMethod.GET)
+    }
+
+    private fun parseQuery(request: HTTPRequest) = request.url.encodedQuery
         .split("&")
         .map { str ->
             val split = str.split("=")

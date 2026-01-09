@@ -22,7 +22,7 @@ import com.connectrpc.protocols.GETConfiguration
 import com.connectrpc.protocols.GRPCInterceptor
 import com.connectrpc.protocols.GRPCWebInterceptor
 import com.connectrpc.protocols.NetworkProtocol
-import java.net.URI
+import io.ktor.http.Url
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -92,7 +92,7 @@ class ProtocolClientConfig @JvmOverloads constructor(
 ) {
     private val internalInterceptorFactoryList = mutableListOf<(ProtocolClientConfig) -> Interceptor>()
     private val compressionPools = mutableMapOf<String, CompressionPool>()
-    internal val baseUri: URI
+    internal val baseUrl: Url
 
     init {
         val protocolInterceptor: (ProtocolClientConfig) -> Interceptor = when (networkProtocol) {
@@ -117,7 +117,11 @@ class ProtocolClientConfig @JvmOverloads constructor(
         for (compressionPool in compressionPools) {
             this.compressionPools[compressionPool.name()] = compressionPool
         }
-        baseUri = URI(host)
+        baseUrl = Url(host)
+        val scheme = baseUrl.protocol.name
+        require(scheme == "http" || scheme == "https") {
+            "Unsupported URL scheme: $scheme (only http and https are supported)"
+        }
     }
 
     /**
