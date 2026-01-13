@@ -175,4 +175,4 @@ releaselocal: ## Release artifacts to local maven repository.
 
 .PHONY: test
 test: generate ## Run tests for the library.
-	./gradlew $(GRADLE_ARGS) library:test
+	./gradlew $(GRADLE_ARGS) library:allTests
