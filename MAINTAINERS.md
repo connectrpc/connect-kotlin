@@ -6,6 +6,7 @@ Maintainers
 * [Michael Rebello](https://github.com/rebello95), [Airbnb](https://airbnb.com)
 * [Philip Warren](https://github.com/pkwarren), [Buf](https://buf.build)
 * [Josh Humphries](https://github.com/jhump), [Buf](https://buf.build)
+* [Timo Stamm](https://github.com/timostamm), [Buf](https://buf.build)
 
 ## Former
 * [Alan Chiu](https://github.com/buildbreaker)
