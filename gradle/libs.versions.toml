@@ -1,6 +1,6 @@
 [versions]
 android = "4.1.1.4"
-assertj = "3.27.6"
+assertj = "3.27.7"
 coroutines = "1.10.2"
 ktor = "3.3.3"
 dokka = "2.1.0"
