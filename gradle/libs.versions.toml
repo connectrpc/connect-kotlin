@@ -53,6 +53,6 @@ spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.re
 
 [plugins]
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
-git = { id = "com.palantir.git-version", version = "4.2.0" }
+git = { id = "com.palantir.git-version", version = "4.3.0" }
 ksp = { id = "com.google.devtools.ksp", version = "2.3.3" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
