@@ -1,44 +1,60 @@
 import com.vanniktech.maven.publish.JavadocJar.Dokka
-import com.vanniktech.maven.publish.KotlinJvm
+import com.vanniktech.maven.publish.KotlinMultiplatform
 
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     id("org.jetbrains.dokka")
     id("com.vanniktech.maven.publish.base")
     alias(libs.plugins.ksp)
 }
 
 kotlin {
-    compilerOptions.allWarningsAsErrors.set(true)
+    jvm {
+        compilerOptions.allWarningsAsErrors.set(true)
+    }
+
+    sourceSets {
+        val jvmMain by getting {
+            dependencies {
+                // Part of API contract
+                api(libs.kotlin.coroutines.core)
+                api(libs.okio.core)
+                api(libs.ktor.http)
+
+                implementation(libs.moshiKotlin)
+            }
+        }
+
+        val jvmTest by getting {
+            dependencies {
+                implementation(libs.assertj)
+                implementation(libs.junit)
+                implementation(libs.mockito)
+            }
+        }
+    }
 }
 
 dependencies {
-    testImplementation(libs.assertj)
-    testImplementation(libs.junit)
-    testImplementation(libs.mockito)
-
-    // Part of API contract
-    api(libs.kotlin.coroutines.core)
-    api(libs.okio.core)
-    api(libs.ktor.http)
-
-    implementation(libs.moshiKotlin)
-
-    ksp(libs.moshiKotlinCodegen)
+    add("kspJvm", libs.moshiKotlinCodegen)
 }
 
 mavenPublishing {
     configure(
-        KotlinJvm(javadocJar = Dokka("dokkaGeneratePublicationHtml")),
+        KotlinMultiplatform(javadocJar = Dokka("dokkaGeneratePublicationHtml")),
     )
 }
 
-// Workaround for overriding the published library name to "connect-kotlin".
-// Otherwise, the plugin will take the library name.
+// Override published artifact names.
+// KMP generates multiple publications with different suffixes.
 extensions.getByType<PublishingExtension>().apply {
     publications
         .filterIsInstance<MavenPublication>()
         .forEach { publication ->
-            publication.artifactId = "connect-kotlin"
+            publication.artifactId = when (publication.name) {
+                "kotlinMultiplatform" -> "connect-kotlin"
+                "jvm" -> "connect-kotlin-jvm"
+                else -> "connect-kotlin-${publication.name}"
+            }
         }
 }
