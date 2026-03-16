@@ -18,6 +18,8 @@ import com.connectrpc.Code
 import com.connectrpc.Codec
 import com.connectrpc.ConnectException
 import com.connectrpc.ErrorDetailParser
+import com.connectrpc.GETConfiguration
+import com.connectrpc.GETConstants
 import com.connectrpc.Idempotency
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig

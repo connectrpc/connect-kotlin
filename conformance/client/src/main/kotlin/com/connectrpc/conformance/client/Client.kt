@@ -43,7 +43,7 @@ import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.Timeout
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
-import com.connectrpc.protocols.GETConfiguration
+import com.connectrpc.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred

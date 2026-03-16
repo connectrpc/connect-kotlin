@@ -36,18 +36,22 @@ enum class Code(val codeName: String, val value: Int) {
     ABORTED("aborted", 10),
     OUT_OF_RANGE("out_of_range", 11),
     UNIMPLEMENTED("unimplemented", 12),
-    INTERNAL_ERROR("internal", 13), // TODO: rename enum value to INTERNAL
+    INTERNAL("internal", 13),
     UNAVAILABLE("unavailable", 14),
     DATA_LOSS("data_loss", 15),
     UNAUTHENTICATED("unauthenticated", 16),
     ;
 
     companion object {
+        @Deprecated("Use Code.INTERNAL", ReplaceWith("Code.INTERNAL"))
+        @JvmField
+        val INTERNAL_ERROR = INTERNAL
+
         // https://connectrpc.com/docs/protocol#http-to-error-code
         fun fromHTTPStatus(status: Int?): Code {
             return when (status) {
                 null -> UNKNOWN
-                400 -> INTERNAL_ERROR
+                400 -> INTERNAL
                 401 -> UNAUTHENTICATED
                 403 -> PERMISSION_DENIED
                 404 -> UNIMPLEMENTED

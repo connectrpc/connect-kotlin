@@ -79,7 +79,7 @@ internal class GRPCInterceptor(
                     // If content-type looks like it could be a gRPC server's response, consider
                     // this an internal error. Otherwise, we infer a code from the HTTP status,
                     // which means a code of UNKNOWN since HTTP status is 200.
-                    val code = if (contentTypeIsGRPC(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
+                    val code = if (contentTypeIsGRPC(contentType)) Code.INTERNAL else Code.UNKNOWN
                     return@UnaryFunction response.clone(
                         message = Buffer(),
                         cause = ConnectException(
@@ -158,7 +158,7 @@ internal class GRPCInterceptor(
                             // If content-type looks like it could be a gRPC server's response, consider
                             // this an internal error. Otherwise, we infer a code from the HTTP status,
                             // which means a code of UNKNOWN since HTTP status is 200.
-                            val code = if (contentTypeIsGRPC(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
+                            val code = if (contentTypeIsGRPC(contentType)) Code.INTERNAL else Code.UNKNOWN
                             StreamResult.Complete(
                                 cause = ConnectException(
                                     code = code,
@@ -169,7 +169,7 @@ internal class GRPCInterceptor(
                         } else {
                             responseCompressionPool = clientConfig
                                 .compressionPool(responseHeaders[GRPC_ENCODING]?.first())
-                            StreamResult.Headers(responseHeaders)
+                            StreamResult.Headers(responseHeaders, result.httpStatus)
                         }
                     },
                     onMessage = { result ->

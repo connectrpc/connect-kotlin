@@ -36,7 +36,7 @@ import com.connectrpc.http.Timeout
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.dispatchIn
 import com.connectrpc.http.transform
-import com.connectrpc.protocols.GETConfiguration
+import com.connectrpc.GETConfiguration
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.appendPathSegments
@@ -152,7 +152,7 @@ class ProtocolClient(
                 } catch (ex: Exception) {
                     finalOnResult(
                         ResponseMessage.Failure(
-                            asConnectException(ex, Code.INTERNAL_ERROR),
+                            asConnectException(ex, Code.INTERNAL),
                             finalResponse.headers,
                             finalResponse.trailers,
                         ),

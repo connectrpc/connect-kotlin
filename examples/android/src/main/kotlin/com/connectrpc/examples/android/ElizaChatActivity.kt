@@ -29,7 +29,7 @@ import com.connectrpc.eliza.v1.SayRequest
 import com.connectrpc.extensions.GoogleJavaLiteProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
-import com.connectrpc.protocols.NetworkProtocol
+import com.connectrpc.NetworkProtocol
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
