@@ -8,8 +8,8 @@ MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --no-print-directory
 BIN := .tmp/bin
 CACHE := .tmp/cache
-LICENSE_HEADER_YEAR_RANGE := 2022-2025
-LICENSE_HEADER_VERSION := v1.49.0
+LICENSE_HEADER_YEAR_RANGE := 2022-2026
+LICENSE_HEADER_VERSION := v1.66.1
 CONFORMANCE_VERSION := v1.0.3
 PROTOC_VERSION ?= $(shell yq '.versions.protobuf' gradle/libs.versions.toml | cut -d'.' -f2-)
 ifeq ($(PROTOC_VERSION),)
