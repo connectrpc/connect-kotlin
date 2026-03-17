@@ -16,6 +16,7 @@ package com.connectrpc.conformance.client.java
 
 import com.connectrpc.ConnectException
 import com.connectrpc.Headers
+import com.connectrpc.NetworkProtocol
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.conformance.client.adapt.AnyMessage
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest
@@ -47,7 +48,6 @@ import com.connectrpc.conformance.v1.UnaryResponse
 import com.connectrpc.conformance.v1.UnimplementedResponse
 import com.connectrpc.extensions.GoogleJavaJSONStrategy
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
-import com.connectrpc.NetworkProtocol
 import com.google.protobuf.Any
 import com.google.protobuf.ByteString
 import com.google.protobuf.MessageLite

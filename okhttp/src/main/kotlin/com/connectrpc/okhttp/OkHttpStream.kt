@@ -107,7 +107,7 @@ private class ResponseCallback(
             val httpStatus = resp.originalCode()
             runBlocking {
                 val headers = resp.headers.toLowerCaseKeysMultiMap()
-                onResult(StreamResult.Headers(headers = headers, httpStatus = httpStatus))
+                onResult(StreamResult.Headers(headers = headers))
                 if (httpStatus != 200) {
                     val finalResult = StreamResult.Complete<Buffer>(
                         trailers = resp.safeTrailers(),

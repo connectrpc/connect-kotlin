@@ -224,7 +224,7 @@ internal class GRPCWebInterceptor(
                         } else {
                             responseCompressionPool = clientConfig
                                 .compressionPool(responseHeaders[GRPC_ENCODING]?.first())
-                            StreamResult.Headers(responseHeaders, result.httpStatus)
+                            StreamResult.Headers(responseHeaders)
                         }
                     },
                     onMessage = { result ->

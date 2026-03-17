@@ -207,7 +207,7 @@ internal class ConnectInterceptor(
                         } else {
                             responseCompressionPool =
                                 clientConfig.compressionPool(responseHeaders[CONNECT_STREAMING_CONTENT_ENCODING]?.first())
-                            StreamResult.Headers(responseHeaders, result.httpStatus)
+                            StreamResult.Headers(responseHeaders)
                         }
                     },
                     onMessage = { result ->

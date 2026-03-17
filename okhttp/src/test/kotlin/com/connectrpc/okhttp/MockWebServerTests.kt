@@ -15,6 +15,7 @@
 package com.connectrpc.okhttp
 
 import com.connectrpc.Code
+import com.connectrpc.NetworkProtocol
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
 import com.connectrpc.ResponseMessage
@@ -25,7 +26,6 @@ import com.connectrpc.eliza.v1.sayRequest
 import com.connectrpc.extensions.GoogleJavaJSONStrategy
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.NetworkProtocol
 import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.junit4.MockWebServerRule

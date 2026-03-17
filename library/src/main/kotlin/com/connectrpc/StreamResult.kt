@@ -23,10 +23,9 @@ sealed class StreamResult<Output> {
     // Headers have been received over the stream.
     class Headers<Output>(
         val headers: com.connectrpc.Headers,
-        val httpStatus: Int? = null,
     ) : StreamResult<Output>() {
         override fun toString(): String {
-            return "Headers{httpStatus=$httpStatus, headers=$headers}"
+            return "Headers{headers=$headers}"
         }
     }
 

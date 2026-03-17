@@ -16,6 +16,7 @@ package com.connectrpc.conformance.client
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
+import com.connectrpc.GETConfiguration
 import com.connectrpc.Headers
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.RequestCompression
@@ -43,7 +44,6 @@ import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.Timeout
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
-import com.connectrpc.GETConfiguration
 import com.google.protobuf.MessageLite
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred

@@ -16,6 +16,7 @@ package com.connectrpc.okhttp
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
+import com.connectrpc.GETConstants
 import com.connectrpc.StreamResult
 import com.connectrpc.asConnectException
 import com.connectrpc.http.Cancelable
@@ -26,7 +27,6 @@ import com.connectrpc.http.Stream
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_KEY
 import com.connectrpc.protocols.CONNECT_PROTOCOL_VERSION_VALUE
-import com.connectrpc.GETConstants
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
