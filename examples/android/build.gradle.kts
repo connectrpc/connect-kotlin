@@ -11,7 +11,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        multiDexEnabled = true
     }
 
     compileOptions {
@@ -25,7 +24,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintLayout)
     implementation(libs.androidx.recyclerview)
-    implementation(libs.android.multidex)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.android.material)
 

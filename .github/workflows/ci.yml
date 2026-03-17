@@ -29,9 +29,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
-          github_token: ${{ github.token }}
+          setup_only: true
       - name: Generate proto files for project
         run: make generate
       - name: Print diff
@@ -53,9 +53,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
-          github_token: ${{ github.token }}
+          setup_only: true
       - uses: actions/setup-go@v6
         with:
           go-version: 'stable'
@@ -112,9 +112,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
-          github_token: ${{ github.token }}
+          setup_only: true
       - name: Run tests
         run: make test
   lint:
@@ -126,8 +126,8 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
-          github_token: ${{ github.token }}
+          setup_only: true
       - name: Run lint
         run: make lint
