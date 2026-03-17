@@ -101,24 +101,25 @@ private class ResponseCallback(
 
     override fun onResponse(call: Call, response: Response) {
         whenDone()
-        val httpStatus = response.originalCode()
-        runBlocking {
-            val headers = response.headers.toLowerCaseKeysMultiMap()
-            onResult(StreamResult.Headers(headers = headers))
-            if (httpStatus != 200) {
-                // TODO: This is not quite exercised yet. Validate if this is exercised in another test case.
-                val finalResult = StreamResult.Complete<Buffer>(
-                    trailers = response.safeTrailers(),
-                    cause = ConnectException(
-                        code = Code.fromHTTPStatus(httpStatus),
-                        message = "unexpected HTTP status: $httpStatus ${response.originalMessage()}",
-                        metadata = headers,
-                    ),
-                )
-                onResult(finalResult)
-                return@runBlocking
-            }
-            response.use { resp ->
+        // Wrap the entire response handling in response.use to ensure the
+        // response body is always closed, preventing connection leaks.
+        response.use { resp ->
+            val httpStatus = resp.originalCode()
+            runBlocking {
+                val headers = resp.headers.toLowerCaseKeysMultiMap()
+                onResult(StreamResult.Headers(headers = headers))
+                if (httpStatus != 200) {
+                    val finalResult = StreamResult.Complete<Buffer>(
+                        trailers = resp.safeTrailers(),
+                        cause = ConnectException(
+                            code = Code.fromHTTPStatus(httpStatus),
+                            message = "unexpected HTTP status: $httpStatus ${resp.originalMessage()}",
+                            metadata = headers,
+                        ),
+                    )
+                    onResult(finalResult)
+                    return@runBlocking
+                }
                 resp.body.source().use { sourceBuffer ->
                     var connEx: ConnectException? = null
                     try {
@@ -132,10 +133,8 @@ private class ResponseCallback(
                     } catch (ex: Exception) {
                         connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
                     } finally {
-                        // If trailers are not yet communicated.
-                        // This is the final chance to notify trailers to the consumer.
                         val finalResult = StreamResult.Complete<Buffer>(
-                            trailers = response.safeTrailers(),
+                            trailers = resp.safeTrailers(),
                             cause = connEx,
                         )
                         onResult(finalResult)
