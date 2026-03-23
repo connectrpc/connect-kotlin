@@ -4,6 +4,7 @@ changelog:
       - ignore-for-release
     authors:
       - dependabot
+      - dependabot[bot]
   categories:
     - title: Enhancements
       labels:
