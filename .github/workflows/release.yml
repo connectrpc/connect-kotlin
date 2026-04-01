@@ -16,11 +16,11 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'gradle'
-      - uses: bufbuild/buf-setup-action@v1
+      - uses: bufbuild/buf-action@fd21066df7214747548607aaa45548ba2b9bc1ff # v1.4.0
         with:
-          github_token: ${{ github.token }}
+          setup_only: true
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
       - name: Configure GPG signing & publish
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
@@ -55,7 +55,7 @@ jobs:
           java-version: '21'
           cache: 'gradle'
       - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
       - name: sha256
         run: |
           tag=$(git describe --tags --abbrev=0 --exact-match)
@@ -66,7 +66,7 @@ jobs:
           mv ./protoc-gen-connect-kotlin/build/libs/protoc-gen-connect-kotlin-${release_version}.jar .
           sha256sum protoc-gen-connect-kotlin-${release_version}.jar >> sha256.txt
       - name: Publish GitHub artifacts
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           generate_release_notes: true
           append_body: true
