@@ -18,10 +18,8 @@ import com.connectrpc.compression.CompressionPool
 import com.connectrpc.compression.GzipCompressionPool
 import com.connectrpc.http.Timeout
 import com.connectrpc.protocols.ConnectInterceptor
-import com.connectrpc.protocols.GETConfiguration
 import com.connectrpc.protocols.GRPCInterceptor
 import com.connectrpc.protocols.GRPCWebInterceptor
-import com.connectrpc.protocols.NetworkProtocol
 import io.ktor.http.Url
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration

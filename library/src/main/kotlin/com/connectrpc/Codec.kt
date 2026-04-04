@@ -20,22 +20,18 @@ import okio.BufferedSource
 const val CODEC_NAME_PROTO = "proto"
 const val CODEC_NAME_JSON = "json"
 
-@Deprecated("replaced with CODEC_NAME_PROTO", ReplaceWith("CODEC_NAME_PROTO"))
-@Suppress("ktlint:standard:property-naming")
-const val codecNameProto = CODEC_NAME_PROTO
-
-@Deprecated("replaced with CODEC_NAME_JSON", ReplaceWith("CODEC_NAME_JSON"))
-@Suppress("ktlint:standard:property-naming")
-const val codecNameJSON = CODEC_NAME_JSON
-
 /**
  * Defines a type that is capable of encoding and decoding messages using a specific format.
  */
 interface Codec<E> {
-    // TODO: remove this method or unify somehow with SerializationStrategy.serializationName?
     /**
-     * @return The name of the codec's format (e.g., "json", "proto"). Usually consumed
-     * in the form of adding the `content-type` header via "application/{name}".
+     * Returns the name of the codec's format (e.g., "json", "proto"). Usually
+     * consumed in the form of adding the `content-type` header via
+     * "application/{name}".
+     *
+     * This value must match the corresponding
+     * [SerializationStrategy.serializationName] for the strategy that uses
+     * this codec.
      */
     fun encodingName(): String
 

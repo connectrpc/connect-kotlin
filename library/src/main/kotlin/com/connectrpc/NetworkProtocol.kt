@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package com.connectrpc.protocols
+package com.connectrpc
 
-@Deprecated(
-    "Moved to com.connectrpc.NetworkProtocol",
-    ReplaceWith("com.connectrpc.NetworkProtocol"),
-)
-typealias NetworkProtocol = com.connectrpc.NetworkProtocol
+/**
+ * The supported protocols:
+ * Connect, GRPC, and GRPC-Web.
+ */
+enum class NetworkProtocol {
+    CONNECT,
+    GRPC,
+    GRPC_WEB,
+}

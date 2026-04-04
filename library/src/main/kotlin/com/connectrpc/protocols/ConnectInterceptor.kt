@@ -18,6 +18,7 @@ import com.connectrpc.Code
 import com.connectrpc.Codec
 import com.connectrpc.ConnectErrorDetail
 import com.connectrpc.ConnectException
+import com.connectrpc.GETConstants
 import com.connectrpc.Headers
 import com.connectrpc.Idempotency
 import com.connectrpc.Interceptor
@@ -112,7 +113,7 @@ internal class ConnectInterceptor(
                         headers = headers,
                         trailers = trailers,
                         cause = ConnectException(
-                            code = Code.INTERNAL_ERROR,
+                            code = Code.INTERNAL,
                             message = e.message,
                             exception = e,
                             metadata = headers.plus(trailers),
@@ -137,7 +138,7 @@ internal class ConnectInterceptor(
                         // If content-type looks like it could be an RPC server's response, consider
                         // this an internal error. Otherwise, we infer a code from the HTTP status,
                         // which means a code of UNKNOWN since HTTP status is 200.
-                        val code = if (contentType.startsWith("application/")) Code.INTERNAL_ERROR else Code.UNKNOWN
+                        val code = if (contentType.startsWith("application/")) Code.INTERNAL else Code.UNKNOWN
                         exception = ConnectException(
                             code = code,
                             message = "unexpected content-type: $contentType",
@@ -195,7 +196,7 @@ internal class ConnectInterceptor(
                             // If content-type looks like it could be an RPC server's response, consider
                             // this an internal error. Otherwise, we infer a code from the HTTP status,
                             // which means a code of UNKNOWN since HTTP status is 200.
-                            val code = if (contentType.startsWith("application/connect+")) Code.INTERNAL_ERROR else Code.UNKNOWN
+                            val code = if (contentType.startsWith("application/connect+")) Code.INTERNAL else Code.UNKNOWN
                             StreamResult.Complete(
                                 ConnectException(
                                     code = code,

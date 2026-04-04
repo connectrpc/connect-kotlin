@@ -14,38 +14,14 @@
 
 package com.connectrpc.protocols
 
-import okio.Buffer
+@Deprecated(
+    "Moved to com.connectrpc.GETConstants",
+    ReplaceWith("com.connectrpc.GETConstants"),
+)
+typealias GETConstants = com.connectrpc.GETConstants
 
-object GETConstants {
-    const val CONNECT_VERSION_QUERY_PARAM_KEY = "connect"
-    const val ENCODING_QUERY_PARAM_KEY = "encoding"
-    const val BASE64_QUERY_PARAM_KEY = "base64"
-    const val MESSAGE_QUERY_PARAM_KEY = "message"
-    const val COMPRESSION_QUERY_PARAM_KEY = "compression"
-    const val CONNECT_VERSION_QUERY_PARAM_VALUE = "v1"
-}
-
-/**
- * Configuration for enabling Get requests for the Connect protocol.
- */
-sealed class GETConfiguration {
-    object Disabled : GETConfiguration() {
-        override fun useGET(buffer: Buffer): Boolean {
-            return false
-        }
-    }
-
-    class EnabledWithFallback(val maxMessageBytes: Int = 50_000) : GETConfiguration() {
-        override fun useGET(buffer: Buffer): Boolean {
-            return maxMessageBytes > buffer.size
-        }
-    }
-
-    object Enabled : GETConfiguration() {
-        override fun useGET(buffer: Buffer): Boolean {
-            return true
-        }
-    }
-
-    abstract fun useGET(buffer: Buffer): Boolean
-}
+@Deprecated(
+    "Moved to com.connectrpc.GETConfiguration",
+    ReplaceWith("com.connectrpc.GETConfiguration"),
+)
+typealias GETConfiguration = com.connectrpc.GETConfiguration

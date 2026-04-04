@@ -21,10 +21,9 @@ package com.connectrpc
  */
 sealed class StreamResult<Output> {
     // Headers have been received over the stream.
-    class Headers<Output>(val headers: com.connectrpc.Headers) : StreamResult<Output>() {
-        // TODO: This should include an HTTP status code, too. Computing an RPC code
-        //       from the HTTP status code should be part of the protocol impl, not
-        //       pushed down to the HTTPClientInterface impl.
+    class Headers<Output>(
+        val headers: com.connectrpc.Headers,
+    ) : StreamResult<Output>() {
         override fun toString(): String {
             return "Headers{headers=$headers}"
         }

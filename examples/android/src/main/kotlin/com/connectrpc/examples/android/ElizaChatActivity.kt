@@ -22,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.connectrpc.ConnectException
+import com.connectrpc.NetworkProtocol
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ConverseRequest
 import com.connectrpc.eliza.v1.ElizaServiceClient
@@ -29,7 +30,6 @@ import com.connectrpc.eliza.v1.SayRequest
 import com.connectrpc.extensions.GoogleJavaLiteProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
 import com.connectrpc.okhttp.ConnectOkHttpClient
-import com.connectrpc.protocols.NetworkProtocol
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient

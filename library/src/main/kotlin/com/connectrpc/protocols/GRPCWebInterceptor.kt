@@ -84,7 +84,7 @@ internal class GRPCWebInterceptor(
                     // If content-type looks like it could be a gRPC server's response, consider
                     // this an internal error. Otherwise, we infer a code from the HTTP status,
                     // which means a code of UNKNOWN since HTTP status is 200.
-                    val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
+                    val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL else Code.UNKNOWN
                     return@UnaryFunction response.clone(
                         message = Buffer(),
                         cause = ConnectException(
@@ -134,7 +134,7 @@ internal class GRPCWebInterceptor(
                         return@UnaryFunction response.clone(
                             message = Buffer(),
                             cause = ConnectException(
-                                code = Code.INTERNAL_ERROR,
+                                code = Code.INTERNAL,
                                 message = "response did not include an end of stream message",
                                 metadata = headers,
                             ),
@@ -163,7 +163,7 @@ internal class GRPCWebInterceptor(
                         return@UnaryFunction response.clone(
                             message = Buffer(),
                             cause = ConnectException(
-                                code = Code.INTERNAL_ERROR,
+                                code = Code.INTERNAL,
                                 message = "response stream contains data after end-of-stream message",
                                 metadata = headers,
                             ),
@@ -213,7 +213,7 @@ internal class GRPCWebInterceptor(
                             // If content-type looks like it could be a gRPC server's response, consider
                             // this an internal error. Otherwise, we infer a code from the HTTP status,
                             // which means a code of UNKNOWN since HTTP status is 200.
-                            val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL_ERROR else Code.UNKNOWN
+                            val code = if (contentTypeIsGRPCWeb(contentType)) Code.INTERNAL else Code.UNKNOWN
                             StreamResult.Complete(
                                 cause = ConnectException(
                                     code = code,

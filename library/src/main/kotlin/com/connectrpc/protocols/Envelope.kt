@@ -72,7 +72,7 @@ class Envelope {
                 Buffer().write(source as Source, length)
             } else {
                 throw ConnectException(
-                    code = Code.INTERNAL_ERROR,
+                    code = Code.INTERNAL,
                     message = "stream message was incomplete: expecting $length bytes, got ${source.size}",
                 )
             }
@@ -80,7 +80,7 @@ class Envelope {
                 1 -> {
                     if (compressionPool == null) {
                         throw ConnectException(
-                            code = Code.INTERNAL_ERROR,
+                            code = Code.INTERNAL,
                             message = "stream message was compressed but no known encoding",
                         )
                     }

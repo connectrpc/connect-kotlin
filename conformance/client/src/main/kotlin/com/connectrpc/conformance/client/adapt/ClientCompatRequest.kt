@@ -15,7 +15,7 @@
 package com.connectrpc.conformance.client.adapt
 
 import com.connectrpc.Headers
-import com.connectrpc.protocols.NetworkProtocol
+import com.connectrpc.NetworkProtocol
 import com.google.protobuf.ByteString
 
 /**

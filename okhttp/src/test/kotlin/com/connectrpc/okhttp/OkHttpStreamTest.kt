@@ -16,11 +16,11 @@ package com.connectrpc.okhttp
 
 import com.connectrpc.Code
 import com.connectrpc.ConnectException
+import com.connectrpc.NetworkProtocol
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.eliza.v1.ElizaServiceClient
 import com.connectrpc.extensions.GoogleJavaProtobufStrategy
 import com.connectrpc.impl.ProtocolClient
-import com.connectrpc.protocols.NetworkProtocol
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import mockwebserver3.MockResponse
@@ -69,7 +69,7 @@ class OkHttpStreamTest {
             // but the key assertion is that the stream completes at all
             // (before the fix, the response body was never closed on
             // non-200 responses, causing a connection leak).
-            assertThat(exception!!.code).isIn(Code.UNAVAILABLE, Code.UNKNOWN, Code.INTERNAL_ERROR)
+            assertThat(exception!!.code).isIn(Code.UNAVAILABLE, Code.UNKNOWN, Code.INTERNAL)
             stream.receiveClose()
         }
     }

@@ -14,13 +14,13 @@
 
 package com.connectrpc
 
+import com.connectrpc.NetworkProtocol
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.clone
 import com.connectrpc.protocols.CONTENT_TYPE
 import com.connectrpc.protocols.Envelope
-import com.connectrpc.protocols.NetworkProtocol
 import io.ktor.http.Url
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
