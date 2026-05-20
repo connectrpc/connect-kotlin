@@ -715,6 +715,12 @@ class ConnectInterceptorTest {
         assertThat(queryMap.get(GETConstants.ENCODING_QUERY_PARAM_KEY)).isEqualTo("encoding_name")
         assertThat(queryMap.get(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY)).isEqualTo("v1")
         assertThat(request.httpMethod).isEqualTo(HTTPMethod.GET)
+        assertThat(parseQueryOrder(request)).containsExactly(
+            GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY,
+            GETConstants.BASE64_QUERY_PARAM_KEY,
+            GETConstants.ENCODING_QUERY_PARAM_KEY,
+            GETConstants.MESSAGE_QUERY_PARAM_KEY,
+        )
     }
 
     @Test
@@ -852,11 +858,15 @@ class ConnectInterceptorTest {
     private fun parseQuery(request: HTTPRequest) = request.url.encodedQuery
         .split("&")
         .map { str ->
-            val split = str.split("=")
+            val split = str.split("=", limit = 2)
             split[0] to split[1]
         }
         .foldRight(mutableMapOf<String, String>()) { pair, acc ->
             acc.put(pair.first, pair.second)
             acc
         }
+
+    private fun parseQueryOrder(request: HTTPRequest): List<String> = request.url.encodedQuery
+        .split("&")
+        .map { it.substringBefore("=") }
 }

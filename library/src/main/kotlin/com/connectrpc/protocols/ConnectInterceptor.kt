@@ -361,14 +361,19 @@ internal class ConnectInterceptor(
     ): Url {
         // The httpRequest.url already contains the full path including methodSpec.path
         // (added by ProtocolClient.urlFromMethodSpec), so we just need to add query parameters.
+        // Parameters are appended in the order recommended by the Connect protocol to
+        // maximize cache hit rates on shared caches:
+        // [connect] [base64] [compression] encoding message
+        // See https://connectrpc.com/docs/protocol#unary-request.
         return URLBuilder(httpRequest.url).apply {
+            parameters.append(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY, GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE)
+            parameters.append(GETConstants.BASE64_QUERY_PARAM_KEY, "1")
             if (requestCompression?.shouldCompress(payload) == true) {
                 parameters.append(GETConstants.COMPRESSION_QUERY_PARAM_KEY, requestCompression.compressionPool.name())
             }
-            parameters.append(GETConstants.MESSAGE_QUERY_PARAM_KEY, payload.readByteString().base64Url())
-            parameters.append(GETConstants.BASE64_QUERY_PARAM_KEY, "1")
             parameters.append(GETConstants.ENCODING_QUERY_PARAM_KEY, codec.encodingName())
-            parameters.append(GETConstants.CONNECT_VERSION_QUERY_PARAM_KEY, GETConstants.CONNECT_VERSION_QUERY_PARAM_VALUE)
+            // Use unpadded base64 URL encoding
+            parameters.append(GETConstants.MESSAGE_QUERY_PARAM_KEY, payload.readByteString().base64Url().trimEnd('='))
         }.build()
     }
 
