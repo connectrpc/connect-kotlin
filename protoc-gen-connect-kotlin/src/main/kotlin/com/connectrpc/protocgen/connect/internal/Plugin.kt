@@ -77,17 +77,19 @@ import java.io.OutputStream
  */
 object Plugin {
     /**
-     * Runs the given code generator, reading the request from [System.in]
-     * and writing the response to [System.out].
-     *
-     * @see .run
+     * Runs the given code generator, reading the request from [input]
+     * (by default, [System.in]) and writing the response to [output]
+     * (by default, [System.out]).
      */
-    @JvmOverloads
-    fun run(generator: CodeGenerator, environment: Environment = DefaultEnvironment()) {
+    fun run(
+        generator: CodeGenerator,
+        input: InputStream = System.`in`,
+        output: OutputStream = System.out,
+    ) {
         var request: PluginProtos.CodeGeneratorRequest
         val rawRequest: ByteString
         try {
-            rawRequest = ByteString.readFrom(environment.inputStream())
+            rawRequest = ByteString.readFrom(input)
             request = PluginProtos.CodeGeneratorRequest.parseFrom(rawRequest)
         } catch (e: IOException) {
             throw PluginException("protoc sent unparseable request to plugin.", e)
@@ -103,9 +105,7 @@ object Plugin {
             throw PluginException("protoc sent unparseable request to plugin.", e)
         }
         files = asDescriptors(request.protoFileList)
-        val output = CodedOutputStream.newInstance(
-            environment.outputStream(),
-        )
+        val codedOutput = CodedOutputStream.newInstance(output)
         try {
             // go ahead and write response preamble
             PluginProtos.CodeGeneratorResponse
@@ -116,11 +116,16 @@ object Plugin {
                 .setMinimumEdition(generator.getMinimumEdition().number)
                 .setMaximumEdition(generator.getMaximumEdition().number)
                 .build()
-                .writeTo(output)
+                .writeTo(codedOutput)
         } catch (e: IOException) {
             throw PluginException("protoc sent unparseable request to plugin.", e)
         }
-        generator.generate(request, DescriptorSource(files), Response(output))
+        generator.generate(request, DescriptorSource(files), Response(codedOutput))
+        try {
+            codedOutput.flush()
+        } catch (e: IOException) {
+            throw PluginException("Error writing to stdout.", e)
+        }
     }
 
     private fun toFeatureBitmask(vararg features: PluginProtos.CodeGeneratorResponse.Feature): Long {
@@ -215,34 +220,6 @@ object Plugin {
         companion object {
             private const val serialVersionUID = 4028115971354639383L
         }
-    }
-
-    /**
-     * Provides access to the input and output streams used to communicate with
-     * protoc.
-     *
-     * @see DefaultEnvironment
-     */
-    interface Environment {
-        /**
-         * Returns the input stream to read the protoc code generation request
-         * from.
-         */
-        fun inputStream(): InputStream
-
-        /**
-         * Returns the output stream to write the code generation response to.
-         */
-        fun outputStream(): OutputStream
-    }
-
-    /**
-     * An [Environment] giving access to the "standard" input and output
-     * streams.
-     */
-    open class DefaultEnvironment : Environment {
-        override fun inputStream(): InputStream = System.`in`
-        override fun outputStream(): OutputStream = System.out
     }
 
     class DescriptorSource(private val files: Map<String, Descriptors.FileDescriptor>) {
