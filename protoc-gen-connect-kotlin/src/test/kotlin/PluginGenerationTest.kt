@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import buf.editions.v1.Editions2024Proto
+import buf.editions.v1.Editions2024Response
+import buf.editions.v1.Editions2024ServiceClient
 import buf.evilcomments.v1.EvilCommentsServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyOuterClass
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
@@ -112,5 +115,16 @@ class PluginGenerationTest {
     @Test
     fun evilCommentsCompiles() {
         EvilCommentsServiceClient(mock { })
+    }
+
+    @Test
+    fun edition2024NestInFileClass() {
+        val client = Editions2024ServiceClient(mock { })
+        val request = Editions2024Proto.Editions2024Request.getDefaultInstance()
+        client.editions2024(request) { response ->
+            response.success { success ->
+                assertThat(success.message).isOfAnyClassIn(Editions2024Response::class.java)
+            }
+        }
     }
 }

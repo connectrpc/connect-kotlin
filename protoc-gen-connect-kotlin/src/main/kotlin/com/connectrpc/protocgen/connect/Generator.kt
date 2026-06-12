@@ -27,14 +27,13 @@ import com.connectrpc.protocgen.connect.internal.CodeGenerator
 import com.connectrpc.protocgen.connect.internal.Configuration
 import com.connectrpc.protocgen.connect.internal.Plugin
 import com.connectrpc.protocgen.connect.internal.SourceInfo
-import com.connectrpc.protocgen.connect.internal.getClassName
-import com.connectrpc.protocgen.connect.internal.getFileJavaPackage
 import com.connectrpc.protocgen.connect.internal.parse
 import com.connectrpc.protocgen.connect.internal.withSourceInfo
 import com.google.protobuf.DescriptorProtos
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto
 import com.google.protobuf.DescriptorProtos.MethodOptions.IdempotencyLevel
 import com.google.protobuf.Descriptors
+import com.google.protobuf.GeneratorNames
 import com.google.protobuf.compiler.PluginProtos
 import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
@@ -108,13 +107,13 @@ class Generator : CodeGenerator {
     }
 
     override fun getMaximumEdition(): DescriptorProtos.Edition {
-        return DescriptorProtos.Edition.EDITION_2023
+        return DescriptorProtos.Edition.EDITION_2024
     }
 
     private fun parseFile(file: Descriptors.FileDescriptor): Map<ClassName, FileSpec> {
-        val baseSourceInfo = SourceInfo(protoFileMap[file.name]!!, descriptorSource, emptyList())
+        val baseSourceInfo = SourceInfo(protoFileMap[file.name]!!)
         val fileSpecs = mutableMapOf<ClassName, FileSpec>()
-        val packageName = getFileJavaPackage(file)
+        val packageName = GeneratorNames.getFileJavaPackage(file)
         for ((sourceInfo, service) in file.services.withSourceInfo(
             baseSourceInfo,
             FileDescriptorProto.SERVICE_FIELD_NUMBER,
@@ -491,12 +490,12 @@ class Generator : CodeGenerator {
     private fun classNameFromType(descriptor: Descriptors.Descriptor): ClassName {
         // Get the package of the descriptor's file.
         // e.g. "com.connectrpc".
-        val packageName = getFileJavaPackage(descriptor.file)
+        val packageName = GeneratorNames.getFileJavaPackage(descriptor.file)
         // Get the fully qualified class name of the descriptor
         // and subtract the file's package.
         // e.g. "com.connectrpc.EmptyMessage.InnerMessage"
         // becomes ["EmptyMessage", "InnerMessage"].
-        val names = getClassName(descriptor)
+        val names = GeneratorNames.getQualifiedClassName(descriptor)
             .removePrefix(packageName)
             .removePrefix(".")
             .split(".")
