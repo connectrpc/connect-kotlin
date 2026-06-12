@@ -18,19 +18,17 @@ import com.google.protobuf.DescriptorProtos
 
 internal class SourceInfo(
     private val helper: SourceCodeHelper,
-    private val descriptorSource: Plugin.DescriptorSource,
     path: List<Int> = emptyList(),
 ) {
     constructor(
         fileDescriptor: DescriptorProtos.FileDescriptorProto,
-        descriptorSource: Plugin.DescriptorSource,
         path: List<Int> = emptyList(),
-    ) : this(SourceCodeHelper(fileDescriptor), descriptorSource, path)
+    ) : this(SourceCodeHelper(fileDescriptor), path)
 
     private val path = listOf(*path.toTypedArray())
 
     fun push(value: Int): SourceInfo {
-        return SourceInfo(helper, descriptorSource, path.plus(value))
+        return SourceInfo(helper, path.plus(value))
     }
 
     fun comment(): String {

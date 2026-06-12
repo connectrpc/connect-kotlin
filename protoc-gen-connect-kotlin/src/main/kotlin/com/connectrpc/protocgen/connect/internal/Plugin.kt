@@ -246,13 +246,6 @@ object Plugin {
     }
 
     class DescriptorSource(private val files: Map<String, Descriptors.FileDescriptor>) {
-        fun findMessageTypeByName(fullName: String): Descriptors.Descriptor? {
-            for (fileDescriptor in files.values) {
-                return fileDescriptor.findMessageTypeByName(fullName) ?: continue
-            }
-            return null
-        }
-
         fun findFileByName(fileName: String): Descriptors.FileDescriptor? {
             return files[fileName]
         }
