@@ -104,8 +104,8 @@ subprojects {
     tasks.withType<KotlinJvmCompile> {
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_1_8)
-            languageVersion.set(KotlinVersion.KOTLIN_2_1)
-            apiVersion.set(KotlinVersion.KOTLIN_2_1)
+            languageVersion.set(KotlinVersion.KOTLIN_2_2)
+            apiVersion.set(KotlinVersion.KOTLIN_2_2)
             if (JavaVersion.current().isJava9Compatible && project.name != "android") {
                 freeCompilerArgs.add("-Xjdk-release=1.8")
             }

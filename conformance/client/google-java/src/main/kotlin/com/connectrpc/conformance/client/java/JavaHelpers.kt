@@ -61,7 +61,6 @@ class JavaHelpers {
             return when (codec) {
                 ClientCompatRequest.Codec.PROTO -> GoogleJavaProtobufStrategy()
                 ClientCompatRequest.Codec.JSON -> GoogleJavaJSONStrategy(getTypes())
-                else -> throw RuntimeException("unsupported codec $codec")
             }
         }
 

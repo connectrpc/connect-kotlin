@@ -27,7 +27,7 @@ class UnaryCallTest {
     fun testExecute() {
         val executor = Executors.newSingleThreadExecutor()
         try {
-            val result = Object()
+            val result = Any()
             val call = UnaryCall<Any> { callback ->
                 executor.execute {
                     callback.invoke(
