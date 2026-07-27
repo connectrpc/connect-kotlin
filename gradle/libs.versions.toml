@@ -10,7 +10,7 @@ kotlinpoet = "2.3.0"
 mavenplugin = "0.37.0"
 moshi = "1.15.2"
 okhttp = "5.4.0"
-okio = "3.17.0"
+okio = "3.18.0"
 protobuf = "4.35.1"
 spotless = "8.8.0"
 
