@@ -33,7 +33,7 @@ class VerbosePrinter(
          * threads printing don't interleave optional stack traces
          * (which makes them much harder to read)
          */
-        private val lock = Object()
+        private val lock = Any()
     }
 
     private val output = PrinterImpl(verbosity, prefix)
