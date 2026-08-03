@@ -17,7 +17,6 @@ package com.connectrpc.protocols
 import com.connectrpc.compression.GzipCompressionPool
 import okio.Buffer
 import okio.ByteString.Companion.encodeUtf8
-import okio.internal.commonAsUtf8ToByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -38,7 +37,7 @@ class EnvelopeTest {
 
     @Test
     fun unpackWithHeaderByte() {
-        val payload = "hello_world".commonAsUtf8ToByteArray()
+        val payload = "hello_world".encodeUtf8()
         val enveloped = Buffer()
             .writeByte(100)
             .writeInt(payload.size)

@@ -17,7 +17,6 @@ package com.connectrpc.protocols
 import com.connectrpc.Code
 import com.connectrpc.ErrorDetailParser
 import okio.ByteString.Companion.encodeUtf8
-import okio.internal.commonAsUtf8ToByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.kotlin.mock
@@ -43,7 +42,7 @@ class GRPCErrorDetailParserTest {
         assertThat(completion.present).isTrue()
         assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
         assertThat(completion.message).isEqualTo("str")
-        verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
+        verify(errorDetailParser).parseDetails("data".encodeUtf8().toByteArray())
     }
 
     @Test
@@ -78,7 +77,7 @@ class GRPCErrorDetailParserTest {
         assertThat(completion.present).isTrue()
         assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
         assertThat(completion.message).isEqualTo("str")
-        verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
+        verify(errorDetailParser).parseDetails("data".encodeUtf8().toByteArray())
     }
 
     @Test
@@ -114,7 +113,7 @@ class GRPCErrorDetailParserTest {
         )
         assertThat(completion.present).isTrue()
         assertThat(completion.code).isEqualTo(Code.UNAUTHENTICATED)
-        verify(errorDetailParser).parseDetails("data".commonAsUtf8ToByteArray())
+        verify(errorDetailParser).parseDetails("data".encodeUtf8().toByteArray())
     }
 
     @Test
