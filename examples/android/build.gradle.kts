@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.connectrpc.examples.android"
