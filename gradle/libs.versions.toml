@@ -12,7 +12,7 @@ moshi = "1.15.2"
 okhttp = "5.5.0"
 okio = "3.18.1"
 protobuf = "4.36.0"
-spotless = "8.10.0"
+spotless = "8.10.1"
 
 [libraries]
 android = { module = "com.google.android:android", version.ref = "android" }
