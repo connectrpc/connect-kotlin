@@ -53,6 +53,10 @@ internal class ClientOnlyStream<Input, Output>(
             if (additionalMessage.isSuccess) {
                 throw ConnectException(code = Code.UNIMPLEMENTED, message = "unary stream has multiple messages")
             }
+            val ex = additionalMessage.exceptionOrNull()
+            if (ex != null && ex !is ClosedReceiveChannelException) {
+                throw asConnectException(ex)
+            }
             return message.getOrThrow()
         } finally {
             resultChannel.cancel()
