@@ -246,7 +246,30 @@ internal class GRPCWebInterceptor(
                             StreamResult.Message(unpackedMessage)
                         }
                     },
-                    onCompletion = { result -> result },
+                    onCompletion = { result ->
+                        if (result.cause != null) {
+                            return@fold result
+                        }
+                        val completion = if (streamEmpty) {
+                            completionParser.parse(responseHeaders, false, emptyMap())
+                        } else {
+                            null
+                        }
+                        if (completion == null || !completion.present) {
+                            StreamResult.Complete(
+                                cause = ConnectException(
+                                    code = Code.INTERNAL_ERROR,
+                                    message = "response did not include an end of stream message",
+                                    metadata = responseHeaders,
+                                ),
+                            )
+                        } else {
+                            StreamResult.Complete(
+                                cause = completion.toConnectExceptionOrNull(serializationStrategy),
+                                trailers = responseHeaders,
+                            )
+                        }
+                    },
                 )
                 streamResult
             },

@@ -556,26 +556,97 @@ class GRPCWebInterceptorTest {
     }
 
     @Test
-    fun endStreamOnTrailers() {
+    fun endStreamTrailersOnlySuccess() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
         )
         val grpcWebInterceptor = GRPCWebInterceptor(config)
         val streamFunction = grpcWebInterceptor.streamFunction()
-
-        val result = streamFunction.streamResultFunction(
-            StreamResult.Complete(
-                trailers = mapOf(
+        streamFunction.streamResultFunction(
+            StreamResult.Headers(
+                mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
+                    GRPC_STATUS_TRAILER to listOf("0"),
                     "key" to listOf("value"),
                 ),
             ),
         )
 
+        val result = streamFunction.streamResultFunction(StreamResult.Complete())
+
         assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
         assertThat(completion.cause).isNull()
         assertThat(completion.trailers["key"]).containsExactly("value")
+    }
+
+    @Test
+    fun endStreamTrailersOnlyError() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com",
+            serializationStrategy = serializationStrategy,
+        )
+        val grpcWebInterceptor = GRPCWebInterceptor(config)
+        val streamFunction = grpcWebInterceptor.streamFunction()
+        streamFunction.streamResultFunction(
+            StreamResult.Headers(
+                mapOf(
+                    CONTENT_TYPE to listOf("application/grpc-web+encoding_type"),
+                    GRPC_STATUS_TRAILER to listOf("${Code.FAILED_PRECONDITION.value}"),
+                    GRPC_MESSAGE_TRAILER to listOf("error"),
+                    "x-custom-trailer" to listOf("bing"),
+                ),
+            ),
+        )
+
+        val result = streamFunction.streamResultFunction(StreamResult.Complete())
+
+        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        val completion = result as StreamResult.Complete
+        assertThat(completion.cause!!.code).isEqualTo(Code.FAILED_PRECONDITION)
+        assertThat(completion.cause!!.message).isEqualTo("error")
+        assertThat(completion.trailers["x-custom-trailer"]).containsExactly("bing")
+    }
+
+    @Test
+    fun endStreamMissingStatusAfterMessage() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com",
+            serializationStrategy = serializationStrategy,
+        )
+        val grpcWebInterceptor = GRPCWebInterceptor(config)
+        val streamFunction = grpcWebInterceptor.streamFunction()
+        streamFunction.streamResultFunction(
+            StreamResult.Headers(mapOf(CONTENT_TYPE to listOf("application/grpc-web+encoding_type"))),
+        )
+        val message = Buffer().writeByte(0).writeInt(5).write("hello".encodeUtf8())
+        streamFunction.streamResultFunction(StreamResult.Message(message))
+
+        val result = streamFunction.streamResultFunction(StreamResult.Complete())
+
+        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        val completion = result as StreamResult.Complete
+        assertThat(completion.cause!!.code).isEqualTo(Code.INTERNAL_ERROR)
+    }
+
+    @Test
+    fun endStreamMissingStatusWithoutMessages() {
+        val config = ProtocolClientConfig(
+            host = "https://connectrpc.com",
+            serializationStrategy = serializationStrategy,
+        )
+        val grpcWebInterceptor = GRPCWebInterceptor(config)
+        val streamFunction = grpcWebInterceptor.streamFunction()
+        streamFunction.streamResultFunction(
+            StreamResult.Headers(mapOf(CONTENT_TYPE to listOf("application/grpc-web+encoding_type"))),
+        )
+
+        val result = streamFunction.streamResultFunction(StreamResult.Complete())
+
+        assertThat(result).isOfAnyClassIn(StreamResult.Complete::class.java)
+        val completion = result as StreamResult.Complete
+        assertThat(completion.cause!!.code).isEqualTo(Code.INTERNAL_ERROR)
     }
 
     @Test
