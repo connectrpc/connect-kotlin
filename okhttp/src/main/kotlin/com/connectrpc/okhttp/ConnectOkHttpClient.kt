@@ -44,6 +44,8 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
@@ -139,6 +141,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             .method(method, requestBody)
             .build()
         val newCall = unaryClient.newCall(callRequest)
+        val deadline = request.timeout?.let { TimeSource.Monotonic.markNow() + it }
         val cancelable = {
             newCall.cancel()
         }
@@ -146,7 +149,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             newCall.enqueue(
                 object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        val code = codeFromException(newCall.isCanceled(), e)
+                        val code = codeFromException(newCall.isCanceled(), e, deadline)
                         onResult(
                             HTTPResponse(
                                 status = null,
@@ -173,7 +176,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 buffer
                             }
                         } catch (ex: Throwable) {
-                            connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
+                            connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex, deadline))
                         }
                         onResult(
                             HTTPResponse(
@@ -221,10 +224,14 @@ internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
     )
 }
 
-internal fun codeFromException(callCanceled: Boolean, e: Throwable): Code {
+internal fun codeFromException(callCanceled: Boolean, e: Throwable, deadline: TimeMark? = null): Code {
     return if ((e is InterruptedIOException && e.message == "timeout") ||
         e is SocketTimeoutException
     ) {
+        Code.DEADLINE_EXCEEDED
+    } else if (e is IOException && deadline != null && deadline.hasPassedNow()) {
+        // The server may abort the RPC at its deadline (for example, gRPC
+        // servers reset the stream) before the client's own timeout fires.
         Code.DEADLINE_EXCEEDED
     } else if (e is IOException && callCanceled) {
         Code.CANCELED

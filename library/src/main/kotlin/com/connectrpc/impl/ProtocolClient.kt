@@ -50,6 +50,9 @@ import okio.Buffer
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Concrete implementation of the [ProtocolClientInterface].
@@ -97,13 +100,14 @@ class ProtocolClient(
             val unaryFunc = config.createInterceptorChain()
             val finalRequest = unaryFunc.requestFunction(unaryRequest)
             val timeoutRef = AtomicReference<Timeout?>(null)
+            val startMark = TimeSource.Monotonic.markNow()
             val finalOnResult: (ResponseMessage<Output>) -> Unit = handleResult@{ result ->
                 when (result) {
                     is ResponseMessage.Failure -> {
                         val timeout = timeoutRef.load()
                         if (timeout != null) {
                             timeout.cancel()
-                            if (result.cause.code == Code.CANCELED && timeout.timedOut) {
+                            if (result.cause.code == Code.CANCELED && deadlineExceeded(timeout, startMark, requestTimeout)) {
                                 onResult(
                                     ResponseMessage.Failure(
                                         cause = ConnectException(Code.DEADLINE_EXCEEDED, exception = result.cause),
@@ -258,6 +262,7 @@ class ProtocolClient(
         val streamFunc = config.createStreamingInterceptorChain()
         val finalRequest = streamFunc.requestFunction(request)
         val timeoutRef = AtomicReference<Timeout?>(null)
+        val startMark = TimeSource.Monotonic.markNow()
         var isComplete = false
         val httpStream = httpClient.stream(
             request = finalRequest,
@@ -297,7 +302,7 @@ class ProtocolClient(
                         val timeout = timeoutRef.load()
                         if (timeout != null) {
                             timeout.cancel()
-                            if (connEx.code == Code.CANCELED && timeout.timedOut) {
+                            if (connEx.code == Code.CANCELED && deadlineExceeded(timeout, startMark, requestTimeout)) {
                                 connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = ex)
                             }
                         }
@@ -317,7 +322,7 @@ class ProtocolClient(
                     val timeout = timeoutRef.load()
                     if (timeout != null) {
                         timeout.cancel()
-                        if (connEx?.code == Code.CANCELED && timeout.timedOut) {
+                        if (connEx?.code == Code.CANCELED && deadlineExceeded(timeout, startMark, requestTimeout)) {
                             connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = streamResult.cause)
                         }
                     }
@@ -362,4 +367,10 @@ class ProtocolClient(
     }
 
     private fun urlFromMethodSpec(methodSpec: MethodSpec<*, *>): Url = URLBuilder(baseUrlWithTrailingSlash).appendPathSegments(methodSpec.path).build()
+
+    // The server may abort the RPC at its deadline before the local timeout
+    // fires, so compare elapsed time instead of relying only on the timer.
+    private fun deadlineExceeded(timeout: Timeout, startMark: TimeMark, requestTimeout: Duration?): Boolean {
+        return timeout.timedOut || (requestTimeout != null && startMark.elapsedNow() >= requestTimeout)
+    }
 }

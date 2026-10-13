@@ -14,13 +14,19 @@
 
 package com.connectrpc.impl
 
+import com.connectrpc.Code
 import com.connectrpc.Codec
+import com.connectrpc.ConnectException
 import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
+import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
 import com.connectrpc.StreamType
+import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
+import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Timeout
 import com.connectrpc.http.UnaryHTTPRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +39,12 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 
 class ProtocolClientTest {
     private val serializationStrategy: SerializationStrategy = mock { }
@@ -171,6 +183,75 @@ class ProtocolClientTest {
         val captor = argumentCaptor<UnaryHTTPRequest>()
         verify(httpClient).unary(captor.capture(), any())
         assertThat(captor.firstValue.url.toString()).isEqualTo("https://connectrpc.com/api/com.connectrpc.SomeService/Service")
+    }
+
+    @Test
+    fun canceledAfterDeadlineIsDeadlineExceeded() {
+        // The server can reset the stream at its deadline before the local
+        // timer fires; simulate that with a timer that never fires.
+        val result = unaryWithCanceledResponse(
+            requestTimeout = 10.milliseconds,
+            responseDelay = 100.milliseconds,
+        )
+        assertThat(result.cause.code).isEqualTo(Code.DEADLINE_EXCEEDED)
+    }
+
+    @Test
+    fun canceledBeforeDeadlineIsCanceled() {
+        val result = unaryWithCanceledResponse(
+            requestTimeout = 1.hours,
+            responseDelay = 10.milliseconds,
+        )
+        assertThat(result.cause.code).isEqualTo(Code.CANCELED)
+    }
+
+    private fun unaryWithCanceledResponse(
+        requestTimeout: Duration,
+        responseDelay: Duration,
+    ): ResponseMessage.Failure<String> {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(codec.serialize(any())).thenReturn(Buffer())
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+        whenever(httpClient.unary(any(), any())).thenAnswer { invocation ->
+            val onResult = invocation.getArgument<(HTTPResponse) -> Unit>(1)
+            thread {
+                Thread.sleep(responseDelay.inWholeMilliseconds)
+                onResult(
+                    HTTPResponse(
+                        status = null,
+                        headers = emptyMap(),
+                        message = Buffer(),
+                        trailers = emptyMap(),
+                        cause = ConnectException(code = Code.CANCELED),
+                    ),
+                )
+            }
+            val cancelable: Cancelable = {}
+            cancelable
+        }
+        val neverFiringScheduler = object : Timeout.Scheduler {
+            override fun scheduleTimeout(delay: Duration, action: Cancelable): Timeout {
+                return Timeout.DEFAULT_SCHEDULER.scheduleTimeout(1.hours, action)
+            }
+        }
+        val client = ProtocolClient(
+            httpClient = httpClient,
+            config = ProtocolClientConfig(
+                host = "https://connectrpc.com/",
+                serializationStrategy = serializationStrategy,
+                timeoutOracle = { requestTimeout },
+                timeoutScheduler = neverFiringScheduler,
+            ),
+        )
+        val latch = CountDownLatch(1)
+        var response: ResponseMessage<String>? = null
+        client.unary("input", emptyMap(), createMethodSpec(StreamType.UNARY)) { result ->
+            response = result
+            latch.countDown()
+        }
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue()
+        assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
+        return response as ResponseMessage.Failure<String>
     }
 
     private fun createClient(host: String): ProtocolClient {
