@@ -32,6 +32,7 @@ import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Stream
 import com.connectrpc.http.Timeout
 import com.connectrpc.http.UnaryHTTPRequest
 import com.connectrpc.http.dispatchIn
@@ -47,6 +48,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okio.Buffer
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
@@ -263,12 +265,29 @@ class ProtocolClient(
         val finalRequest = streamFunc.requestFunction(request)
         val timeoutRef = AtomicReference<Timeout?>(null)
         val startMark = TimeSource.Monotonic.markNow()
-        var isComplete = false
+        val isComplete = AtomicBoolean(false)
+
+        // The first completion wins, whether it comes from the server, the
+        // timeout, or the caller canceling.
+        fun complete(cause: ConnectException?, trailers: Headers = emptyMap()) {
+            if (isComplete.compareAndSet(false, true)) {
+                responseHeaders.complete(emptyMap())
+                try {
+                    channel.close(cause)
+                } finally {
+                    responseTrailers.complete(trailers)
+                }
+            }
+        }
+        fun cancelStream() {
+            timeoutRef.load()?.cancel()
+            complete(ConnectException(code = Code.CANCELED, message = "stream canceled"))
+        }
         val httpStream = httpClient.stream(
             request = finalRequest,
             duplex = methodSpec.streamType == StreamType.BIDI,
         ) httpStream@{ initialResult ->
-            if (isComplete) {
+            if (isComplete.load()) {
                 // No-op on remaining handlers after a completion.
                 return@httpStream
             }
@@ -297,7 +316,6 @@ class ProtocolClient(
                         )
                         channel.send(message)
                     } catch (ex: Throwable) {
-                        isComplete = true
                         var connEx = asConnectException(ex)
                         val timeout = timeoutRef.load()
                         if (timeout != null) {
@@ -306,18 +324,11 @@ class ProtocolClient(
                                 connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = ex)
                             }
                         }
-                        try {
-                            channel.close(connEx)
-                        } finally {
-                            responseTrailers.complete(emptyMap())
-                        }
+                        complete(connEx)
                     }
                 }
 
                 is StreamResult.Complete -> {
-                    // This is a no-op if we already received a StreamResult.Headers.
-                    responseHeaders.complete(emptyMap())
-                    isComplete = true
                     var connEx = streamResult.cause
                     val timeout = timeoutRef.load()
                     if (timeout != null) {
@@ -326,28 +337,24 @@ class ProtocolClient(
                             connEx = ConnectException(Code.DEADLINE_EXCEEDED, exception = streamResult.cause)
                         }
                     }
-                    try {
-                        channel.close(connEx)
-                    } finally {
-                        responseTrailers.complete(streamResult.trailers)
-                    }
+                    complete(connEx, trailers = streamResult.trailers)
                 }
             }
         }
         if (requestTimeout != null) {
             timeoutRef.store(
                 config.timeoutScheduler.scheduleTimeout(requestTimeout) {
-                    runBlocking {
-                        channel.close(ConnectException(code = Code.DEADLINE_EXCEEDED, message = "$requestTimeout timeout elapsed"))
-                    }
+                    complete(ConnectException(code = Code.DEADLINE_EXCEEDED, message = "$requestTimeout timeout elapsed"))
                 },
             )
         }
         try {
             channel.invokeOnClose {
+                cancelStream()
                 runBlocking { httpStream.receiveClose() }
             }
             var stream = httpStream.transform { streamFunc.requestBodyFunction(it) }
+                .beforeReceiveClose { cancelStream() }
             if (config.ioCoroutineContext != null) {
                 stream = stream.dispatchIn(config.ioCoroutineContext)
             }
@@ -361,6 +368,7 @@ class ProtocolClient(
         } catch (ex: Throwable) {
             // If something in these last steps prevents us
             // from returning, don't leak the stream.
+            timeoutRef.load()?.cancel()
             httpStream.receiveClose()
             throw ex
         }
@@ -372,5 +380,15 @@ class ProtocolClient(
     // fires, so compare elapsed time instead of relying only on the timer.
     private fun deadlineExceeded(timeout: Timeout, startMark: TimeMark, requestTimeout: Duration?): Boolean {
         return timeout.timedOut || (requestTimeout != null && startMark.elapsedNow() >= requestTimeout)
+    }
+}
+
+private fun Stream.beforeReceiveClose(action: () -> Unit): Stream {
+    val delegate = this
+    return object : Stream by delegate {
+        override suspend fun receiveClose() {
+            action()
+            delegate.receiveClose()
+        }
     }
 }
