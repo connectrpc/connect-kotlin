@@ -44,6 +44,8 @@ import java.io.IOException
 import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * The OkHttp implementation of HTTPClientInterface.
@@ -139,6 +141,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             .method(method, requestBody)
             .build()
         val newCall = unaryClient.newCall(callRequest)
+        val deadline = request.timeout?.let { TimeSource.Monotonic.markNow() + it }
         val cancelable = {
             newCall.cancel()
         }
@@ -146,7 +149,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
             newCall.enqueue(
                 object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        val code = codeFromException(newCall.isCanceled(), e)
+                        val code = codeFromException(newCall.isCanceled(), e, deadline)
                         onResult(
                             HTTPResponse(
                                 status = null,
@@ -173,7 +176,7 @@ class ConnectOkHttpClient @JvmOverloads constructor(
                                 buffer
                             }
                         } catch (ex: Throwable) {
-                            connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
+                            connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex, deadline))
                         }
                         onResult(
                             HTTPResponse(
@@ -221,15 +224,49 @@ internal fun Headers.toLowerCaseKeysMultiMap(): Map<String, List<String>> {
     )
 }
 
-internal fun codeFromException(callCanceled: Boolean, e: Throwable): Code {
+internal fun codeFromException(callCanceled: Boolean, e: Throwable, deadline: TimeMark? = null): Code {
     return if ((e is InterruptedIOException && e.message == "timeout") ||
         e is SocketTimeoutException
     ) {
         Code.DEADLINE_EXCEEDED
+    } else if (e is IOException && deadline != null && deadline.hasPassedNow()) {
+        // The server may abort the RPC at its deadline (for example, gRPC
+        // servers reset the stream) before the client's own timeout fires.
+        Code.DEADLINE_EXCEEDED
     } else if (e is IOException && callCanceled) {
         Code.CANCELED
+    } else if (e is IOException) {
+        codeFromStreamReset(e) ?: Code.UNKNOWN
     } else {
         Code.UNKNOWN
+    }
+}
+
+private const val STREAM_RESET_PREFIX = "stream was reset: "
+
+// Maps HTTP/2 RST_STREAM error codes following
+// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#errors.
+// OkHttp only exposes the error code through StreamResetException, which is
+// in an internal package, so this parses the message it produces instead.
+private fun codeFromStreamReset(e: IOException): Code? {
+    val message = e.message ?: return null
+    if (!message.startsWith(STREAM_RESET_PREFIX)) {
+        return null
+    }
+    return when (message.removePrefix(STREAM_RESET_PREFIX)) {
+        "NO_ERROR", "PROTOCOL_ERROR", "INTERNAL_ERROR", "FLOW_CONTROL_ERROR",
+        "SETTINGS_TIMEOUT", "FRAME_SIZE_ERROR", "COMPRESSION_ERROR", "CONNECT_ERROR",
+        -> Code.INTERNAL_ERROR
+
+        "REFUSED_STREAM" -> Code.UNAVAILABLE
+
+        "CANCEL" -> Code.CANCELED
+
+        "ENHANCE_YOUR_CALM" -> Code.RESOURCE_EXHAUSTED
+
+        "INADEQUATE_SECURITY" -> Code.PERMISSION_DENIED
+
+        else -> null
     }
 }
 

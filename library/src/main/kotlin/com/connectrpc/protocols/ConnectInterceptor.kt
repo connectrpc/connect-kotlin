@@ -220,7 +220,19 @@ internal class ConnectInterceptor(
                             StreamResult.Message(unpackedMessage)
                         }
                     },
-                    onCompletion = { result -> result },
+                    onCompletion = { result ->
+                        if (result.cause != null) {
+                            result
+                        } else {
+                            StreamResult.Complete(
+                                cause = ConnectException(
+                                    code = Code.INTERNAL_ERROR,
+                                    message = "response did not include an end of stream message",
+                                    metadata = responseHeaders,
+                                ),
+                            )
+                        }
+                    },
                 )
                 streamResult
             },

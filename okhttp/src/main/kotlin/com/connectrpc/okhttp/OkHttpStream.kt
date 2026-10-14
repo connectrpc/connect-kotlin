@@ -36,6 +36,8 @@ import okio.BufferedSource
 import okio.Pipe
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /**
  * Extension function for OkHttpClient to initialize a stream.
@@ -58,10 +60,11 @@ internal fun OkHttpClient.initializeStream(
     }
     val callRequest = builder.build()
     val call = newCall(callRequest)
+    val deadline = request.timeout?.let { TimeSource.Monotonic.markNow() + it }
     // For non-duplex bodies, the request is complete when the
     // response arrives.
     val whenDone = if (!duplex) requestBody::close else { -> }
-    call.enqueue(ResponseCallback(onResult, whenDone))
+    call.enqueue(ResponseCallback(onResult, whenDone, deadline))
     return Stream(
         onSend = { buffer ->
             try {
@@ -84,6 +87,7 @@ internal fun OkHttpClient.initializeStream(
 private class ResponseCallback(
     private val onResult: suspend (StreamResult<Buffer>) -> Unit,
     private val whenDone: () -> Unit,
+    private val deadline: TimeMark?,
 ) : Callback {
     override fun onFailure(call: Call, e: IOException) {
         whenDone()
@@ -91,7 +95,7 @@ private class ResponseCallback(
             onResult(
                 StreamResult.Complete(
                     cause = ConnectException(
-                        code = codeFromException(call.isCanceled(), e),
+                        code = codeFromException(call.isCanceled(), e, deadline),
                         exception = e,
                     ),
                 ),
@@ -131,7 +135,7 @@ private class ResponseCallback(
                             onResult(streamResult)
                         }
                     } catch (ex: Exception) {
-                        connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex))
+                        connEx = asConnectException(ex, codeFromException(call.isCanceled(), ex, deadline))
                     } finally {
                         val finalResult = StreamResult.Complete<Buffer>(
                             trailers = resp.safeTrailers(),

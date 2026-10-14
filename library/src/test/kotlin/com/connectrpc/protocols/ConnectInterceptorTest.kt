@@ -634,7 +634,7 @@ class ConnectInterceptorTest {
     }
 
     @Test
-    fun endStreamOnTrailers() {
+    fun endStreamMissing() {
         val config = ProtocolClientConfig(
             host = "https://connectrpc.com",
             serializationStrategy = serializationStrategy,
@@ -652,8 +652,7 @@ class ConnectInterceptorTest {
 
         assertThat(result).isInstanceOf(StreamResult.Complete::class.java)
         val completion = result as StreamResult.Complete
-        assertThat(completion.cause).isNull()
-        assertThat(completion.trailers["key"]).containsExactly("value")
+        assertThat(completion.cause!!.code).isEqualTo(Code.INTERNAL_ERROR)
     }
 
     @Test
