@@ -250,12 +250,17 @@ internal class GRPCWebInterceptor(
                         if (result.cause != null) {
                             return@fold result
                         }
+                        // A trailers frame would have completed the stream in onMessage.
+                        // Without one, the only valid response is trailers-only
+                        // (an empty body with status in headers).
                         val completion = if (streamEmpty) {
-                            completionParser.parse(responseHeaders, false, emptyMap())
+                            completionParser
+                                .parse(responseHeaders, false, emptyMap())
+                                .takeIf { it.present }
                         } else {
                             null
                         }
-                        if (completion == null || !completion.present) {
+                        if (completion == null) {
                             StreamResult.Complete(
                                 cause = ConnectException(
                                     code = Code.INTERNAL_ERROR,
@@ -266,6 +271,7 @@ internal class GRPCWebInterceptor(
                         } else {
                             StreamResult.Complete(
                                 cause = completion.toConnectExceptionOrNull(serializationStrategy),
+                                // In a trailers-only response the headers are the trailers.
                                 trailers = responseHeaders,
                             )
                         }
