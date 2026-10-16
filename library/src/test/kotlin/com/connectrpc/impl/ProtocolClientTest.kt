@@ -21,21 +21,26 @@ import com.connectrpc.MethodSpec
 import com.connectrpc.ProtocolClientConfig
 import com.connectrpc.ResponseMessage
 import com.connectrpc.SerializationStrategy
+import com.connectrpc.StreamResult
 import com.connectrpc.StreamType
 import com.connectrpc.http.Cancelable
 import com.connectrpc.http.HTTPClientInterface
 import com.connectrpc.http.HTTPRequest
 import com.connectrpc.http.HTTPResponse
+import com.connectrpc.http.Stream
 import com.connectrpc.http.Timeout
 import com.connectrpc.http.UnaryHTTPRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okio.Buffer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -252,6 +257,85 @@ class ProtocolClientTest {
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue()
         assertThat(response).isInstanceOf(ResponseMessage.Failure::class.java)
         return response as ResponseMessage.Failure<String>
+    }
+
+    @Test
+    fun streamResultAfterReceiveCloseIsCanceled() = runBlocking {
+        val (onResult, httpStream) = mockHTTPStream()
+        val stream = createClient("https://connectrpc.com/").stream(
+            emptyMap(),
+            createMethodSpec(StreamType.SERVER),
+        )
+
+        stream.receiveClose()
+        // A response frame that was already buffered when the caller canceled.
+        onResult(
+            StreamResult.Complete(
+                ConnectException(code = Code.UNKNOWN, message = "protocol error: status is missing from trailers"),
+            ),
+        )
+
+        val ex = stream.responseChannel().receiveCatching().exceptionOrNull()
+        assertThat(ex).isInstanceOf(ConnectException::class.java)
+        assertThat((ex as ConnectException).code).isEqualTo(Code.CANCELED)
+        verify(httpStream, atLeastOnce()).receiveClose()
+    }
+
+    @Test
+    fun streamResultAfterResponseChannelCancelIsIgnored() = runBlocking {
+        val (onResult, httpStream) = mockHTTPStream()
+        val stream = createClient("https://connectrpc.com/").stream(
+            emptyMap(),
+            createMethodSpec(StreamType.SERVER),
+        )
+
+        stream.responseChannel().cancel()
+        onResult(
+            StreamResult.Complete(
+                cause = ConnectException(code = Code.UNKNOWN, message = "protocol error: status is missing from trailers"),
+                trailers = mapOf("key" to listOf("value")),
+            ),
+        )
+
+        val ex = stream.responseChannel().receiveCatching().exceptionOrNull()
+        assertThat(ex).isInstanceOf(CancellationException::class.java)
+        assertThat(stream.responseHeaders().await()).isEmpty()
+        assertThat(stream.responseTrailers().await()).isEmpty()
+        verify(httpStream, atLeastOnce()).receiveClose()
+    }
+
+    @Test
+    fun receiveCloseAfterCompletionKeepsResult() = runBlocking<Unit> {
+        val (onResult, _) = mockHTTPStream()
+        val stream = createClient("https://connectrpc.com/").stream(
+            emptyMap(),
+            createMethodSpec(StreamType.SERVER),
+        )
+
+        onResult(
+            StreamResult.Complete(
+                cause = ConnectException(code = Code.NOT_FOUND, message = "not found"),
+                trailers = mapOf("key" to listOf("value")),
+            ),
+        )
+        stream.receiveClose()
+
+        val ex = stream.responseChannel().receiveCatching().exceptionOrNull()
+        assertThat(ex).isInstanceOf(ConnectException::class.java)
+        assertThat((ex as ConnectException).code).isEqualTo(Code.NOT_FOUND)
+        assertThat(stream.responseTrailers().await()["key"]).containsExactly("value")
+    }
+
+    private fun mockHTTPStream(): Pair<suspend (StreamResult<Buffer>) -> Unit, Stream> {
+        whenever(codec.encodingName()).thenReturn("testing")
+        whenever(serializationStrategy.codec<String>(any())).thenReturn(codec)
+        val httpStream = mock<Stream>()
+        var onResult: (suspend (StreamResult<Buffer>) -> Unit)? = null
+        whenever(httpClient.stream(any(), any(), any())).thenAnswer { invocation ->
+            onResult = invocation.getArgument(2)
+            httpStream
+        }
+        return Pair({ result -> onResult!!(result) }, httpStream)
     }
 
     private fun createClient(host: String): ProtocolClient {
