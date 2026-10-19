@@ -102,21 +102,9 @@ fun Stream(
  */
 fun Stream.transform(apply: (Buffer) -> Buffer): Stream {
     val delegate = this
-    return object : Stream {
+    return object : Stream by delegate {
         override suspend fun send(buffer: Buffer): Result<Unit> {
             return delegate.send(apply(buffer))
-        }
-        override suspend fun sendClose() {
-            delegate.sendClose()
-        }
-        override suspend fun receiveClose() {
-            delegate.receiveClose()
-        }
-        override fun isSendClosed(): Boolean {
-            return delegate.isSendClosed()
-        }
-        override fun isReceiveClosed(): Boolean {
-            return delegate.isReceiveClosed()
         }
     }
 }
