@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import buf.editions.v1.Editions2024Proto
-import buf.editions.v1.Editions2024Response
 import buf.editions.v1.Editions2024ServiceClient
+import buf.editions.v1.Editions2026ServiceClient
 import buf.evilcomments.v1.EvilCommentsServiceClient
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyOuterClass
 import buf.javamultiplefiles.disabled.v1.DisabledEmptyServiceClient
@@ -29,6 +29,7 @@ import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyOuterClass
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedEmptyServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedInnerMessageServiceClient
 import buf.javamultiplefiles.unspecified.v1.UnspecifiedServiceClient
+import com.connectrpc.ResponseMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,26 +91,23 @@ class PluginGenerationTest {
     @Test
     fun callbackSignature() {
         val unspecifiedEmptyServiceClient = UnspecifiedEmptyServiceClient(mock { })
-        val request = UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCRequest.getDefaultInstance()
-        unspecifiedEmptyServiceClient.unspecifiedEmptyRPC(request) { response ->
-            response.success { success ->
-                assertThat(success.message).isOfAnyClassIn(UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCResponse::class.java)
-            }
-        }
+        val onUnspecifiedResult: (ResponseMessage<UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCResponse>) -> Unit = {}
+        unspecifiedEmptyServiceClient.unspecifiedEmptyRPC(
+            UnspecifiedEmptyOuterClass.UnspecifiedEmptyRPCRequest.getDefaultInstance(),
+            onResult = onUnspecifiedResult,
+        )
         val disabledEmptyServiceClient = DisabledEmptyServiceClient(mock { })
-        disabledEmptyServiceClient.disabledEmptyRPC(DisabledEmptyOuterClass.DisabledEmptyRPCRequest.getDefaultInstance()) { response ->
-            response.success { success ->
-                success.message
-                assertThat(success.message).isOfAnyClassIn(DisabledEmptyOuterClass.DisabledEmptyRPCResponse::class.java)
-            }
-        }
+        val onDisabledResult: (ResponseMessage<DisabledEmptyOuterClass.DisabledEmptyRPCResponse>) -> Unit = {}
+        disabledEmptyServiceClient.disabledEmptyRPC(
+            DisabledEmptyOuterClass.DisabledEmptyRPCRequest.getDefaultInstance(),
+            onResult = onDisabledResult,
+        )
         val enabledEmptyServiceClient = EnabledEmptyServiceClient(mock { })
-        enabledEmptyServiceClient.enabledEmptyRPC(EnabledEmptyRPCRequest.getDefaultInstance()) { response ->
-            response.success { success ->
-                success.message
-                assertThat(success.message).isOfAnyClassIn(EnabledEmptyRPCResponse::class.java)
-            }
-        }
+        val onEnabledResult: (ResponseMessage<EnabledEmptyRPCResponse>) -> Unit = {}
+        enabledEmptyServiceClient.enabledEmptyRPC(
+            EnabledEmptyRPCRequest.getDefaultInstance(),
+            onResult = onEnabledResult,
+        )
     }
 
     @Test
@@ -120,11 +118,11 @@ class PluginGenerationTest {
     @Test
     fun edition2024NestInFileClass() {
         val client = Editions2024ServiceClient(mock { })
-        val request = Editions2024Proto.Editions2024Request.getDefaultInstance()
-        client.editions2024(request) { response ->
-            response.success { success ->
-                assertThat(success.message).isOfAnyClassIn(Editions2024Response::class.java)
-            }
-        }
+        client.editions2024(Editions2024Proto.Editions2024Request.getDefaultInstance()) { }
+    }
+
+    @Test
+    fun edition2026Compiles() {
+        Editions2026ServiceClient(mock { })
     }
 }

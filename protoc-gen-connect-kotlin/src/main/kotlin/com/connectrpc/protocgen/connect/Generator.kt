@@ -107,7 +107,7 @@ class Generator : CodeGenerator {
     }
 
     override fun getMaximumEdition(): DescriptorProtos.Edition {
-        return DescriptorProtos.Edition.EDITION_2024
+        return DescriptorProtos.Edition.EDITION_2026
     }
 
     private fun parseFile(file: Descriptors.FileDescriptor): Map<ClassName, FileSpec> {
