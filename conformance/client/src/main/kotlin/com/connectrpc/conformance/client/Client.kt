@@ -94,6 +94,11 @@ class Client(
         private const val BIDI_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.BidiStreamRequest"
     }
 
+    /** Builds a copy of this client that logs through the given printer. */
+    fun withVerbose(verbose: VerbosePrinter): Client {
+        return Client(args.copy(verbose = verbose), invokerFactory, serializationFactory, payloadExtractor)
+    }
+
     suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
         val (httpClient, protocolClient) = getClient(req)
         try {

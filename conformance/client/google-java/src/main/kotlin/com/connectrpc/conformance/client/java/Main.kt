@@ -24,6 +24,7 @@ fun main(args: Array<String>) {
         JavaHelpers::unmarshalRequest,
         JavaHelpers::marshalResponse,
         clientArgs.verbose,
+        clientArgs.parallelism,
     )
     val client = Client(
         args = clientArgs,
