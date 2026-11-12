@@ -18,7 +18,7 @@ endif
 GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
 CONNECT_CONFORMANCE := $(BIN)/connectconformance
-CONNECT_CONFORMANCE_ARGS ?= -v --mode client --trace
+CONNECT_CONFORMANCE_ARGS ?= -v --mode client --trace --max-servers 32
 CONFORMANCE_CLIENT ?= google-java
 CONFORMANCE_SUITE ?= unary
 CONFORMANCE_STYLE ?=
