@@ -46,6 +46,17 @@ jobs:
         run: make releaselocal
   conformance:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        client:
+          - google-java
+          - google-javalite
+        test:
+          - { suite: unary, style: suspend }
+          - { suite: unary, style: callback }
+          - { suite: unary, style: blocking }
+          - { suite: stream }
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -69,7 +80,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run conformance tests
-        run: make runconformance
+        run: >-
+          make runconformancecase
+          CONFORMANCE_CLIENT=${{ matrix.client }}
+          CONFORMANCE_SUITE=${{ matrix.test.suite }}
+          CONFORMANCE_STYLE=${{ matrix.test.style }}
   license-headers:
     runs-on: ubuntu-latest
     steps:

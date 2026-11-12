@@ -19,6 +19,10 @@ GRADLE_ARGS ?=
 PROTOC := $(BIN)/protoc
 CONNECT_CONFORMANCE := $(BIN)/connectconformance
 CONNECT_CONFORMANCE_ARGS ?= -v --mode client --trace
+CONFORMANCE_CLIENT ?= google-java
+CONFORMANCE_SUITE ?= unary
+CONFORMANCE_STYLE ?=
+CONFORMANCE_CONFIG_PREFIX := $(if $(filter google-javalite,$(CONFORMANCE_CLIENT)),lite,standard)
 
 UNAME_OS := $(shell uname -s)
 UNAME_ARCH := $(shell uname -m)
@@ -43,38 +47,22 @@ clean: ## Cleans the underlying build.
 	./gradlew $(GRADLE_ARGS) clean
 
 .PHONY: runconformance
-runconformance: generate $(CONNECT_CONFORMANCE)
-	./gradlew $(GRADLE_ARGS) conformance:client:google-java:installDist conformance:client:google-javalite:installDist
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
-		--style suspend
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
-		--style callback
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite \
-		--style blocking
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-java/build/install/google-java/bin/google-java \
-		--style suspend
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-java/build/install/google-java/bin/google-java \
-		--style callback
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-unary-config.yaml \
-		--known-failing @conformance/client/known-failing-unary-cases.txt -- \
-		conformance/client/google-java/build/install/google-java/bin/google-java \
-		--style blocking
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/lite-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
-		conformance/client/google-javalite/build/install/google-javalite/bin/google-javalite
-	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) --conf conformance/client/standard-stream-config.yaml \
-		--known-failing @conformance/client/known-failing-stream-cases.txt -- \
-		conformance/client/google-java/build/install/google-java/bin/google-java
+runconformance: generate $(CONNECT_CONFORMANCE) ## Run all conformance suites.
+	for client in google-java google-javalite; do \
+		for style in suspend callback blocking; do \
+			$(MAKE) -o generate runconformancecase CONFORMANCE_CLIENT=$$client CONFORMANCE_SUITE=unary CONFORMANCE_STYLE=$$style; \
+		done; \
+		$(MAKE) -o generate runconformancecase CONFORMANCE_CLIENT=$$client CONFORMANCE_SUITE=stream; \
+	done
+
+.PHONY: runconformancecase
+runconformancecase: generate $(CONNECT_CONFORMANCE) ## Run a single conformance suite, selected by the CONFORMANCE_* variables.
+	./gradlew $(GRADLE_ARGS) conformance:client:$(CONFORMANCE_CLIENT):installDist
+	$(CONNECT_CONFORMANCE) $(CONNECT_CONFORMANCE_ARGS) \
+		--conf conformance/client/$(CONFORMANCE_CONFIG_PREFIX)-$(CONFORMANCE_SUITE)-config.yaml \
+		--known-failing @conformance/client/known-failing-$(CONFORMANCE_SUITE)-cases.txt -- \
+		conformance/client/$(CONFORMANCE_CLIENT)/build/install/$(CONFORMANCE_CLIENT)/bin/$(CONFORMANCE_CLIENT) \
+		$(if $(CONFORMANCE_STYLE),--style $(CONFORMANCE_STYLE))
 
 ifeq ($(UNAME_OS),Darwin)
 PROTOC_OS := osx
