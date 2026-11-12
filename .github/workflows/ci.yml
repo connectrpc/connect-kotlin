@@ -80,11 +80,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run conformance tests
-        run: >-
-          make runconformancecase
-          CONFORMANCE_CLIENT=${{ matrix.client }}
-          CONFORMANCE_SUITE=${{ matrix.test.suite }}
-          CONFORMANCE_STYLE=${{ matrix.test.style }}
+        env:
+          CONFORMANCE_CLIENT: ${{ matrix.client }}
+          CONFORMANCE_SUITE: ${{ matrix.test.suite }}
+          CONFORMANCE_STYLE: ${{ matrix.test.style }}
+        run: make runconformancecase
   license-headers:
     runs-on: ubuntu-latest
     steps:
