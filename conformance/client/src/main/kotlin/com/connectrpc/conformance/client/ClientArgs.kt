@@ -22,7 +22,7 @@ data class ClientArgs(
     val parallelism: Int,
 ) {
     companion object {
-        private const val DEFAULT_PARALLELISM_PER_CPU = 16
+        private const val DEFAULT_PARALLELISM_PER_CPU = 8
 
         fun parseArgs(args: Array<String>): ClientArgs {
             var unaryInvokeStyle = UnaryInvokeStyle.SUSPEND
