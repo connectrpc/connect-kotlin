@@ -94,8 +94,13 @@ class Client(
         private const val BIDI_STREAM_REQUEST_NAME = "connectrpc.conformance.v1.BidiStreamRequest"
     }
 
-    suspend fun handle(req: ClientCompatRequest, verbose: VerbosePrinter): ClientResponseResult {
-        val (httpClient, protocolClient) = getClient(req, verbose)
+    /** Builds a copy of this client that logs through the given printer. */
+    fun withVerbose(verbose: VerbosePrinter): Client {
+        return Client(args.copy(verbose = verbose), invokerFactory, serializationFactory, payloadExtractor)
+    }
+
+    suspend fun handle(req: ClientCompatRequest): ClientResponseResult {
+        val (httpClient, protocolClient) = getClient(req)
         try {
             val invoker = invokerFactory(protocolClient)
             val service = req.service
@@ -107,9 +112,9 @@ class Client(
                 UNARY_METHOD_NAME -> handleUnary(invoker.unaryClient(), UNARY_REQUEST_NAME, req)
                 IDEMPOTENT_UNARY_METHOD_NAME -> handleUnary(invoker.idempotentUnaryClient(), IDEMPOTENT_UNARY_REQUEST_NAME, req)
                 UNIMPLEMENTED_METHOD_NAME -> handleUnary(invoker.unimplementedClient(), UNIMPLEMENTED_REQUEST_NAME, req)
-                CLIENT_STREAM_METHOD_NAME -> handleClient(invoker.clientStreamClient(), req, verbose)
+                CLIENT_STREAM_METHOD_NAME -> handleClient(invoker.clientStreamClient(), req)
                 SERVER_STREAM_METHOD_NAME -> handleServer(invoker.serverStreamClient(), req)
-                BIDI_STREAM_METHOD_NAME -> handleBidi(invoker.bidiStreamClient(), req, verbose)
+                BIDI_STREAM_METHOD_NAME -> handleBidi(invoker.bidiStreamClient(), req)
                 else -> throw RuntimeException("method ${req.method} is not known")
             }
         } finally {
@@ -197,7 +202,6 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleClient(
         client: ClientStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-        verbose: VerbosePrinter,
     ): ClientResponseResult {
         if (req.streamType != StreamType.CLIENT_STREAM) {
             throw RuntimeException("specified method ${req.method} is client-stream but stream type indicates ${req.streamType}")
@@ -218,7 +222,7 @@ class Client(
                 try {
                     stream.send(msg)
                 } catch (ex: Exception) {
-                    verbose.verbosity(2) {
+                    args.verbose.verbosity(2) {
                         println("Failed to send request message:")
                         indent().println(ex.stackTraceToString())
                     }
@@ -289,14 +293,13 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleBidi(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-        verbose: VerbosePrinter,
     ): ClientResponseResult {
         return when (req.streamType) {
             StreamType.HALF_DUPLEX_BIDI_STREAM ->
-                handleHalfDuplexBidi(client, req, verbose)
+                handleHalfDuplexBidi(client, req)
 
             StreamType.FULL_DUPLEX_BIDI_STREAM ->
-                handleFullDuplexBidi(client, req, verbose)
+                handleFullDuplexBidi(client, req)
 
             else ->
                 throw RuntimeException("specified method ${req.method} is bidi-stream but stream type indicates ${req.streamType}")
@@ -306,7 +309,6 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleHalfDuplexBidi(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-        verbose: VerbosePrinter,
     ): ClientResponseResult {
         return client.execute(req.requestHeaders) { stream ->
             var numUnsent = 0
@@ -318,7 +320,7 @@ class Client(
                 try {
                     stream.requests.send(msg)
                 } catch (ex: Exception) {
-                    verbose.verbosity(2) {
+                    args.verbose.verbosity(2) {
                         println("Failed to send request message:")
                         indent().println(ex.stackTraceToString())
                     }
@@ -350,7 +352,6 @@ class Client(
     private suspend fun <Req : MessageLite, Resp : MessageLite> handleFullDuplexBidi(
         client: BidiStreamClient<Req, Resp>,
         req: ClientCompatRequest,
-        verbose: VerbosePrinter,
     ): ClientResponseResult {
         return client.execute(req.requestHeaders) { stream ->
             val cancel = req.cancel
@@ -363,7 +364,7 @@ class Client(
                 try {
                     stream.requests.send(msg)
                 } catch (ex: Exception) {
-                    verbose.verbosity(2) {
+                    args.verbose.verbosity(2) {
                         println("Failed to send request message:")
                         indent().println(ex.stackTraceToString())
                     }
@@ -482,7 +483,7 @@ class Client(
         )
     }
 
-    private fun getClient(req: ClientCompatRequest, verbose: VerbosePrinter): Pair<OkHttpClient, ProtocolClient> {
+    private fun getClient(req: ClientCompatRequest): Pair<OkHttpClient, ProtocolClient> {
         // TODO: cache/re-use clients instead of creating a new one for every request
         val serializationStrategy = serializationFactory(req.codec)
         val useTls = !req.serverTlsCert.isEmpty
@@ -492,7 +493,7 @@ class Client(
             .protocols(asOkHttpProtocols(req.httpVersion, useTls))
             .connectTimeout(Duration.ofMinutes(1))
 
-        verbose.withPrefix("okhttp3 events: ").verbosity(4) {
+        args.verbose.withPrefix("okhttp3 events: ").verbosity(4) {
             clientBuilder = clientBuilder.eventListener(OkHttpEventTracer(this))
         }
 
@@ -516,11 +517,11 @@ class Client(
             }
         val httpClient = ConnectOkHttpClient.configureClient(clientBuilder).build()
         var connectHttpClient: HTTPClientInterface = ConnectOkHttpClient(httpClient)
-        verbose.withPrefix("http client interface: ").verbosity(3) {
+        args.verbose.withPrefix("http client interface: ").verbosity(3) {
             connectHttpClient = TracingHTTPClient(connectHttpClient, this)
         }
         var timeoutScheduler = Timeout.DEFAULT_SCHEDULER
-        verbose.verbosity(3) {
+        args.verbose.verbosity(3) {
             val verbosePrinter = this
             timeoutScheduler = object : Timeout.Scheduler {
                 override fun scheduleTimeout(delay: kotlin.time.Duration, action: Cancelable): Timeout {

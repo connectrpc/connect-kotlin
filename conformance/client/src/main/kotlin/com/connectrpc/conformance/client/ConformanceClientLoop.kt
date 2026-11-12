@@ -36,6 +36,8 @@ class ConformanceClientLoop(
     private val verbose: VerbosePrinter,
     private val parallelism: Int,
 ) {
+    private val outputLock = Any()
+
     fun run(input: InputStream, output: OutputStream, client: Client) = runBlocking {
         val semaphore = Semaphore(parallelism)
 
@@ -64,7 +66,7 @@ class ConformanceClientLoop(
             }
         }
         try {
-            val resp = client.handle(req, testVerbose)
+            val resp = client.withVerbose(testVerbose).handle(req)
             result = ClientCompatResponse.Result.ResponseResult(resp)
             testVerbose.verbosity(1) {
                 println("RPC completed")
@@ -118,7 +120,7 @@ class ConformanceClientLoop(
         prefix[1] = len.ushr(16).toByte()
         prefix[2] = len.ushr(8).toByte()
         prefix[3] = len.toByte()
-        synchronized(output) {
+        synchronized(outputLock) {
             output.write(prefix)
             output.write(respBytes)
         }
