@@ -17,11 +17,17 @@ package com.connectrpc.conformance.client
 data class ClientArgs(
     val unaryInvokeStyle: UnaryInvokeStyle,
     val verbose: VerbosePrinter,
+
+    /** Maximum number of RPCs the client runs at once. */
+    val parallelism: Int,
 ) {
     companion object {
+        private const val DEFAULT_PARALLELISM_PER_CPU = 4
+
         fun parseArgs(args: Array<String>): ClientArgs {
             var unaryInvokeStyle = UnaryInvokeStyle.SUSPEND
             var verbosity = 0
+            var parallelism = Runtime.getRuntime().availableProcessors() * DEFAULT_PARALLELISM_PER_CPU
             var skip = false
             for (i in args.indices) {
                 if (skip) {
@@ -67,6 +73,19 @@ data class ClientArgs(
                         verbosity = intVal
                     }
 
+                    "-p", "--parallel" -> {
+                        if (i == args.size - 1) {
+                            throw RuntimeException("$arg option requires a value")
+                        }
+                        skip = true // consuming next string now
+                        val v = args[i + 1]
+                        val intVal = v.toIntOrNull()
+                        if (intVal == null || intVal < 1) {
+                            throw RuntimeException("value for $arg option should be a positive integer; instead got '$v'")
+                        }
+                        parallelism = intVal
+                    }
+
                     else -> {
                         if (arg.startsWith("-")) {
                             throw RuntimeException("unknown option: $arg")
@@ -76,7 +95,7 @@ data class ClientArgs(
                     }
                 }
             }
-            return ClientArgs(unaryInvokeStyle, VerbosePrinter(verbosity, "* client: "))
+            return ClientArgs(unaryInvokeStyle, VerbosePrinter(verbosity, "* client: "), parallelism)
         }
     }
 

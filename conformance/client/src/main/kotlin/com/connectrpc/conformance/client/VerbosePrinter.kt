@@ -45,7 +45,7 @@ class VerbosePrinter(
      */
     fun verbosity(v: Int, block: Printer.() -> Unit) {
         if (v > verbosity) return
-        block(output)
+        synchronized(lock) { block(output) }
     }
 
     /**

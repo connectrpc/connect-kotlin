@@ -16,7 +16,10 @@ package com.connectrpc.conformance.client
 
 import com.connectrpc.conformance.client.adapt.ClientCompatRequest
 import com.connectrpc.conformance.client.adapt.ClientCompatResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Semaphore
 import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
@@ -31,56 +34,71 @@ class ConformanceClientLoop(
     private val requestUnmarshaller: (ByteArray) -> ClientCompatRequest,
     private val responseMarshaller: (ClientCompatResponse) -> ByteArray,
     private val verbose: VerbosePrinter,
+    private val parallelism: Int,
 ) {
     fun run(input: InputStream, output: OutputStream, client: Client) = runBlocking {
-        // TODO: issue RPCs in parallel
+        val semaphore = Semaphore(parallelism)
+
         while (true) {
-            var result: ClientCompatResponse.Result
-            val req = readRequest(input) ?: return@runBlocking // end of stream
-            verbose.verbosity(1) {
-                println("read request for test ${req.testName}")
-                verbose.verbosity(3) {
-                    println("RPC request:")
-                    indent().println("${req.raw}")
+            val req = readRequest(input) ?: break
+
+            semaphore.acquire()
+            launch(Dispatchers.IO) {
+                try {
+                    handle(req, client, output)
+                } finally {
+                    semaphore.release()
                 }
             }
-            try {
-                val resp = client.handle(req)
-                result = ClientCompatResponse.Result.ResponseResult(resp)
-                verbose.verbosity(1) {
-                    println("RPC completed for test ${req.testName}")
-                }
-            } catch (ex: Exception) {
-                verbose.verbosity(1) {
-                    println("RPC could not be issued for test ${req.testName}")
-                    indent().println(ex.stackTraceToString())
-                }
-                val msg = if (ex.message.orEmpty() == "") {
-                    ex::class.qualifiedName.orEmpty()
-                } else {
-                    "${ex::class.qualifiedName}: ${ex.message}"
-                }
-                result = ClientCompatResponse.Result.ErrorResult(msg)
+        }
+    }
+
+    private suspend fun handle(req: ClientCompatRequest, client: Client, output: OutputStream) {
+        val testVerbose = verbose.withPrefix("[${req.testName}] ")
+        var result: ClientCompatResponse.Result
+        testVerbose.verbosity(1) {
+            println("read request")
+            testVerbose.verbosity(3) {
+                println("RPC request:")
+                indent().println("${req.raw}")
             }
-            if (result is ClientCompatResponse.Result.ResponseResult && result.response.error != null) {
-                verbose.verbosity(2) {
-                    val ex = result.response.error!!
-                    println("RPC failed with code ${ex.code} for test ${req.testName}:")
-                    indent().println(ex.stackTraceToString())
-                }
+        }
+        try {
+            val resp = client.handle(req, testVerbose)
+            result = ClientCompatResponse.Result.ResponseResult(resp)
+            testVerbose.verbosity(1) {
+                println("RPC completed")
             }
-            writeResponse(
-                output,
-                ClientCompatResponse(
-                    testName = req.testName,
-                    result = result,
-                ),
-            )
-            if (result is ClientCompatResponse.Result.ResponseResult && result.response.raw != null) {
-                verbose.verbosity(3) {
-                    println("RPC result:")
-                    indent().println("${result.response.raw}")
-                }
+        } catch (ex: Exception) {
+            testVerbose.verbosity(1) {
+                println("RPC could not be issued")
+                indent().println(ex.stackTraceToString())
+            }
+            val msg = if (ex.message.orEmpty() == "") {
+                ex::class.qualifiedName.orEmpty()
+            } else {
+                "${ex::class.qualifiedName}: ${ex.message}"
+            }
+            result = ClientCompatResponse.Result.ErrorResult(msg)
+        }
+        if (result is ClientCompatResponse.Result.ResponseResult && result.response.error != null) {
+            testVerbose.verbosity(2) {
+                val ex = result.response.error!!
+                println("RPC failed with code ${ex.code}:")
+                indent().println(ex.stackTraceToString())
+            }
+        }
+        writeResponse(
+            output,
+            ClientCompatResponse(
+                testName = req.testName,
+                result = result,
+            ),
+        )
+        if (result is ClientCompatResponse.Result.ResponseResult && result.response.raw != null) {
+            testVerbose.verbosity(3) {
+                println("RPC result:")
+                indent().println("${result.response.raw}")
             }
         }
     }
@@ -100,8 +118,10 @@ class ConformanceClientLoop(
         prefix[1] = len.ushr(16).toByte()
         prefix[2] = len.ushr(8).toByte()
         prefix[3] = len.toByte()
-        output.write(prefix)
-        output.write(respBytes)
+        synchronized(output) {
+            output.write(prefix)
+            output.write(respBytes)
+        }
     }
 
     private fun InputStream.readN(len: Int): ByteArray? {
